@@ -49,7 +49,9 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    last_login_time TEXT,
+    last_login_ip TEXT
   )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
   db.run(`CREATE TABLE IF NOT EXISTS ads (
@@ -287,6 +289,8 @@ db.serialize(() => {
     }
   });
 
+  // 尝试添加登录信息列（如果表已存在但没有这些列）
+  // 静默处理错误，因为如果列已存在会报错
   db.run(`ALTER TABLE users ADD COLUMN last_login_time TEXT`, [], () => {});
   db.run(`ALTER TABLE users ADD COLUMN last_login_ip TEXT`, [], () => {});
 });

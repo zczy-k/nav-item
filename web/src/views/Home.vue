@@ -42,13 +42,13 @@
     <!-- 左侧广告条 -->
     <div v-if="leftAds.length" class="ad-space-fixed left-ad-fixed">
       <a v-for="ad in leftAds" :key="ad.id" :href="ad.url" target="_blank">
-        <img :src="ad.img" alt="广告" />
+        <img :src="ad.img" alt="广告" loading="lazy" />
       </a>
     </div>
     <!-- 右侧广告条 -->
     <div v-if="rightAds.length" class="ad-space-fixed right-ad-fixed">
       <a v-for="ad in rightAds" :key="ad.id" :href="ad.url" target="_blank">
-        <img :src="ad.img" alt="广告" />
+        <img :src="ad.img" alt="广告" loading="lazy" />
       </a>
     </div>
     
@@ -92,6 +92,7 @@
                   v-if="friend.logo" 
                   :src="friend.logo" 
                   :alt="friend.title"
+                  loading="lazy"
                   @error="handleLogoError"
                 />
                 <div v-else class="friend-link-placeholder">
@@ -110,10 +111,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { getMenus, getCards, getAds, getFriends } from '../api';
 import MenuBar from '../components/MenuBar.vue';
-import CardGrid from '../components/CardGrid.vue';
+const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
 
 const menus = ref([]);
 const activeMenu = ref(null);
