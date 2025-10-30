@@ -22,6 +22,11 @@
     "sqlite3": "^5.1.6"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=14",
+    "npm": ">=6"
+  },
+  "devEngines": {
+    "comment": "For Serv00 deployment, use Node 20",
+    "node": "20.x"
   }
 }
