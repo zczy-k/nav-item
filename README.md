@@ -173,7 +173,7 @@ ghcr.io/eooce/nav-item:latest
   * `DOMAIN`为自定义站点域名
 
 ```bash
-DOMAIN=自定义域名 bash <(curl -Ls https://github.com/eooce/nav-item/releases/download/ct8-and-serv00/install.sh) 
+DOMAIN=自定义域名 bash <(curl -Ls https://github.com/zczy-k/nav-item/releases/download/ct8-and-serv00/install.sh) 
 ```
 
 ## 🤝 贡献指南
@@ -201,6 +201,7 @@ DOMAIN=自定义域名 bash <(curl -Ls https://github.com/eooce/nav-item/release
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！ 
+
 
 
 
