@@ -103,24 +103,31 @@ install_application() {
     fi
     
     # 配置 Node 环境
+    mkdir -p ~/bin
     ln -fs /usr/local/bin/node20 ~/bin/node > /dev/null 2>&1
     ln -fs /usr/local/bin/npm20 ~/bin/npm > /dev/null 2>&1
     mkdir -p ~/.npm-global
-    npm config set prefix '~/.npm-global'
+    npm config set prefix '~/.npm-global' 2>/dev/null || true
     
-    if ! grep -q "~/.npm-global/bin" ~/.bash_profile; then
+    # 创建 .bash_profile 如果不存在
+    touch ~/.bash_profile
+    
+    if ! grep -q "~/.npm-global/bin" ~/.bash_profile 2>/dev/null; then
         echo 'export PATH=~/.npm-global/bin:~/bin:$PATH' >> ~/.bash_profile
     fi
-    source ~/.bash_profile 2>/dev/null || true
+    
+    # 导入环境变量
+    export PATH=~/.npm-global/bin:~/bin:/usr/local/devil/node20/bin:$PATH
     
     # 安装依赖
-    yellow "安装后端依赖...\n"
-    PATH=/usr/local/devil/node20/bin:$PATH npm install --silent > /dev/null 2>&1
+    yellow "安装后端依赖...（这可能需要几分钟）\n"
     
-    if [ $? -eq 0 ]; then
+    if npm install 2>&1 | tee /tmp/npm-install.log | grep -v "^npm warn"; then
         green "依赖安装成功\n"
     else
-        red "依赖安装失败，请检查日志"
+        red "依赖安装失败！\n"
+        yellow "错误日志："
+        tail -20 /tmp/npm-install.log
         exit 1
     fi
     
