@@ -9,10 +9,14 @@
 
 ## 快速部署到 Serv00
 
-### 方法 1：使用官方安装脚本（推荐）
+### 方法 1：使用一键安装脚本（推荐）
 
 ```bash
-DOMAIN=your-domain.serv00.net bash <(curl -Ls https://github.com/eooce/nav-item/releases/download/ct8-and-serv00/install.sh)
+# 使用默认域名（username.serv00.net）
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+
+# 或指定自定义域名
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
 ```
 
 **如果遇到问题，按以下步骤手动修复：**
@@ -205,5 +209,7 @@ public_nodejs/
 
 ## 更多帮助
 
+- 项目地址：https://github.com/zczy-k/nav-item
 - 原项目：https://github.com/eooce/nav-item
 - Serv00 文档：https://wiki.serv00.com/
+- 问题反馈：https://github.com/zczy-k/nav-item/issues

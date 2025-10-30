@@ -1,9 +1,9 @@
 {
   "name": "nav-item-backend",
   "version": "1.0.0",
-  "author": "eooce",
-  "description": "nav-item-backend",
-  "repository": "https://github.com/eooce/nav-item",
+  "author": "zczy-k",
+  "description": "nav-item-backend - 个人导航站后端",
+  "repository": "https://github.com/zczy-k/nav-item",
   "license": "MIT",
   "main": "app.js",
   "scripts": {

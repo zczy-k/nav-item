@@ -1,5 +1,9 @@
 # Nav-item - 个人导航站
 
+> 🔗 **仓库地址**: [github.com/zczy-k/nav-item](https://github.com/zczy-k/nav-item)  
+> 👤 **Fork 自**: [github.com/eooce/nav-item](https://github.com/eooce/nav-item)  
+> ✨ **增强功能**: Serv00 一键部署脚本、完善部署文档
+
 ## 项目简介
 
 一个现代化的导航网站项目，提供简洁美观的导航界面和强大的后台管理系统,快速访问常用网站和工具。
@@ -97,7 +101,7 @@ nav-item/
 
 #### 1. 克隆项目
 ```bash
-git clone https://github.com/eooce/nav-Item.git
+git clone https://github.com/zczy-k/nav-item.git
 cd nav-item
 ```
 
@@ -169,7 +173,7 @@ ghcr.io/eooce/nav-item:latest
   * `DOMAIN`为自定义站点域名
 
 ```bash
-bash <(curl -Ls https://github.com/eooce/nav-item/releases/download/ct8-and-serv00/install.sh) 
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
 ```
 
 ## 🤝 贡献指南
@@ -186,7 +190,9 @@ bash <(curl -Ls https://github.com/eooce/nav-item/releases/download/ct8-and-serv
 
 ## 👨‍💻 作者
 
-**eooce** - [GitHub](https://github.com/eooce)
+**zczy-k** - [GitHub](https://github.com/zczy-k)
+
+原项目作者：**eooce** - [GitHub](https://github.com/eooce)
 
 ## 🙏 致谢
 

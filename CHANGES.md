@@ -1,5 +1,20 @@
 # 项目修改总结
 
+## 最新更新 (2025-10-30)
+
+### 仓库信息更新
+- **新仓库地址**: https://github.com/zczy-k/nav-item
+- **原项目**: https://github.com/eooce/nav-item
+- **作者**: zczy-k
+
+### 更新内容
+1. 更新所有文档中的仓库链接
+2. 创建 Serv00 一键安装脚本 (`scripts/install-serv00.sh`)
+3. 更新 package.json 中的作者和仓库信息
+4. 更新 README.md 和 DEPLOY_SERV00.md 文档
+
+---
+
 ## 修改日期
 2025-10-30
 
