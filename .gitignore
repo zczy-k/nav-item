@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+web/node_modules/
+.npm-global/
+
+# Build output (we commit the built files in public/)
+web/dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+database/*.db
+database/*.db-*
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+!uploads/default-favicon.png
+
+# Temporary files
+tmp/
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Package lock conflicts
+package-lock.json.orig

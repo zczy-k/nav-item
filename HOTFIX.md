@@ -140,9 +140,30 @@ devil www restart your-domain.com
 3. ✅ `scripts/install-serv00.sh` - 优化错误处理
 4. ✅ `HOTFIX.md` - 本文档
 
-## ⏱️ 更新时间
+## 🛠️ 本地构建前端
 
-2025-10-30 14:30 UTC
+如果你需要修改前端代码：
+
+```bash
+# 在 web 目录构建
+cd web
+npm install
+npm run build
+
+# 复制到 public 目录
+cd ..
+rm -rf public
+cp -r web/dist public
+
+# 提交到 GitHub
+git add public/
+git commit -m "Update frontend build"
+git push
+```
+
+## ⛱️ 更新时间
+
+2025-10-30 14:45 UTC
 
 ---
 
