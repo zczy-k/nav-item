@@ -72,21 +72,19 @@ scp username@hostname:~/nav-item-backups/nav-item-backup-*.tar.gz .
 
 ### 首次配置
 
-1. **创建 GitHub 私有仓库**
-   - 访问 https://github.com/new
-   - 名称：`nav-item-backup`
-   - 类型：**Private**（私有）
-
-2. **创建 Personal Access Token**
+1. **创建 Personal Access Token**
    - 访问 https://github.com/settings/tokens
    - 点击 "Generate new token (classic)"
-   - 权限：勾选 `repo`
+   - 权限：勾选 `repo`（完整仓库权限）
    - 复制生成的 token
 
-3. **在菜单中配置**
+2. **在菜单中配置**
    - 选择选项 `6` (GitHub 配置)
    - 输入 Token
-   - 输入仓库名（格式：`username/nav-item-backup`）
+   - 输入仓库名（格式：`username/repo-name`）
+   - 例如：`zczy-k/nav-item-backup`
+
+> ✨ **自动创建**：如果仓库不存在，脚本会自动创建私有仓库，无需手动操作！
 
 ### 备份到 GitHub
 - 选择菜单选项 `2`

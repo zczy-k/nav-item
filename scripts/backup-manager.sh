@@ -165,15 +165,35 @@ backup_to_github() {
         CLONE_OUTPUT=$(git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git" "$GITHUB_BACKUP_DIR" 2>&1)
         
         if [ $? -ne 0 ]; then
-            # 克隆失败，创建新仓库
-            yellow "仓库不存在，创建新仓库...\n"
+            # 克隆失败，自动创建新仓库
+            yellow "仓库不存在，正在自动创建...\n"
+            
+            # 使用 GitHub API 创建私有仓库
+            REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
+            CREATE_RESULT=$(curl -s -X POST \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                https://api.github.com/user/repos \
+                -d "{\"name\":\"${REPO_NAME}\",\"private\":true,\"auto_init\":false}")
+            
+            # 检查是否创建成功
+            if echo "$CREATE_RESULT" | grep -q '"id"'; then
+                green "✓ 仓库创建成功\n"
+                sleep 2  # 等待 GitHub 同步
+            elif echo "$CREATE_RESULT" | grep -q "name already exists"; then
+                yellow "仓库已存在，继续...\n"
+            else
+                red "✗ 仓库创建失败"
+                yellow "错误信息: $(echo "$CREATE_RESULT" | grep -o '"message":"[^"]*"' || echo '未知错误')"
+                return 1
+            fi
+            
+            # 初始化本地仓库
             git init
             git config user.name "Nav-Item Backup"
             git config user.email "backup@nav-item.local"
             git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
-            
-            # 创建默认分支
-            git checkout -b main 2>/dev/null || git checkout -b master 2>/dev/null
+            git checkout -b main 2>/dev/null
         else
             green "✓ 仓库克隆成功\n"
         fi
