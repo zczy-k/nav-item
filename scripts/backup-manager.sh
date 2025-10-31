@@ -156,51 +156,53 @@ backup_to_github() {
     
     mkdir -p "$GITHUB_BACKUP_DIR"
     cd "$GITHUB_BACKUP_DIR"
-    
+
+    # 检查本地仓库配置是否有效
+    if [ -d ".git" ]; then
+        # 检查远程仓库是否可达
+        if ! git ls-remote --exit-code origin > /dev/null 2>&1; then
+            yellow "检测到无效的远程仓库配置，正在自动修复...\n"
+            rm -rf .git
+        fi
+    fi
+
     # 初始化或更新仓库
-    if [ ! -d "$GITHUB_BACKUP_DIR/.git" ]; then
+    if [ ! -d ".git" ]; then
         yellow "正在初始化 GitHub 仓库...\n"
-        
         # 尝试克隆现有仓库
-        CLONE_OUTPUT=$(git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git" "$GITHUB_BACKUP_DIR" 2>&1)
-        
+        CLONE_OUTPUT=$(git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git" . 2>&1)
         if [ $? -ne 0 ]; then
             # 克隆失败，自动创建新仓库
             yellow "仓库不存在，正在自动创建...\n"
-            
-            # 使用 GitHub API 创建私有仓库
             REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
             CREATE_RESULT=$(curl -s -X POST \
                 -H "Authorization: token ${GITHUB_TOKEN}" \
                 -H "Accept: application/vnd.github.v3+json" \
                 https://api.github.com/user/repos \
-                -d "{\"name\":\"${REPO_NAME}\",\"private\":true,\"auto_init\":false}")
-            
-            # 检查是否创建成功
+                -d "{\"name\":\"${REPO_NAME}\",\"private\":true}")
+
             if echo "$CREATE_RESULT" | grep -q '"id"'; then
                 green "✓ 仓库创建成功\n"
-                sleep 2  # 等待 GitHub 同步
+                sleep 2
+                git init
+                git config user.name "Nav-Item Backup"
+                git config user.email "backup@nav-item.local"
+                git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
+                git checkout -b main 2>/dev/null
             elif echo "$CREATE_RESULT" | grep -q "name already exists"; then
-                yellow "仓库已存在，继续...\n"
+                red "✗ 远程仓库已存在，但本地配置错误，请删除后重试"
+                red "  rm -rf ${GITHUB_BACKUP_DIR}"
+                return 1
             else
                 red "✗ 仓库创建失败"
                 yellow "错误信息: $(echo "$CREATE_RESULT" | grep -o '"message":"[^"]*"' || echo '未知错误')"
                 return 1
             fi
-            
-            # 初始化本地仓库
-            git init
-            git config user.name "Nav-Item Backup"
-            git config user.email "backup@nav-item.local"
-            git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
-            git checkout -b main 2>/dev/null
-        else
-            green "✓ 仓库克隆成功\n"
         fi
-    else
-        # 更新现有仓库
-        git pull origin $(git symbolic-ref --short HEAD 2>/dev/null || echo "main") 2>/dev/null || true
     fi
+
+    # 更新仓库
+    git pull origin $(git symbolic-ref --short HEAD 2>/dev/null || echo "main") --allow-unrelated-histories --quiet 2>/dev/null || true
     
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
     BACKUP_FOLDER="backups/${TIMESTAMP}"
