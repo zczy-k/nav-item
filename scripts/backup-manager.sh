@@ -160,12 +160,26 @@ backup_to_github() {
     # 初始化或更新仓库
     if [ ! -d "$GITHUB_BACKUP_DIR/.git" ]; then
         yellow "正在初始化 GitHub 仓库...\n"
-        git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git" "$GITHUB_BACKUP_DIR" 2>/dev/null || {
+        
+        # 尝试克隆现有仓库
+        CLONE_OUTPUT=$(git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git" "$GITHUB_BACKUP_DIR" 2>&1)
+        
+        if [ $? -ne 0 ]; then
+            # 克隆失败，创建新仓库
+            yellow "仓库不存在，创建新仓库...\n"
             git init
             git config user.name "Nav-Item Backup"
             git config user.email "backup@nav-item.local"
             git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
-        }
+            
+            # 创建默认分支
+            git checkout -b main 2>/dev/null || git checkout -b master 2>/dev/null
+        else
+            green "✓ 仓库克隆成功\n"
+        fi
+    else
+        # 更新现有仓库
+        git pull origin $(git symbolic-ref --short HEAD 2>/dev/null || echo "main") 2>/dev/null || true
     fi
     
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
@@ -188,15 +202,37 @@ EOF
     yellow "正在推送到 GitHub..."
     git add .
     git commit -m "Backup: ${TIMESTAMP} from ${CURRENT_DOMAIN}" 2>/dev/null
-    git push -u origin main 2>/dev/null
     
-    if [ $? -eq 0 ]; then
+    # 检测当前分支
+    CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")
+    
+    # 尝试推送
+    PUSH_OUTPUT=$(git push -u origin "$CURRENT_BRANCH" 2>&1)
+    PUSH_STATUS=$?
+    
+    if [ $PUSH_STATUS -eq 0 ]; then
         echo ""
         green "✓ 备份到 GitHub 成功！"
-        purple "仓库: ${green}https://github.com/${GITHUB_REPO}"
+        purple "仓库: https://github.com/${GITHUB_REPO}"
+        purple "分支: ${CURRENT_BRANCH}"
         echo ""
     else
+        echo ""
         red "✗ 推送失败"
+        echo ""
+        yellow "错误信息:"
+        echo "$PUSH_OUTPUT" | grep -v "${GITHUB_TOKEN}" || echo "$PUSH_OUTPUT" | sed "s/${GITHUB_TOKEN}/***TOKEN***/g"
+        echo ""
+        yellow "可能的原因:"
+        echo "  1. Token 权限不足（需要 repo 完整权限）"
+        echo "  2. 仓库不存在或名称错误"
+        echo "  3. 网络连接问题"
+        echo "  4. Token 已过期"
+        echo ""
+        yellow "解决方法:"
+        echo "  - 检查 GitHub Token 和仓库配置（选项 6）"
+        echo "  - 访问 https://github.com/${GITHUB_REPO} 确认仓库存在"
+        echo ""
     fi
 }
 
