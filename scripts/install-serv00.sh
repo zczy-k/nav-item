@@ -122,12 +122,14 @@ install_application() {
     # 安装依赖
     yellow "安装后端依赖...（这可能需要几分钟）\n"
     
-    if npm install 2>&1 | tee /tmp/npm-install.log | grep -v "^npm warn"; then
+    LOG_FILE="${HOME}/npm-install.log"
+    if npm install 2>&1 | tee "$LOG_FILE" | grep -v "^npm warn"; then
         green "依赖安装成功\n"
+        rm -f "$LOG_FILE"
     else
         red "依赖安装失败！\n"
         yellow "错误日志："
-        tail -20 /tmp/npm-install.log
+        tail -20 "$LOG_FILE"
         exit 1
     fi
     
