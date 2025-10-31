@@ -325,7 +325,17 @@ onMounted(async () => {
   // 检查是否有保存的背景
   const savedBg = localStorage.getItem('nav_background');
   if (savedBg) {
-    document.body.style.backgroundImage = `url(${savedBg})`;
+    // 应用保存的背景到 .home-container
+    setTimeout(() => {
+      const homeContainer = document.querySelector('.home-container');
+      if (homeContainer) {
+        homeContainer.style.backgroundImage = `url(${savedBg})`;
+        homeContainer.style.backgroundSize = 'cover';
+        homeContainer.style.backgroundPosition = 'center';
+        homeContainer.style.backgroundRepeat = 'no-repeat';
+        homeContainer.style.backgroundAttachment = 'fixed';
+      }
+    }, 0);
   }
   
   // 检查是否有保存的密码token
@@ -403,11 +413,15 @@ function checkSavedPassword() {
   const savedData = localStorage.getItem('nav_password_token');
   if (savedData) {
     try {
-      const { password, expiry } = JSON.parse(savedData);
+      const { password, expiry, token } = JSON.parse(savedData);
       if (Date.now() < expiry) {
-        // 密码未过期，自动填充
+        // 密码未过期，自动填充并恢复token
         batchPassword.value = password;
         rememberPassword.value = true;
+        // 如果有保存的token，也恢复它
+        if (token) {
+          localStorage.setItem('token', token);
+        }
       } else {
         // 已过期，清除
         localStorage.removeItem('nav_password_token');
@@ -444,6 +458,7 @@ async function verifyPassword() {
       const expiry = Date.now() + 2 * 60 * 60 * 1000; // 2小时
       localStorage.setItem('nav_password_token', JSON.stringify({
         password: batchPassword.value,
+        token: response.data.token,
         expiry
       }));
     } else {
@@ -533,12 +548,15 @@ async function changeBackground() {
     const response = await getRandomWallpaper();
     const wallpaperUrl = response.data.url;
     
-    // 更新背景
-    document.body.style.backgroundImage = `url(${wallpaperUrl})`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundAttachment = 'fixed';
+    // 更新背景 - 应用到 .home-container 元素
+    const homeContainer = document.querySelector('.home-container');
+    if (homeContainer) {
+      homeContainer.style.backgroundImage = `url(${wallpaperUrl})`;
+      homeContainer.style.backgroundSize = 'cover';
+      homeContainer.style.backgroundPosition = 'center';
+      homeContainer.style.backgroundRepeat = 'no-repeat';
+      homeContainer.style.backgroundAttachment = 'fixed';
+    }
     
     // 保存到localStorage
     localStorage.setItem('nav_background', wallpaperUrl);
