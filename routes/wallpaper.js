@@ -27,15 +27,26 @@ router.get('/random', async (req, res) => {
     // 如果Unsplash失败，使用备用壁纸源
     console.error('Unsplash request failed, using fallback:', error.message);
     try {
-      const fallbackUrl = `https://picsum.photos/1920/1080?random=${Date.now()}`;
+      // 使用 picsum.photos 备用，通过 seed 参数确保每次请求获取不同但固定的图片
+      const seed = Date.now();
+      const fallbackResponse = await axios.get(`https://picsum.photos/1920/1080?random=${seed}`, {
+        maxRedirects: 0,
+        validateStatus: (status) => status === 302 || status === 200,
+      });
+      
+      // 获取重定向后的固定 URL
+      const fallbackUrl = fallbackResponse.headers.location || fallbackResponse.request.res.responseUrl || `https://picsum.photos/id/${seed % 1000}/1920/1080`;
+      
       res.json({ 
         success: true,
         url: fallbackUrl 
       });
     } catch (e) {
-      res.status(500).json({ 
-        error: '获取壁纸失败',
-        message: e.message 
+      // 最后的备用：返回一个固定 ID 的图片
+      const fixedId = Date.now() % 1000;
+      res.json({ 
+        success: true,
+        url: `https://picsum.photos/id/${fixedId}/1920/1080` 
       });
     }
   }
