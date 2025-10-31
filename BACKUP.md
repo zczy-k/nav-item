@@ -1,149 +1,123 @@
 # Nav-Item 备份与恢复指南
 
-## 📦 备份功能
+## 🚀 快速开始
 
-一键备份脚本可以自动备份导航站的所有重要数据，方便迁移和灾难恢复。
-
-### 备份内容
-
-- ✅ **数据库** (`database/`) - 所有菜单、卡片、用户数据
-- ✅ **上传文件** (`uploads/`) - Logo 和其他上传的图片
-- ✅ **环境配置** (`.env`) - 管理员密码等配置
+使用统一的备份管理工具，通过交互式菜单完成所有备份和恢复操作。
 
 ### 使用方法
 
-#### 1. 一键备份
-
-**使用默认域名：**
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-serv00.sh)
-```
-
-**使用自定义域名：**
-```bash
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-serv00.sh)
-```
-
-#### 2. 备份说明
-
-- 备份文件自动保存到 `~/nav-item-backups/` 目录
-- 文件名格式：`nav-item-backup-YYYYMMDD_HHMMSS.tar.gz`
-- 压缩格式：`.tar.gz`（gzip 压缩，节省空间）
-
-#### 3. 查看所有备份
-
-```bash
-ls -lh ~/nav-item-backups/
-```
-
-#### 4. 下载备份到本地
-
-```bash
-# 替换 username、hostname 和 backup-file
-scp username@hostname:~/nav-item-backups/nav-item-backup-YYYYMMDD_HHMMSS.tar.gz .
-```
-
----
-
-## 🔄 恢复功能
-
-从备份恢复导航站数据，支持选择历史备份。
-
-### 使用方法
-
-#### 1. 一键恢复
-
-**使用默认域名：**
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/restore-serv00.sh)
-```
-
-**使用自定义域名：**
-```bash
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/restore-serv00.sh)
-```
-
-#### 2. 恢复流程
-
-1. 脚本自动列出所有可用备份
-2. 选择要恢复的备份编号
-3. 确认恢复操作（输入 `yes`）
-4. 自动恢复数据并重启应用
-
-#### 3. 注意事项
-
-⚠️ **警告：恢复操作会覆盖当前数据！**
-
-- 恢复前建议先创建当前数据的备份
-- 确保选择正确的备份文件
-- 恢复后会自动重启应用
-
----
-
-## 💙 备份到 GitHub
-
-将备份自动推送到私有 GitHub 仓库，实现云端备份。
-
-### 优点
-
-- ✅ **云端存储** - 不占用服务器空间
-- ✅ **版本管理** - Git 自动记录所有历史版本
-- ✅ **随时恢复** - 从任何设备克隆恢复
-- ✅ **免费** - GitHub 私有仓库免费
-
-### 使用方法
-
-#### 1. 首次使用（配置）
-
-**步骤1：创建 GitHub 私有仓库**
-
-1. 访问 https://github.com/new
-2. 仓库名称：`nav-item-backup`（或其他名称）
-3. 选择 **Private**（私有）
-4. 点击 "Create repository"
-
-**步骤2：创建 Personal Access Token**
-
-1. 访问 https://github.com/settings/tokens
-2. 点击 "Generate new token (classic)"
-3. 设置名称：`nav-item-backup`
-4. 勾选权限：`repo`（完整仓库权限）
-5. 点击 "Generate token" 并复制 token
-
-**步骤3：运行备份脚本**
+**启动备份管理工具：**
 
 ```bash
 # 默认域名
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
 
 # 自定义域名
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
 ```
 
-脚本会引导你输入：
-- GitHub Token
-- 仓库名称（格式：`username/repo-name`）
+---
 
-#### 2. 后续备份
+## 📋 功能菜单
 
-配置后，直接运行即可：
+启动后会显示交互式菜单：
 
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh)
+```
+==========================================
+  Nav-Item 备份管理工具
+  GitHub: github.com/zczy-k/nav-item
+==========================================
+
+当前域名: your-domain.com
+
+请选择操作：
+
+  1) 📦 创建本地备份
+  2) 💙 备份到 GitHub
+  3) 🔄 恢复本地备份
+  4) 🔄 从 GitHub 恢复
+  5) 📋 查看备份列表
+  6) ⚙️  GitHub 配置
+  0) 🚪 退出
 ```
 
-#### 3. 定时自动备份
+---
 
+## 📦 本地备份
+
+### 特点
+- ✅ 快速，存储在服务器本地
+- ✅ `.tar.gz` 压缩格式
+- ✅ 保存在 `~/nav-item-backups/`
+
+### 使用
+1. 选择菜单选项 `1`
+2. 自动备份数据库、上传文件、配置
+3. 完成后显示备份文件路径和大小
+
+### 下载到本地
 ```bash
-# 添加到 crontab
+scp username@hostname:~/nav-item-backups/nav-item-backup-*.tar.gz .
+```
+
+---
+
+## 💙 GitHub 云端备份
+
+### 特点
+- ✅ 云端存储，不占服务器空间
+- ✅ Git 版本管理，保留历史
+- ✅ 从任何设备恢复
+- ✅ 免费（私有仓库）
+
+### 首次配置
+
+1. **创建 GitHub 私有仓库**
+   - 访问 https://github.com/new
+   - 名称：`nav-item-backup`
+   - 类型：**Private**（私有）
+
+2. **创建 Personal Access Token**
+   - 访问 https://github.com/settings/tokens
+   - 点击 "Generate new token (classic)"
+   - 权限：勾选 `repo`
+   - 复制生成的 token
+
+3. **在菜单中配置**
+   - 选择选项 `6` (GitHub 配置)
+   - 输入 Token
+   - 输入仓库名（格式：`username/nav-item-backup`）
+
+### 备份到 GitHub
+- 选择菜单选项 `2`
+- 自动推送到 GitHub 仓库
+
+### 定时自动备份
+```bash
+# 编辑 crontab
 crontab -e
 
-# 每天6小时备份一次
-0 */6 * * * bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh) > /dev/null 2>&1
+# 每6小时自动备份
+0 */6 * * * DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh) <<< "2" > /dev/null 2>&1
 ```
 
-#### 4. 从 GitHub 恢复
+### 安全说明
+⚠️ **重要：**
+- 必须使用私有仓库
+- Token 安全存储（`~/.nav-item-github-config`）
+- 备份包含敏感信息（密码、数据库）
 
+---
+
+## 🔄 恢复备份
+
+### 恢复本地备份
+1. 选择菜单选项 `3`
+2. 从列表中选择要恢复的备份
+3. 确认恢复（输入 `yes`）
+4. 自动恢复并重启应用
+
+### 从 GitHub 恢复
 ```bash
 # 克隆备份仓库
 git clone https://github.com/your-username/nav-item-backup.git
@@ -160,196 +134,118 @@ cp .env ~/domains/your-domain.com/public_nodejs/
 devil www restart your-domain.com
 ```
 
-### 安全说明
-
-⚠️ **重要：**
-- 务必使用 **私有仓库**
-- Token 保存在 `~/.nav-item-github-config`，权限为 600
-- 备份包含敏感信息（密码、数据库）
-- 定期更换 GitHub Token
-
----
-
-## 💾 手动备份（高级）
-
-如果需要手动操作：
-
-### 1. 手动创建备份
-
-```bash
-# 进入项目目录
-cd ~/domains/your-domain.com/public_nodejs
-
-# 创建备份
-tar -czf ~/nav-item-backup-manual.tar.gz database/ uploads/ .env
-
-# 查看备份大小
-ls -lh ~/nav-item-backup-manual.tar.gz
-```
-
-### 2. 手动恢复备份
-
-```bash
-# 解压备份
-tar -xzf ~/nav-item-backup-manual.tar.gz -C ~/temp/
-
-# 恢复文件
-cd ~/domains/your-domain.com/public_nodejs
-rm -rf database/ uploads/
-cp -r ~/temp/database ./
-cp -r ~/temp/uploads ./
-cp ~/temp/.env ./
-
-# 重启应用
-devil www restart your-domain.com
-
-# 清理临时文件
-rm -rf ~/temp/
-```
-
 ---
 
 ## 🚀 迁移场景
 
-### 场景1：同一服务器换域名
+### 场景1：更换服务器
 
-1. 备份旧域名数据：
-   ```bash
-   DOMAIN=old-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-serv00.sh)
-   ```
-
-2. 安装新域名：
-   ```bash
-   DOMAIN=new-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
-   ```
-
-3. 恢复备份到新域名：
-   ```bash
-   DOMAIN=new-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/restore-serv00.sh)
-   ```
-
-### 场景2：迁移到新服务器
-
-1. 在旧服务器创建备份：
-   ```bash
-   bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-serv00.sh)
-   ```
-
-2. 下载备份到本地：
-   ```bash
-   scp username@old-server:~/nav-item-backups/nav-item-backup-*.tar.gz .
-   ```
-
-3. 上传备份到新服务器：
-   ```bash
-   scp nav-item-backup-*.tar.gz username@new-server:~/nav-item-backups/
-   ```
-
-4. 在新服务器安装应用：
-   ```bash
-   bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
-   ```
-
-5. 恢复备份：
-   ```bash
-   bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/restore-serv00.sh)
-   ```
-
-### 场景3：定期自动备份
-
-创建定时任务（cron）：
-
+**旧服务器：**
 ```bash
-# 编辑 crontab
-crontab -e
-
-# 添加定时任务（每天凌晨 3 点备份）
-0 3 * * * bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-serv00.sh) > /dev/null 2>&1
-
-# 或使用自定义域名
-0 3 * * * DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-serv00.sh) > /dev/null 2>&1
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+# 选择: 2 (备份到 GitHub)
 ```
 
-### 场景4：清理旧备份
+**新服务器：**
+```bash
+# 安装应用
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
 
-保留最近 7 天的备份，删除旧备份：
+# 从 GitHub 恢复备份
+git clone https://github.com/your-username/nav-item-backup.git
+cd nav-item-backup/backups/latest
+cp -r * ~/domains/your-domain.com/public_nodejs/
+```
+
+### 场景2：更换域名
 
 ```bash
-# 查看备份目录大小
-du -sh ~/nav-item-backups/
+# 1. 备份旧域名
+DOMAIN=old-domain.com bash <(curl -Ls .../backup-manager.sh)
+# 选择: 1 (本地备份)
 
-# 删除 7 天前的备份
-find ~/nav-item-backups/ -name "nav-item-backup-*.tar.gz" -mtime +7 -delete
+# 2. 安装新域名
+DOMAIN=new-domain.com bash <(curl -Ls .../install-serv00.sh)
 
-# 或保留最近 5 个备份
-cd ~/nav-item-backups/
-ls -t nav-item-backup-*.tar.gz | tail -n +6 | xargs rm -f
+# 3. 恢复到新域名
+DOMAIN=new-domain.com bash <(curl -Ls .../backup-manager.sh)
+# 选择: 3 (恢复本地备份)
 ```
+
+---
+
+## 📝 备份内容
+
+每次备份包含：
+- ✅ **database/** - 数据库文件（所有菜单、卡片、用户数据）
+- ✅ **uploads/** - 上传的图片文件（Logo等）
+- ✅ **.env** - 环境配置（管理员密码等）
+- ✅ **backup-info.txt** - 备份信息（时间、服务器等）
 
 ---
 
 ## ❓ 常见问题
 
 ### Q: 备份文件保存在哪里？
-A: `~/nav-item-backups/` 目录下。
+**A:** 
+- 本地：`~/nav-item-backups/`
+- GitHub：你配置的私有仓库
 
 ### Q: 备份文件有多大？
-A: 通常 1-10 MB，取决于你的数据量和上传文件大小。
+**A:** 通常 1-10 MB，取决于数据量和上传文件大小。
 
-### Q: 可以在 Windows 上恢复备份吗？
-A: 可以，解压 `.tar.gz` 文件后手动复制到项目目录。
+### Q: GitHub 备份安全吗？
+**A:** 安全，但务必使用私有仓库，并保护好 Token。
 
-### Q: 恢复备份会影响正在运行的应用吗？
-A: 恢复过程会短暂重启应用（约 1-2 秒），期间可能无法访问。
+### Q: 可以自动备份吗？
+**A:** 可以，使用 crontab 设置定时任务。
 
-### Q: 备份是否包含管理员密码？
-A: 是的，`.env` 文件中包含管理员密码配置。
+### Q: 恢复备份会影响运行吗？
+**A:** 恢复过程会短暂重启应用（约1-2秒）。
 
-### Q: 如何验证备份是否成功？
-A: 备份完成后，脚本会显示备份文件路径和大小。你可以解压查看内容：
-```bash
-tar -tzf ~/nav-item-backups/nav-item-backup-*.tar.gz
-```
-
----
-
-## 📝 备份最佳实践
-
-1. ✅ **定期备份** - 建议每天自动备份
-2. ✅ **多地备份** - 同时保存到本地和云端
-3. ✅ **测试恢复** - 定期测试备份恢复流程
-4. ✅ **版本管理** - 保留多个历史版本
-5. ✅ **安全存储** - 备份文件包含敏感信息，注意权限
+### Q: 如何查看所有备份？
+**A:** 在菜单中选择选项 `5`（查看备份列表）。
 
 ---
 
 ## 🆘 故障排除
 
-### 备份失败
-
-**问题：** 提示"未找到项目目录"
-
+### 问题：提示"未找到项目目录"
 **解决：**
 ```bash
 # 检查域名是否正确
 ls ~/domains/
 
 # 使用正确的域名
-DOMAIN=correct-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-serv00.sh)
+DOMAIN=correct-domain.com bash <(curl -Ls .../backup-manager.sh)
 ```
 
-### 恢复失败
+### 问题：GitHub 推送失败
+**解决：**
+1. 检查 Token 权限是否包含 `repo`
+2. 检查仓库名称是否正确
+3. 确认仓库已创建且为私有
+4. 检查网络连接
 
-**问题：** 提示"未找到备份文件"
-
+### 问题：未找到备份文件
 **解决：**
 ```bash
-# 检查备份目录
+# 查看备份目录
 ls -la ~/nav-item-backups/
 
-# 如果备份在其他位置，先移动
+# 如果在其他位置，先移动
 mv /path/to/backup.tar.gz ~/nav-item-backups/
 ```
+
+---
+
+## 📊 备份最佳实践
+
+1. ✅ **定期备份** - 建议每天或每周备份
+2. ✅ **多地备份** - 同时使用本地和 GitHub 备份
+3. ✅ **测试恢复** - 定期测试备份恢复流程
+4. ✅ **版本管理** - 保留多个历史版本
+5. ✅ **安全存储** - 使用私有仓库，保护 Token
 
 ---
 
