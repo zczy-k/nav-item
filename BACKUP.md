@@ -80,6 +80,96 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 ---
 
+## 💙 备份到 GitHub
+
+将备份自动推送到私有 GitHub 仓库，实现云端备份。
+
+### 优点
+
+- ✅ **云端存储** - 不占用服务器空间
+- ✅ **版本管理** - Git 自动记录所有历史版本
+- ✅ **随时恢复** - 从任何设备克隆恢复
+- ✅ **免费** - GitHub 私有仓库免费
+
+### 使用方法
+
+#### 1. 首次使用（配置）
+
+**步骤1：创建 GitHub 私有仓库**
+
+1. 访问 https://github.com/new
+2. 仓库名称：`nav-item-backup`（或其他名称）
+3. 选择 **Private**（私有）
+4. 点击 "Create repository"
+
+**步骤2：创建 Personal Access Token**
+
+1. 访问 https://github.com/settings/tokens
+2. 点击 "Generate new token (classic)"
+3. 设置名称：`nav-item-backup`
+4. 勾选权限：`repo`（完整仓库权限）
+5. 点击 "Generate token" 并复制 token
+
+**步骤3：运行备份脚本**
+
+```bash
+# 默认域名
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh)
+
+# 自定义域名
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh)
+```
+
+脚本会引导你输入：
+- GitHub Token
+- 仓库名称（格式：`username/repo-name`）
+
+#### 2. 后续备份
+
+配置后，直接运行即可：
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh)
+```
+
+#### 3. 定时自动备份
+
+```bash
+# 添加到 crontab
+crontab -e
+
+# 每天6小时备份一次
+0 */6 * * * bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-to-github.sh) > /dev/null 2>&1
+```
+
+#### 4. 从 GitHub 恢复
+
+```bash
+# 克隆备份仓库
+git clone https://github.com/your-username/nav-item-backup.git
+
+# 选择要恢复的备份
+cd nav-item-backup/backups/20250131_030000
+
+# 恢复到项目目录
+cp -r database ~/domains/your-domain.com/public_nodejs/
+cp -r uploads ~/domains/your-domain.com/public_nodejs/
+cp .env ~/domains/your-domain.com/public_nodejs/
+
+# 重启应用
+devil www restart your-domain.com
+```
+
+### 安全说明
+
+⚠️ **重要：**
+- 务必使用 **私有仓库**
+- Token 保存在 `~/.nav-item-github-config`，权限为 600
+- 备份包含敏感信息（密码、数据库）
+- 定期更换 GitHub Token
+
+---
+
 ## 💾 手动备份（高级）
 
 如果需要手动操作：
