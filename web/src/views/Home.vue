@@ -429,7 +429,12 @@ async function verifyPassword() {
   
   try {
     // 使用默认管理员用户名 admin 进行验证
-    await login('admin', batchPassword.value);
+    const response = await login('admin', batchPassword.value);
+    
+    // 保存 token 到 localStorage
+    if (response.data && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
     
     // 如果选择了记住密码，保存到2小时
     if (rememberPassword.value) {
