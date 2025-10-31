@@ -230,6 +230,38 @@ EOF
     PUSH_OUTPUT=$(git push -u origin "$CURRENT_BRANCH" 2>&1)
     PUSH_STATUS=$?
     
+    # 如果推送失败且是因为仓库不存在，尝试创建仓库
+    if [ $PUSH_STATUS -ne 0 ] && echo "$PUSH_OUTPUT" | grep -q "Repository not found"; then
+        echo ""
+        yellow "仓库不存在，正在自动创建...\n"
+        
+        # 使用 GitHub API 创建私有仓库
+        REPO_NAME=$(echo "$GITHUB_REPO" | cut -d'/' -f2)
+        CREATE_RESULT=$(curl -s -X POST \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/user/repos \
+            -d "{\"name\":\"${REPO_NAME}\",\"private\":true,\"auto_init\":false}")
+        
+        # 检查是否创建成功
+        if echo "$CREATE_RESULT" | grep -q '"id"'; then
+            green "✓ 仓库创建成功\n"
+            sleep 3  # 等待 GitHub 同步
+            
+            # 重试推送
+            yellow "重试推送..."
+            PUSH_OUTPUT=$(git push -u origin "$CURRENT_BRANCH" 2>&1)
+            PUSH_STATUS=$?
+        elif echo "$CREATE_RESULT" | grep -q "name already exists"; then
+            yellow "仓库已存在，重试推送...\n"
+            PUSH_OUTPUT=$(git push -u origin "$CURRENT_BRANCH" 2>&1)
+            PUSH_STATUS=$?
+        else
+            red "✗ 仓库创建失败"
+            yellow "错误信息: $(echo "$CREATE_RESULT" | grep -o '"message":"[^"]*"' || echo '未知错误')"
+        fi
+    fi
+    
     if [ $PUSH_STATUS -eq 0 ]; then
         echo ""
         green "✓ 备份到 GitHub 成功！"
@@ -245,13 +277,13 @@ EOF
         echo ""
         yellow "可能的原因:"
         echo "  1. Token 权限不足（需要 repo 完整权限）"
-        echo "  2. 仓库不存在或名称错误"
+        echo "  2. 仓库名称错误"
         echo "  3. 网络连接问题"
         echo "  4. Token 已过期"
         echo ""
         yellow "解决方法:"
-        echo "  - 检查 GitHub Token 和仓库配置（选项 6）"
-        echo "  - 访问 https://github.com/${GITHUB_REPO} 确认仓库存在"
+        echo "  - 重新配置 GitHub Token 和仓库（选项 6）"
+        echo "  - 确保 Token 有 repo 完整权限"
         echo ""
     fi
 }
