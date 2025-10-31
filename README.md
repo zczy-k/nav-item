@@ -167,14 +167,42 @@ eooce/nav-item
 ghcr.io/eooce/nav-item:latest
 ```
 
-## serv00|ct8|Hostuno 一键安装脚本
-- 环境变量,放在脚本前，随脚本一起运行，英文空隔隔开
-- 后台管理用户名和密码默认分别为为`admin`和`123456`
-  * `DOMAIN`为自定义站点域名
+## Serv00 / CT8 / Hostuno 一键部署
 
+### 安装脚本
+
+**使用默认域名（username.serv00.net）：**
 ```bash
-DOMAIN=自定义域名 bash <(curl -Ls https://github.com/zczy-k/nav-item/releases/download/ct8-and-serv00/install.sh) 
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
 ```
+
+**使用自定义域名：**
+```bash
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+```
+
+### 重置脚本
+
+如果需要重新安装或清理旧数据，可以使用重置脚本：
+
+**重置默认域名站点：**
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/reset-serv00.sh)
+```
+
+**重置自定义域名站点：**
+```bash
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/reset-serv00.sh)
+```
+
+> ⚠️ **注意**：重置脚本将删除所有应用数据、数据库和配置，请谨慎操作！
+
+### 默认账号
+- 管理员用户名：`admin`
+- 管理员密码：`123456`
+- 后台地址：`https://your-domain.com/admin`
+
+> ⚠️ **安全提示**：请在首次登录后立即修改默认密码！
 
 ## 🤝 贡献指南
 
