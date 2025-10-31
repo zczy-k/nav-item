@@ -1339,6 +1339,13 @@ async function changeBackground() {
     height: 50px;
   }
   
+  .change-bg-btn {
+    right: 20px;
+    bottom: 85px;
+    width: 50px;
+    height: 50px;
+  }
+  
   .batch-card-preview {
     flex-direction: column;
   }
