@@ -58,9 +58,10 @@ show_main_menu() {
     echo -e "  \e[1;32m2\033[0m) 💙 备份到 GitHub"
     echo -e "  \e[1;32m3\033[0m) 🔄 恢复本地备份"
     echo -e "  \e[1;32m4\033[0m) 🔄 从 GitHub 恢复"
-    echo -e "  \e[1;32m5\033[0m) 📋 查看备份列表"
-    echo -e "  \e[1;32m6\033[0m) ⚙️  GitHub 配置"
-    echo -e "  \e[1;32m0\033[0m) 🚪 退出"
+    echo -e "  \e[1;32m5\e[0m) 📋 查看备份列表"
+    echo -e "  \e[1;32m6\e[0m) ⚙️  GitHub 配置"
+    echo -e "  \e[1;31m7\e[0m) 🧹 清理本地Git缓存"
+    echo -e "  \e[1;32m0\e[0m) 🚪 退出"
     echo ""
 }
 
@@ -509,7 +510,15 @@ list_backups() {
             git fetch origin --quiet 2>/dev/null
             green "✓ 更新完成\n"
             
-            # 获取所有备份提交
+            # 获取远程默认分支名
+            REMOTE_REF=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)
+            if [ -z "$REMOTE_REF" ]; then
+                # Fallback for older git versions or weird setups
+                REMOTE_REF="origin/main"
+            fi
+            
+            # 获取所有备份提交（只看远程默认分支）
+            ALL_COMMITS=$(git log --oneline "$REMOTE_REF" 2>/dev/null | grep "Backup:")
             ALL_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:")
             
             if [ -n "$ALL_COMMITS" ]; then
@@ -600,7 +609,19 @@ restore_from_github() {
     fi
     
     # 列出可用的备份（只显示实际存在备份文件的提交）
-    ALL_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:")
+    # 先从远程更新最新状态
+    yellow "正在从 GitHub 更新备份列表..."
+    git fetch origin --quiet 2>/dev/null
+    green "✓ 更新完成\n"
+
+    # 获取远程默认分支名
+    REMOTE_REF=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)
+    if [ -z "$REMOTE_REF" ]; then
+        # Fallback
+        REMOTE_REF="origin/main"
+    fi
+
+    ALL_COMMITS=$(git log --oneline "$REMOTE_REF" 2>/dev/null | grep "Backup:")
     
     if [ -z "$ALL_COMMITS" ]; then
         red "错误: 未找到任何备份记录"
@@ -736,11 +757,42 @@ restore_from_github() {
     echo ""
 }
 
+# 清理本地Git缓存
+clean_local_git_cache() {
+    echo ""
+    yellow "=========================================="
+    yellow "  清理本地Git缓存"
+    yellow "=========================================="
+    echo ""
+
+    if [ -d "$GITHUB_BACKUP_DIR" ]; then
+        red "⚠️  警告: 这将删除本地的GitHub备份缓存目录"
+        red "         下次操作会从GitHub重新克隆，确保列表最新。"
+        echo ""
+        reading "确认清理? (输入 yes 继续): " CONFIRM
+        echo ""
+
+        if [ "$CONFIRM" = "yes" ]; then
+            rm -rf "$GITHUB_BACKUP_DIR"
+            if [ $? -eq 0 ]; then
+                green "✓ 本地Git缓存已成功清理！"
+            else
+                red "✗ 清理失败，请检查权限。"
+            fi
+        else
+            yellow "已取消。"
+        fi
+    else
+        green "✓ 本地Git缓存目录不存在，无需清理。"
+    fi
+    echo ""
+}
+
 # 主循环
 main() {
     while true; do
         show_main_menu
-        reading "请选择 (0-6): " choice
+reading "请选择 (0-7): " choice
         
         case $choice in
             1) create_local_backup ;;
@@ -749,8 +801,8 @@ main() {
             4) restore_from_github ;;
             5) list_backups ;;
             6) github_config ;;
-            0) echo ""; green "再见！"; exit 0 ;;
-            *) echo ""; red "无效选项" ;;
+            7) clean_local_git_cache ;;
+            0) echo ""; green "再见！"; exit 0 ;;            *) echo ""; red "无效选项" ;;
         esac
         
         echo ""
