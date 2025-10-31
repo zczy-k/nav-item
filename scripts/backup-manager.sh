@@ -271,8 +271,11 @@ EOF
         purple "分支: ${CURRENT_BRANCH}"
         echo ""
     else
+        # 推送失败，清理未推送的提交
         echo ""
-        red "✗ 推送失败"
+        red "✗ 推送失败，正在清理未同步的备份..."
+        git reset --hard HEAD~1 2>/dev/null
+        rm -rf "$BACKUP_FOLDER"
         echo ""
         yellow "错误信息:"
         echo "$PUSH_OUTPUT" | grep -v "${GITHUB_TOKEN}" || echo "$PUSH_OUTPUT" | sed "s/${GITHUB_TOKEN}/***TOKEN***/g"
@@ -395,18 +398,64 @@ list_backups() {
     yellow "=========================================="
     echo ""
     
-    echo "${blue}本地备份:${re}"
-    if [ -d "$LOCAL_BACKUP_DIR" ]; then
-        ls -lh "$LOCAL_BACKUP_DIR"/*.tar.gz 2>/dev/null | awk '{print "  " $9 " (" $5 ")"}'
+    # 本地备份
+    echo -e "${blue}本地备份:${re}"
+    if [ -d "$LOCAL_BACKUP_DIR" ] && [ -n "$(ls -A "$LOCAL_BACKUP_DIR"/*.tar.gz 2>/dev/null)" ]; then
+        BACKUPS=($(ls -t "$LOCAL_BACKUP_DIR"/*.tar.gz 2>/dev/null))
+        for i in "${!BACKUPS[@]}"; do
+            BACKUP_NAME=$(basename "${BACKUPS[$i]}")
+            BACKUP_SIZE=$(du -h "${BACKUPS[$i]}" | cut -f1)
+            BACKUP_TIME=$(echo "$BACKUP_NAME" | grep -o '[0-9]\{8\}_[0-9]\{6\}' | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1-\2-\3 \4:\5:\6/')
+            echo -e "  ${green}$((i+1))${re}) $BACKUP_TIME (${BACKUP_SIZE})"
+        done
+        echo ""
+        reading "是否删除本地备份? (y/N): " DELETE_CHOICE
+        if [[ "$DELETE_CHOICE" =~ ^[Yy]$ ]]; then
+            echo ""
+            reading "请输入要删除的编号 (多个用空格分隔, 或输入 'all' 删除全部): " DELETE_NUMS
+            echo ""
+            if [ "$DELETE_NUMS" = "all" ]; then
+                red "⚠️  警告: 将删除所有本地备份！"
+                reading "确认删除? (yes/no): " CONFIRM
+                if [ "$CONFIRM" = "yes" ]; then
+                    rm -f "$LOCAL_BACKUP_DIR"/*.tar.gz
+                    green "✓ 已删除所有本地备份"
+                else
+                    yellow "已取消"
+                fi
+            else
+                for num in $DELETE_NUMS; do
+                    if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le ${#BACKUPS[@]} ]; then
+                        rm -f "${BACKUPS[$((num-1))]}"
+                        green "✓ 已删除: $(basename "${BACKUPS[$((num-1))]}")"
+                    else
+                        red "✗ 无效编号: $num"
+                    fi
+                done
+            fi
+        fi
     else
         echo "  无"
     fi
     echo ""
     
-    echo "${blue}GitHub 备份:${re}"
+    # GitHub 备份
+    echo -e "${blue}GitHub 备份:${re}"
     if [ -f "$GITHUB_CONFIG" ]; then
         source "$GITHUB_CONFIG"
         echo "  仓库: https://github.com/${GITHUB_REPO}"
+        
+        if [ -d "$GITHUB_BACKUP_DIR/.git" ]; then
+            cd "$GITHUB_BACKUP_DIR"
+            GITHUB_BACKUPS=$(git log --oneline --all 2>/dev/null | grep "Backup:" | head -n 10)
+            if [ -n "$GITHUB_BACKUPS" ]; then
+                echo ""
+                echo "  最近 10 次备份:"
+                echo "$GITHUB_BACKUPS" | while read line; do
+                    echo "    - $line"
+                done
+            fi
+        fi
     else
         echo "  未配置"
     fi
