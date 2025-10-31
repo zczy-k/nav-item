@@ -367,26 +367,67 @@ github_config() {
     yellow "=========================================="
     echo ""
     
+    # 检查是否已有配置
+    if [ -f "$GITHUB_CONFIG" ]; then
+        source "$GITHUB_CONFIG"
+        echo ""
+        yellow "当前配置:"
+        echo "  仓库: ${GITHUB_REPO}"
+        echo ""
+        reading "是否更改配置? (y/N): " CHANGE_CONFIG
+        if [[ ! "$CHANGE_CONFIG" =~ ^[Yy]$ ]]; then
+            yellow "已取消"
+            return 0
+        fi
+        echo ""
+        red "⚠️  警告: 更改配置将清理旧仓库的本地缓存！"
+        reading "确认继续? (yes/no): " CONFIRM
+        if [ "$CONFIRM" != "yes" ]; then
+            yellow "已取消"
+            return 0
+        fi
+        echo ""
+        # 清理旧仓库
+        if [ -d "$GITHUB_BACKUP_DIR" ]; then
+            yellow "正在清理旧仓库..."
+            rm -rf "$GITHUB_BACKUP_DIR"
+            green "✓ 旧仓库已清理"
+            echo ""
+        fi
+    fi
+    
     echo "步骤1: 创建 GitHub Personal Access Token"
     echo "  访问: https://github.com/settings/tokens"
-    echo "  权限: repo"
+    echo "  权限: repo (完整仓库权限)"
     echo ""
-    reading "GitHub Token: " GITHUB_TOKEN
+    reading "GitHub Token: " NEW_GITHUB_TOKEN
     echo ""
     
     echo "步骤2: 配置仓库"
     echo "  格式: username/repo-name"
+    echo "  示例: zczy-k/nav-item-backup"
     echo ""
-    reading "仓库名称: " GITHUB_REPO
+    reading "仓库名称: " NEW_GITHUB_REPO
     echo ""
     
+    # 验证仓库名称格式
+    if [[ ! "$NEW_GITHUB_REPO" =~ ^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+$ ]]; then
+        red "✗ 仓库名称格式错误，应为: username/repo-name"
+        return 1
+    fi
+    
+    # 保存新配置
     cat > "$GITHUB_CONFIG" <<EOF
-GITHUB_REPO="$GITHUB_REPO"
-GITHUB_TOKEN="$GITHUB_TOKEN"
+GITHUB_REPO="$NEW_GITHUB_REPO"
+GITHUB_TOKEN="$NEW_GITHUB_TOKEN"
 EOF
     
     chmod 600 "$GITHUB_CONFIG"
+    echo ""
     green "✓ 配置已保存"
+    purple "仓库: https://github.com/${NEW_GITHUB_REPO}"
+    echo ""
+    yellow "提示: 下次备份到 GitHub 时将自动创建仓库（如果不存在）"
     echo ""
 }
 
