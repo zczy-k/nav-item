@@ -11,7 +11,8 @@
   },
   "options_page": "options.html",
   "action": {
-    "default_title": "导航站设置"
+    "default_title": "导航站设置",
+    "default_popup": "popup.html"
   },
   "icons": {
     "16": "icons/icon16.png",

@@ -1,8 +1,11 @@
-// 检查是否已保存导航站地址
+// 检查是否已保存导航站地址（同步执行，避免闪烁）
 chrome.storage.sync.get(['navUrl'], function(result) {
     if (result.navUrl) {
         // 已配置，直接跳转
-        window.location.href = result.navUrl;
+        window.location.replace(result.navUrl);
+    } else {
+        // 未配置，显示欢迎页面
+        document.body.style.display = 'block';
     }
 });
 
