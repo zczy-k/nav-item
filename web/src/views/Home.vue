@@ -61,6 +61,18 @@
       </svg>
     </button>
     
+    <!-- 切换背景按钮 -->
+    <button @click="changeBackground" class="change-bg-btn" title="切换背景" :disabled="bgLoading">
+      <svg v-if="!bgLoading" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <path d="M21 15l-5-5L5 21"></path>
+      </svg>
+      <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
+    </button>
+    
     <!-- 批量添加弹窗 -->
     <div v-if="showBatchAddModal" class="modal-overlay" @click="closeBatchAdd">
       <div class="modal-content batch-modal" @click.stop>
@@ -83,6 +95,12 @@
               class="batch-input"
               @keyup.enter="verifyPassword"
             />
+            <div class="remember-password-wrapper">
+              <label>
+                <input type="checkbox" v-model="rememberPassword" />
+                <span>记住密码（2小时）</span>
+              </label>
+            </div>
             <p v-if="batchError" class="batch-error">{{ batchError }}</p>
             <div class="batch-actions">
               <button @click="closeBatchAdd" class="btn btn-cancel">取消</button>
@@ -116,15 +134,25 @@
             <div class="batch-preview-list">
               <div v-for="(item, index) in parsedCards" :key="index" class="batch-preview-item">
                 <input type="checkbox" v-model="item.selected" :id="`card-${index}`" />
-                <label :for="`card-${index}`" class="batch-card-preview">
+                <div class="batch-card-preview">
                   <img :src="item.logo" :alt="item.title" class="batch-card-logo" @error="e => e.target.src = '/default-favicon.png'" />
                   <div class="batch-card-info">
-                    <h4 class="batch-card-title">{{ item.title }}</h4>
+                    <div class="batch-edit-field">
+                      <label>标题：</label>
+                      <input type="text" v-model="item.title" class="batch-edit-input" />
+                    </div>
+                    <div class="batch-edit-field">
+                      <label>Logo：</label>
+                      <input type="text" v-model="item.logo" class="batch-edit-input" />
+                    </div>
+                    <div class="batch-edit-field">
+                      <label>描述：</label>
+                      <textarea v-model="item.description" class="batch-edit-textarea" rows="2"></textarea>
+                    </div>
                     <p class="batch-card-url">{{ item.url }}</p>
-                    <p v-if="item.description" class="batch-card-desc">{{ item.description }}</p>
                     <p v-if="!item.success" class="batch-card-warning">⚠️ {{ item.error }}</p>
                   </div>
-                </label>
+                </div>
               </div>
             </div>
             <p v-if="batchError" class="batch-error">{{ batchError }}</p>
@@ -197,7 +225,7 @@
 
 <script setup>
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
-import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards } from '../api';
+import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
 
@@ -219,6 +247,10 @@ const batchUrls = ref('');
 const batchLoading = ref(false);
 const batchError = ref('');
 const parsedCards = ref([]);
+const rememberPassword = ref(false);
+
+// 背景切换相关
+const bgLoading = ref(false);
 
 const selectedCardsCount = computed(() => {
   return parsedCards.value.filter(card => card.selected).length;
@@ -289,6 +321,15 @@ onMounted(async () => {
   
   const friendRes = await getFriends();
   friendLinks.value = friendRes.data;
+  
+  // 检查是否有保存的背景
+  const savedBg = localStorage.getItem('nav_background');
+  if (savedBg) {
+    document.body.style.backgroundImage = `url(${savedBg})`;
+  }
+  
+  // 检查是否有保存的密码token
+  checkSavedPassword();
 });
 
 async function selectMenu(menu, parentMenu = null) {
@@ -357,6 +398,26 @@ function closeBatchAdd() {
   batchLoading.value = false;
 }
 
+// 检查保存的密码
+function checkSavedPassword() {
+  const savedData = localStorage.getItem('nav_password_token');
+  if (savedData) {
+    try {
+      const { password, expiry } = JSON.parse(savedData);
+      if (Date.now() < expiry) {
+        // 密码未过期，自动填充
+        batchPassword.value = password;
+        rememberPassword.value = true;
+      } else {
+        // 已过期，清除
+        localStorage.removeItem('nav_password_token');
+      }
+    } catch (e) {
+      localStorage.removeItem('nav_password_token');
+    }
+  }
+}
+
 async function verifyPassword() {
   if (!batchPassword.value) {
     batchError.value = '请输入密码';
@@ -369,6 +430,18 @@ async function verifyPassword() {
   try {
     // 使用默认管理员用户名 admin 进行验证
     await login('admin', batchPassword.value);
+    
+    // 如果选择了记住密码，保存到2小时
+    if (rememberPassword.value) {
+      const expiry = Date.now() + 2 * 60 * 60 * 1000; // 2小时
+      localStorage.setItem('nav_password_token', JSON.stringify({
+        password: batchPassword.value,
+        expiry
+      }));
+    } else {
+      localStorage.removeItem('nav_password_token');
+    }
+    
     batchStep.value = 2;
   } catch (error) {
     batchError.value = '密码错误，请重试';
@@ -438,6 +511,33 @@ async function addSelectedCards() {
     batchError.value = error.response?.data?.error || '添加失败，请重试';
   } finally {
     batchLoading.value = false;
+  }
+}
+
+// 切换背景壁纸
+async function changeBackground() {
+  if (bgLoading.value) return;
+  
+  bgLoading.value = true;
+  
+  try {
+    const response = await getRandomWallpaper();
+    const wallpaperUrl = response.data.url;
+    
+    // 更新背景
+    document.body.style.backgroundImage = `url(${wallpaperUrl})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundAttachment = 'fixed';
+    
+    // 保存到localStorage
+    localStorage.setItem('nav_background', wallpaperUrl);
+  } catch (error) {
+    console.error('获取壁纸失败:', error);
+    alert('获取壁纸失败，请稍后重试');
+  } finally {
+    bgLoading.value = false;
   }
 }
 </script>
@@ -956,6 +1056,45 @@ async function addSelectedCards() {
   box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
 }
 
+/* 切换背景按钮 */
+.change-bg-btn {
+  position: fixed;
+  right: 30px;
+  bottom: 110px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #34a853, #0f9d58);
+  border: none;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(52, 168, 83, 0.4);
+  transition: all 0.3s ease;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.change-bg-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(52, 168, 83, 0.6);
+}
+
+.change-bg-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.change-bg-btn:disabled svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* 批量添加弹窗 */
 .batch-modal {
   width: 700px;
@@ -1121,6 +1260,66 @@ async function addSelectedCards() {
   font-size: 12px;
   color: #dc2626;
   margin: 4px 0 0 0;
+}
+
+/* 可编辑字段样式 */
+.batch-edit-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.batch-edit-field label {
+  font-size: 13px;
+  color: #6b7280;
+  min-width: 50px;
+  font-weight: 500;
+}
+
+.batch-edit-input,
+.batch-edit-textarea {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.batch-edit-input:focus,
+.batch-edit-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.batch-edit-textarea {
+  resize: vertical;
+  min-height: 40px;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+/* 记住密码复选框 */
+.remember-password-wrapper {
+  margin-bottom: 16px;
+}
+
+.remember-password-wrapper label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+
+.remember-password-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {

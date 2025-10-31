@@ -55,3 +55,6 @@ export const getUsers = () => axios.get(`${BASE}/users`, { headers: authHeaders(
 // 批量添加API
 export const batchParseUrls = (urls) => axios.post(`${BASE}/batch/parse`, { urls }, { headers: authHeaders() });
 export const batchAddCards = (menuId, subMenuId, cards) => axios.post(`${BASE}/batch/add`, { menu_id: menuId, sub_menu_id: subMenuId, cards }, { headers: authHeaders() });
+
+// 壁纸API
+export const getRandomWallpaper = () => axios.get(`${BASE}/wallpaper/random`);
