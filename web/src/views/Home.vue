@@ -289,10 +289,31 @@ const searchEngines = [
     url: q => `/search?query=${encodeURIComponent(q)}`
   }
 ];
-const selectedEngine = ref(searchEngines[0]);
+
+// 从 localStorage 读取保存的默认搜索引擎
+const getDefaultEngine = () => {
+  try {
+    const savedEngineName = localStorage.getItem('default_search_engine');
+    if (savedEngineName) {
+      const engine = searchEngines.find(e => e.name === savedEngineName);
+      if (engine) return engine;
+    }
+  } catch (e) {
+    console.error('Failed to load default search engine:', e);
+  }
+  return searchEngines[0]; // 默认返回 Google
+};
+
+const selectedEngine = ref(getDefaultEngine());
 
 function selectEngine(engine) {
   selectedEngine.value = engine;
+  // 保存到 localStorage
+  try {
+    localStorage.setItem('default_search_engine', engine.name);
+  } catch (e) {
+    console.error('Failed to save default search engine:', e);
+  }
 }
 
 function clearSearch() {
