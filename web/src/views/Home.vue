@@ -55,7 +55,7 @@
     <CardGrid :cards="filteredCards"/>
     
     <!-- 批量添加悬浮按钮 -->
-    <button v-if="activeMenu" @click="showBatchAddModal = true" class="batch-add-btn" title="批量添加网站">
+    <button v-if="activeMenu" @click="openBatchAddModal" class="batch-add-btn" title="批量添加网站">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 5v14M5 12h14"/>
       </svg>
@@ -121,7 +121,7 @@
             ></textarea>
             <p v-if="batchError" class="batch-error">{{ batchError }}</p>
             <div class="batch-actions">
-              <button @click="batchStep = 1" class="btn btn-cancel">上一步</button>
+              <button @click="handleBackToPassword" class="btn btn-cancel">上一步</button>
               <button @click="parseUrls" class="btn btn-primary" :disabled="batchLoading || !batchUrls.trim()">
                 {{ batchLoading ? '解析中...' : '下一步' }}
               </button>
@@ -398,6 +398,36 @@ function handleLogoError(event) {
 }
 
 // 批量添加相关函数
+// 打开批量添加弹窗，检查是否有有效的token
+async function openBatchAddModal() {
+  showBatchAddModal.value = true;
+  batchError.value = '';
+  
+  // 检查是否有保存的密码token
+  const savedData = localStorage.getItem('nav_password_token');
+  if (savedData) {
+    try {
+      const { password, expiry, token } = JSON.parse(savedData);
+      if (Date.now() < expiry && token) {
+        // token未过期，恢复token并直接跳到第二步
+        localStorage.setItem('token', token);
+        batchPassword.value = password;
+        rememberPassword.value = true;
+        batchStep.value = 2;
+        return;
+      } else {
+        // 已过期，清除
+        localStorage.removeItem('nav_password_token');
+      }
+    } catch (e) {
+      localStorage.removeItem('nav_password_token');
+    }
+  }
+  
+  // 没有有效token，显示密码验证步骤
+  batchStep.value = 1;
+}
+
 function closeBatchAdd() {
   showBatchAddModal.value = false;
   batchStep.value = 1;
@@ -472,6 +502,16 @@ async function verifyPassword() {
   } finally {
     batchLoading.value = false;
   }
+}
+
+// 返回密码验证步骤（清除保存的token）
+function handleBackToPassword() {
+  // 清除保存的token，要求重新验证
+  localStorage.removeItem('nav_password_token');
+  localStorage.removeItem('token');
+  batchPassword.value = '';
+  rememberPassword.value = false;
+  batchStep.value = 1;
 }
 
 async function parseUrls() {
