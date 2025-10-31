@@ -213,6 +213,38 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 > ⚠️ **安全提示**：请在首次登录后立即修改默认密码！
 
+## 💾 备份与恢复
+
+### 快速开始
+
+使用统一的备份管理工具，通过交互式菜单完成所有备份和恢复操作：
+
+```bash
+# 默认域名
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+
+# 自定义域名
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+```
+
+### 主要功能
+
+- 📦 **本地备份** - 快速创建本地备份，保存在 `~/nav-item-backups/`
+- 💙 **GitHub 云端备份** - 自动推送到私有 GitHub 仓库
+- 🔄 **备份恢复** - 从本地或 GitHub 恢复数据
+- 📋 **备份管理** - 查看和管理所有备份
+- ⚙️ **配置管理** - GitHub Token 和仓库配置
+
+### 备份内容
+
+- ✅ **database/** - 所有菜单、卡片、用户数据
+- ✅ **uploads/** - Logo 和其他上传的图片
+- ✅ **.env** - 环境配置（管理员密码等）
+
+### 详细文档
+
+更多使用说明和高级功能，请查看 [BACKUP.md](BACKUP.md)
+
 ## 🧩 浏览器扩展
 
 将导航站设为浏览器新标签页，每次打开新标签页自动跳转到你的导航站！
