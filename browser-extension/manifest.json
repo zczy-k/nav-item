@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "导航站 - 新标签页",
+  "version": "1.0.0",
+  "description": "将新标签页替换为你的个人导航站，支持自定义导航站地址。",
+  "permissions": [
+    "storage"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "options_page": "options.html",
+  "action": {
+    "default_title": "导航站设置"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
