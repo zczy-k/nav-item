@@ -10,6 +10,22 @@
     <!-- 资源预加载提示 -->
     <link rel="preconnect" href="https://main.ssss.nyc.mn" crossorigin>
     <link rel="dns-prefetch" href="https://img.icons8.com">
+    <!-- 在页面渲染前应用保存的背景，消除闪烁 -->
+    <script>
+      (function() {
+        try {
+          var savedBg = localStorage.getItem('nav_background');
+          if (savedBg) {
+            // 添加内联样式，覆盖 CSS 默认背景
+            var style = document.createElement('style');
+            style.textContent = '.home-container { background-image: url(' + savedBg + ') !important; }';
+            document.head.appendChild(style);
+          }
+        } catch (e) {
+          console.error('Failed to load saved background:', e);
+        }
+      })();
+    </script>
   </head>
   <body style="margin:0;padding:0;background:#222;">
     <div id="app"></div>
