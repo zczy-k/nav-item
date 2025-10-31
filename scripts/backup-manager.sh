@@ -513,49 +513,35 @@ list_backups() {
             # 获取远程默认分支名
             REMOTE_REF=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)
             if [ -z "$REMOTE_REF" ]; then
-                # Fallback for older git versions or weird setups
                 REMOTE_REF="origin/main"
             fi
             
-            # 获取所有备份提交（只看远程默认分支）
-            ALL_COMMITS=$(git log --oneline "$REMOTE_REF" 2>/dev/null | grep "Backup:")
-            ALL_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:")
+            # 检查当前HEAD状态下是否存在backups目录
+            BACKUP_DIRS=$(git ls-tree -d --name-only "$REMOTE_REF:backups" 2>/dev/null)
             
-            if [ -n "$ALL_COMMITS" ]; then
+            if [ -n "$BACKUP_DIRS" ]; then
                 echo ""
                 echo "  可用备份:"
                 
-                VALID_BACKUP_COUNT=0
-                
-                # 遍历每个提交，检查备份文件是否存在
-                while IFS= read -r line; do
-                    COMMIT_HASH=$(echo "$line" | awk '{print $1}')
-                    
-                    # 检查该提交中是否有备份文件
-                    BACKUP_FOLDERS=$(git ls-tree -d --name-only "$COMMIT_HASH" backups 2>/dev/null)
-                    
-                    if [ -n "$BACKUP_FOLDERS" ]; then
-                        # 获取该提交下的备份子目录
-                        BACKUP_SUBDIRS=$(git ls-tree -d --name-only "$COMMIT_HASH:backups" 2>/dev/null)
-                        
-                        if [ -n "$BACKUP_SUBDIRS" ]; then
-                            echo "    - $line"
-                            ((VALID_BACKUP_COUNT++))
-                            
-                            # 只显示最近10个有效备份
-                            if [ $VALID_BACKUP_COUNT -ge 10 ]; then
-                                break
-                            fi
-                        fi
+                # 遍历backups下的所有子目录（实际存在的备份）
+                BACKUP_COUNT=0
+                while IFS= read -r backup_dir; do
+                    # 提取时间戳
+                    TIMESTAMP=$(echo "$backup_dir" | grep -o '[0-9]\{8\}_[0-9]\{6\}')
+                    if [ -n "$TIMESTAMP" ]; then
+                        FORMATTED_TIME=$(echo "$TIMESTAMP" | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1-\2-\3 \4:\5:\6/')
+                        ((BACKUP_COUNT++))
+                        echo "    $BACKUP_COUNT) $FORMATTED_TIME"
                     fi
-                done <<< "$ALL_COMMITS"
+                done <<< "$BACKUP_DIRS"
                 
-                if [ $VALID_BACKUP_COUNT -eq 0 ]; then
+                if [ $BACKUP_COUNT -eq 0 ]; then
                     echo "    无可用备份"
                 fi
             else
                 echo ""
                 echo "  无备份记录"
+            fi
             fi
         fi
     else
@@ -617,78 +603,66 @@ restore_from_github() {
     # 获取远程默认分支名
     REMOTE_REF=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)
     if [ -z "$REMOTE_REF" ]; then
-        # Fallback
         REMOTE_REF="origin/main"
     fi
 
-    ALL_COMMITS=$(git log --oneline "$REMOTE_REF" 2>/dev/null | grep "Backup:")
+    # 检查当前HEAD状态下是否存在backups目录
+    BACKUP_DIRS=$(git ls-tree -d --name-only "$REMOTE_REF:backups" 2>/dev/null)
     
-    if [ -z "$ALL_COMMITS" ]; then
-        red "错误: 未找到任何备份记录"
+    if [ -z "$BACKUP_DIRS" ]; then
+        red "错误: 未找到任何备份文件"
         return 1
     fi
     
     echo "可用的备份："
     echo ""
     
-    # 解析备份提交
-    declare -a COMMIT_HASHES
+    # 解析备份目录
+    declare -a BACKUP_FOLDERS
     declare -a BACKUP_TIMES
-    declare -a BACKUP_DOMAINS
     
     i=1
-    while IFS= read -r line; do
-        COMMIT_HASH=$(echo "$line" | awk '{print $1}')
-        
-        # 检查该提交中是否实际存在备份文件
-        BACKUP_FOLDERS=$(git ls-tree -d --name-only "$COMMIT_HASH" backups 2>/dev/null)
-        
-        if [ -n "$BACKUP_FOLDERS" ]; then
-            # 获取该提交下的备份子目录
-            BACKUP_SUBDIRS=$(git ls-tree -d --name-only "$COMMIT_HASH:backups" 2>/dev/null)
+    while IFS= read -r backup_dir; do
+        # 提取时间戳
+        TIMESTAMP=$(echo "$backup_dir" | grep -o '[0-9]\{8\}_[0-9]\{6\}')
+        if [ -n "$TIMESTAMP" ]; then
+            FORMATTED_TIME=$(echo "$TIMESTAMP" | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1-\2-\3 \4:\5:\6/')
             
-            if [ -n "$BACKUP_SUBDIRS" ]; then
-                BACKUP_INFO=$(echo "$line" | grep -o 'Backup: [^ ]* from [^ ]*')
-                BACKUP_TIME=$(echo "$BACKUP_INFO" | awk '{print $2}' | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1-\2-\3 \4:\5:\6/')
-                BACKUP_DOMAIN=$(echo "$BACKUP_INFO" | awk '{print $4}')
-                
-                COMMIT_HASHES+=($COMMIT_HASH)
-                BACKUP_TIMES+=("$BACKUP_TIME")
-                BACKUP_DOMAINS+=("$BACKUP_DOMAIN")
-                
-                echo -e "  ${green}${i}${re}) ${BACKUP_TIME} (from ${BACKUP_DOMAIN})"
-                ((i++))
-                
-                # 最多显示20个有效备份
-                if [ $i -gt 20 ]; then
-                    break
-                fi
+            BACKUP_FOLDERS+=("$backup_dir")
+            BACKUP_TIMES+=("$FORMATTED_TIME")
+            
+            # 尝试从备份信息文件获取来源服务器
+            BACKUP_INFO=$(git show "$REMOTE_REF:backups/$backup_dir/backup-info.txt" 2>/dev/null | grep "域名:" | awk '{print $2}')
+            if [ -n "$BACKUP_INFO" ]; then
+                echo -e "  ${green}${i}${re}) ${FORMATTED_TIME} (from ${BACKUP_INFO})"
+            else
+                echo -e "  ${green}${i}${re}) ${FORMATTED_TIME}"
             fi
+            ((i++))
         fi
-    done <<< "$ALL_COMMITS"
+    done <<< "$BACKUP_DIRS"
     
     # 检查是否找到有效备份
-    if [ ${#COMMIT_HASHES[@]} -eq 0 ]; then
+    if [ ${#BACKUP_FOLDERS[@]} -eq 0 ]; then
         red "错误: 未找到任何可用的备份文件"
         return 1
     fi
     
     echo ""
-    reading "请选择备份编号 (1-${#COMMIT_HASHES[@]}): " BACKUP_NUM
+    reading "请选择备份编号 (1-${#BACKUP_FOLDERS[@]}): " BACKUP_NUM
     echo ""
     
-    if [[ ! "$BACKUP_NUM" =~ ^[0-9]+$ ]] || [ "$BACKUP_NUM" -lt 1 ] || [ "$BACKUP_NUM" -gt ${#COMMIT_HASHES[@]} ]; then
+    if [[ ! "$BACKUP_NUM" =~ ^[0-9]+$ ]] || [ "$BACKUP_NUM" -lt 1 ] || [ "$BACKUP_NUM" -gt ${#BACKUP_FOLDERS[@]} ]; then
         red "无效的备份编号"
         return 1
     fi
     
-    SELECTED_COMMIT="${COMMIT_HASHES[$((BACKUP_NUM-1))]}"
+    SELECTED_FOLDER="${BACKUP_FOLDERS[$((BACKUP_NUM-1))]}"
     SELECTED_TIME="${BACKUP_TIMES[$((BACKUP_NUM-1))]}"
-    SELECTED_DOMAIN="${BACKUP_DOMAINS[$((BACKUP_NUM-1))]}"
     
     echo "选择的备份:"
     echo "  时间: ${SELECTED_TIME}"
-    echo "  来源: ${SELECTED_DOMAIN}"
+    echo "  文件夹: ${SELECTED_FOLDER}"
     echo ""
     
     red "⚠️  警告: 恢复将覆盖当前数据！"
@@ -700,17 +674,20 @@ restore_from_github() {
         return 0
     fi
     
-    # 切换到选定的提交
+    # 切换到远程分支并检出备份文件
     yellow "正在准备恢复...\n"
-    git checkout "$SELECTED_COMMIT" --quiet 2>/dev/null
+    
+    # 切换到远程分支
+    CURRENT_BRANCH=$(echo "$REMOTE_REF" | sed 's/origin\///')
+    git checkout -B "$CURRENT_BRANCH" "$REMOTE_REF" --quiet 2>/dev/null
     
     if [ $? -ne 0 ]; then
-        red "✗ 切换到备份失败"
+        red "✗ 切换到远程分支失败"
         return 1
     fi
     
-    # 查找备份目录
-    BACKUP_FOLDER=$(find backups -maxdepth 1 -type d -name "*" | tail -n 1)
+    # 检查备份目录
+    BACKUP_FOLDER="backups/$SELECTED_FOLDER"
     
     if [ -z "$BACKUP_FOLDER" ] || [ ! -d "$BACKUP_FOLDER" ]; then
         red "✗ 未找到备份数据"
@@ -743,9 +720,7 @@ restore_from_github() {
         fi
     fi
     
-    # 切回主分支
-    CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")
-    git checkout "$CURRENT_BRANCH" --quiet 2>/dev/null
+    # 不需要切回，因为我们已经在正确的分支上
     
     # 重启服务
     devil www restart "$CURRENT_DOMAIN" > /dev/null 2>&1
