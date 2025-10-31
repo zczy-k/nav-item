@@ -36,6 +36,13 @@
 - 🔍 **搜索功能**：支持站内搜索和外部搜索
 - 📱 **移动端适配**：完美的移动端体验
 
+  
+### 界面预览
+<img width="1891" height="902" alt="image" src="https://github.com/user-attachments/assets/91c687a4-0beb-4445-9528-4501d26ddc10" />
+<img width="1909" height="895" alt="image" src="https://github.com/user-attachments/assets/c810c79c-568f-4c19-a059-54ce88ea29d3" />
+
+
+
 ## 🏗️ 项目结构
 
 ```
@@ -229,6 +236,7 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！ 
+
 
 
 
