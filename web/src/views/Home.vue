@@ -686,7 +686,7 @@ async function changeBackground() {
   padding: 0.3rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
-  max-width: 480px;
+  max-width: 640px;
   width: 92%;
   position: relative;
 }
@@ -775,7 +775,7 @@ async function changeBackground() {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 480px;
+  max-width: 640px;
 }
 
 .content-wrapper {
