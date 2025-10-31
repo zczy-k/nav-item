@@ -1,8 +1,9 @@
-# Nav-item - 个人导航站
+# Nav-item(增强版) - 个人导航站
 
 > 🔗 **仓库地址**: [github.com/zczy-k/nav-item](https://github.com/zczy-k/nav-item)  
-> 👤 **Fork 自**: [github.com/eooce/nav-item](https://github.com/eooce/nav-item)  
-> ✨ **增强功能**: Serv00 一键部署脚本、完善部署文档
+> 👤 **Fork 自**: [github.com/eooce/nav-item](https://github.com/eooce/nav-item)并进行功能的改进与增强
+> 
+> ✨ **增强功能**: Serv00 一键部署脚本、完善部署文档；添加首页添加卡片的功能，方便快捷添加
 
 ## 项目简介
 
@@ -236,6 +237,7 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！ 
+
 
 
 
