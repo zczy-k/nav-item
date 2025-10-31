@@ -518,6 +518,165 @@ list_backups() {
     echo ""
 }
 
+# 从 GitHub 恢复备份
+restore_from_github() {
+    echo ""
+    yellow "=========================================="
+    yellow "  从 GitHub 恢复备份"
+    yellow "=========================================="
+    echo ""
+    
+    # 检查 GitHub 配置
+    if [ ! -f "$GITHUB_CONFIG" ]; then
+        red "未配置 GitHub，请先进行配置（选项 6）"
+        return 1
+    fi
+    
+    source "$GITHUB_CONFIG"
+    
+    if [ -z "$GITHUB_REPO" ] || [ -z "$GITHUB_TOKEN" ]; then
+        red "GitHub 配置不完整，请重新配置（选项 6）"
+        return 1
+    fi
+    
+    # 初始化或更新本地仓库
+    mkdir -p "$GITHUB_BACKUP_DIR"
+    cd "$GITHUB_BACKUP_DIR"
+    
+    if [ ! -d ".git" ]; then
+        yellow "正在克隆 GitHub 仓库...\n"
+        CLONE_OUTPUT=$(git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git" . 2>&1)
+        if [ $? -ne 0 ]; then
+            red "✗ 克隆失败"
+            echo "$CLONE_OUTPUT" | grep -v "${GITHUB_TOKEN}" || echo "$CLONE_OUTPUT" | sed "s/${GITHUB_TOKEN}/***TOKEN***/g"
+            return 1
+        fi
+        green "✓ 克隆成功\n"
+    else
+        yellow "正在更新仓库...\n"
+        git fetch origin --quiet 2>/dev/null
+        if [ $? -ne 0 ]; then
+            red "✗ 更新失败，请检查网络或配置"
+            return 1
+        fi
+        green "✓ 更新成功\n"
+    fi
+    
+    # 列出可用的备份
+    BACKUP_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:" | head -n 20)
+    
+    if [ -z "$BACKUP_COMMITS" ]; then
+        red "错误: 未找到任何备份记录"
+        return 1
+    fi
+    
+    echo "可用的备份："
+    echo ""
+    
+    # 解析备份提交
+    declare -a COMMIT_HASHES
+    declare -a BACKUP_TIMES
+    declare -a BACKUP_DOMAINS
+    
+    i=1
+    while IFS= read -r line; do
+        COMMIT_HASH=$(echo "$line" | awk '{print $1}')
+        BACKUP_INFO=$(echo "$line" | grep -o 'Backup: [^ ]* from [^ ]*')
+        BACKUP_TIME=$(echo "$BACKUP_INFO" | awk '{print $2}' | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1-\2-\3 \4:\5:\6/')
+        BACKUP_DOMAIN=$(echo "$BACKUP_INFO" | awk '{print $4}')
+        
+        COMMIT_HASHES+=($COMMIT_HASH)
+        BACKUP_TIMES+=("$BACKUP_TIME")
+        BACKUP_DOMAINS+=("$BACKUP_DOMAIN")
+        
+        echo -e "  ${green}${i}${re}) ${BACKUP_TIME} (from ${BACKUP_DOMAIN})"
+        ((i++))
+    done <<< "$BACKUP_COMMITS"
+    
+    echo ""
+    reading "请选择备份编号 (1-${#COMMIT_HASHES[@]}): " BACKUP_NUM
+    echo ""
+    
+    if [[ ! "$BACKUP_NUM" =~ ^[0-9]+$ ]] || [ "$BACKUP_NUM" -lt 1 ] || [ "$BACKUP_NUM" -gt ${#COMMIT_HASHES[@]} ]; then
+        red "无效的备份编号"
+        return 1
+    fi
+    
+    SELECTED_COMMIT="${COMMIT_HASHES[$((BACKUP_NUM-1))]}"
+    SELECTED_TIME="${BACKUP_TIMES[$((BACKUP_NUM-1))]}"
+    SELECTED_DOMAIN="${BACKUP_DOMAINS[$((BACKUP_NUM-1))]}"
+    
+    echo "选择的备份:"
+    echo "  时间: ${SELECTED_TIME}"
+    echo "  来源: ${SELECTED_DOMAIN}"
+    echo ""
+    
+    red "⚠️  警告: 恢复将覆盖当前数据！"
+    reading "确认恢复？(输入 yes 继续): " CONFIRM
+    echo ""
+    
+    if [ "$CONFIRM" != "yes" ]; then
+        yellow "已取消"
+        return 0
+    fi
+    
+    # 切换到选定的提交
+    yellow "正在准备恢复...\n"
+    git checkout "$SELECTED_COMMIT" --quiet 2>/dev/null
+    
+    if [ $? -ne 0 ]; then
+        red "✗ 切换到备份失败"
+        return 1
+    fi
+    
+    # 查找备份目录
+    BACKUP_FOLDER=$(find backups -maxdepth 1 -type d -name "*" | tail -n 1)
+    
+    if [ -z "$BACKUP_FOLDER" ] || [ ! -d "$BACKUP_FOLDER" ]; then
+        red "✗ 未找到备份数据"
+        git checkout $(git symbolic-ref --short HEAD 2>/dev/null || echo "main") --quiet 2>/dev/null
+        return 1
+    fi
+    
+    yellow "正在恢复数据...\n"
+    
+    # 恢复数据库
+    if [ -d "$BACKUP_FOLDER/database" ]; then
+        rm -rf "$WORKDIR/database"
+        cp -r "$BACKUP_FOLDER/database" "$WORKDIR/" && green "✓ 数据库已恢复" || red "✗ 数据库恢复失败"
+    fi
+    
+    # 恢复上传文件
+    if [ -d "$BACKUP_FOLDER/uploads" ]; then
+        rm -rf "$WORKDIR/uploads"
+        cp -r "$BACKUP_FOLDER/uploads" "$WORKDIR/" && green "✓ 上传文件已恢复" || red "✗ 上传文件恢复失败"
+    fi
+    
+    # 恢复环境配置（询问用户）
+    if [ -f "$BACKUP_FOLDER/.env" ]; then
+        echo ""
+        reading "是否恢复环境配置 .env? (y/N): " RESTORE_ENV
+        if [[ "$RESTORE_ENV" =~ ^[Yy]$ ]]; then
+            cp "$BACKUP_FOLDER/.env" "$WORKDIR/" && green "✓ 环境配置已恢复" || red "✗ 环境配置恢复失败"
+        else
+            yellow "已跳过环境配置"
+        fi
+    fi
+    
+    # 切回主分支
+    CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")
+    git checkout "$CURRENT_BRANCH" --quiet 2>/dev/null
+    
+    # 重启服务
+    devil www restart "$CURRENT_DOMAIN" > /dev/null 2>&1
+    
+    echo ""
+    green "✓ 恢复成功！"
+    purple "备份时间: ${SELECTED_TIME}"
+    purple "来源服务器: ${SELECTED_DOMAIN}"
+    echo ""
+}
+
 # 主循环
 main() {
     while true; do
@@ -528,7 +687,7 @@ main() {
             1) create_local_backup ;;
             2) backup_to_github ;;
             3) restore_local_backup ;;
-            4) echo ""; yellow "GitHub 恢复功能开发中..." ;;
+            4) restore_from_github ;;
             5) list_backups ;;
             6) github_config ;;
             0) echo ""; green "再见！"; exit 0 ;;
