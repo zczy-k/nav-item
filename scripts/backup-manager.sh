@@ -162,7 +162,10 @@ backup_to_github() {
         # 检查远程仓库是否可达
         if ! git ls-remote --exit-code origin > /dev/null 2>&1; then
             yellow "检测到无效的远程仓库配置，正在自动修复...\n"
-            rm -rf .git
+            cd ..
+            rm -rf "$GITHUB_BACKUP_DIR"
+            mkdir -p "$GITHUB_BACKUP_DIR"
+            cd "$GITHUB_BACKUP_DIR"
         fi
     fi
 
@@ -271,11 +274,23 @@ EOF
         purple "分支: ${CURRENT_BRANCH}"
         echo ""
     else
-        # 推送失败，清理未推送的提交
+        # 推送失败，完全清理未推送的提交和备份
         echo ""
         red "✗ 推送失败，正在清理未同步的备份..."
-        git reset --hard HEAD~1 2>/dev/null
+        
+        # 如果是 root commit 失败，删除整个 .git 目录
+        if git rev-parse HEAD~1 > /dev/null 2>&1; then
+            git reset --hard HEAD~1 2>/dev/null
+        else
+            # 是第一个 commit，删除 .git 和所有备份
+            cd ..
+            rm -rf "$GITHUB_BACKUP_DIR"
+            mkdir -p "$GITHUB_BACKUP_DIR"
+            cd "$GITHUB_BACKUP_DIR"
+        fi
+        
         rm -rf "$BACKUP_FOLDER"
+        green "✓ 已清理"
         echo ""
         yellow "错误信息:"
         echo "$PUSH_OUTPUT" | grep -v "${GITHUB_TOKEN}" || echo "$PUSH_OUTPUT" | sed "s/${GITHUB_TOKEN}/***TOKEN***/g"
