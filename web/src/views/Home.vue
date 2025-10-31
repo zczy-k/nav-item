@@ -428,12 +428,15 @@ async function verifyPassword() {
   batchError.value = '';
   
   try {
-    // 使用默认管理员用户名 admin 进行验证
+    // 使用默认管理员用户名 admin 进行验证，并获取响应
     const response = await login('admin', batchPassword.value);
     
-    // 保存 token 到 localStorage
+    // 检查并保存 token
     if (response.data && response.data.token) {
       localStorage.setItem('token', response.data.token);
+    } else {
+      // 如果没有 token 返回，说明登录逻辑有问题
+      throw new Error('登录成功，但未收到 token');
     }
     
     // 如果选择了记住密码，保存到2小时
@@ -450,6 +453,7 @@ async function verifyPassword() {
     batchStep.value = 2;
   } catch (error) {
     batchError.value = '密码错误，请重试';
+    console.error('密码验证失败:', error);
   } finally {
     batchLoading.value = false;
   }
