@@ -1136,51 +1136,57 @@ async function changeBackground() {
 /* 批量添加按钮 */
 .batch-add-btn {
   position: fixed;
-  right: -40px;
+  right: -45px;
   bottom: 30px;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.85), rgba(118, 75, 162, 0.85));
   border: none;
   color: white;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-  transition: right 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 15px rgba(102, 126, 234, 0.3);
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, opacity 0.3s ease;
   z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.7;
+  backdrop-filter: blur(5px);
 }
 
 .batch-add-btn:hover {
-  right: 20px;
-  box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+  right: 16px;
+  opacity: 1;
+  box-shadow: 0 6px 30px rgba(102, 126, 234, 0.5);
 }
 
 /* 切换背景按钮 */
 .change-bg-btn {
   position: fixed;
-  right: -40px;
-  bottom: 110px;
-  width: 60px;
-  height: 60px;
+  right: -45px;
+  bottom: 100px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #34a853, #0f9d58);
+  background: linear-gradient(135deg, rgba(52, 168, 83, 0.85), rgba(15, 157, 88, 0.85));
   border: none;
   color: white;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(52, 168, 83, 0.4);
-  transition: right 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 15px rgba(52, 168, 83, 0.3);
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, opacity 0.3s ease;
   z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.7;
+  backdrop-filter: blur(5px);
 }
 
 .change-bg-btn:hover:not(:disabled) {
-  right: 20px;
-  box-shadow: 0 6px 30px rgba(52, 168, 83, 0.6);
+  right: 16px;
+  opacity: 1;
+  box-shadow: 0 6px 30px rgba(52, 168, 83, 0.5);
 }
 
 .change-bg-btn:disabled {
@@ -1430,25 +1436,25 @@ async function changeBackground() {
   }
   
   .batch-add-btn {
-    right: -35px;
+    right: -40px;
     bottom: 20px;
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
   }
   
   .batch-add-btn:hover {
-    right: 15px;
+    right: 12px;
   }
   
   .change-bg-btn {
-    right: -35px;
-    bottom: 85px;
-    width: 50px;
-    height: 50px;
+    right: -40px;
+    bottom: 80px;
+    width: 48px;
+    height: 48px;
   }
   
   .change-bg-btn:hover:not(:disabled) {
-    right: 15px;
+    right: 12px;
   }
   
   .batch-card-preview {
