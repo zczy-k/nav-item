@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const adRoutes = require('./routes/ad');
 const friendRoutes = require('./routes/friend');
 const userRoutes = require('./routes/user');
+const batchRoutes = require('./routes/batch');
 const compression = require('compression');
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api', authRoutes);
 app.use('/api/ads', adRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/batch', batchRoutes);
 
 // 定期清理过期缓存
 setInterval(() => {

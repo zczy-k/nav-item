@@ -54,6 +54,91 @@
     
     <CardGrid :cards="filteredCards"/>
     
+    <!-- 批量添加悬浮按钮 -->
+    <button v-if="activeMenu" @click="showBatchAddModal = true" class="batch-add-btn" title="批量添加网站">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+    </button>
+    
+    <!-- 批量添加弹窗 -->
+    <div v-if="showBatchAddModal" class="modal-overlay" @click="closeBatchAdd">
+      <div class="modal-content batch-modal" @click.stop>
+        <div class="modal-header">
+          <h3>{{ batchStep === 1 ? '验证密码' : batchStep === 2 ? '输入网址' : '预览并选择' }}</h3>
+          <button @click="closeBatchAdd" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- 步骤 1: 密码验证 -->
+          <div v-if="batchStep === 1" class="batch-step">
+            <p class="batch-tip">请输入管理员密码以继续：</p>
+            <input 
+              v-model="batchPassword" 
+              type="password" 
+              placeholder="请输入管理员密码"
+              class="batch-input"
+              @keyup.enter="verifyPassword"
+            />
+            <p v-if="batchError" class="batch-error">{{ batchError }}</p>
+            <div class="batch-actions">
+              <button @click="closeBatchAdd" class="btn btn-cancel">取消</button>
+              <button @click="verifyPassword" class="btn btn-primary" :disabled="batchLoading">
+                {{ batchLoading ? '验证中...' : '确认' }}
+              </button>
+            </div>
+          </div>
+          
+          <!-- 步骤 2: 输入网址 -->
+          <div v-if="batchStep === 2" class="batch-step">
+            <p class="batch-tip">请输入需要添加的网址，每行一个：</p>
+            <textarea 
+              v-model="batchUrls" 
+              placeholder="例如：&#10;https://github.com&#10;https://google.com&#10;https://stackoverflow.com"
+              class="batch-textarea"
+              rows="10"
+            ></textarea>
+            <p v-if="batchError" class="batch-error">{{ batchError }}</p>
+            <div class="batch-actions">
+              <button @click="batchStep = 1" class="btn btn-cancel">上一步</button>
+              <button @click="parseUrls" class="btn btn-primary" :disabled="batchLoading || !batchUrls.trim()">
+                {{ batchLoading ? '解析中...' : '下一步' }}
+              </button>
+            </div>
+          </div>
+          
+          <!-- 步骤 3: 预览选择 -->
+          <div v-if="batchStep === 3" class="batch-step">
+            <p class="batch-tip">请选择需要添加的网站：</p>
+            <div class="batch-preview-list">
+              <div v-for="(item, index) in parsedCards" :key="index" class="batch-preview-item">
+                <input type="checkbox" v-model="item.selected" :id="`card-${index}`" />
+                <label :for="`card-${index}`" class="batch-card-preview">
+                  <img :src="item.logo" :alt="item.title" class="batch-card-logo" @error="e => e.target.src = '/default-favicon.png'" />
+                  <div class="batch-card-info">
+                    <h4 class="batch-card-title">{{ item.title }}</h4>
+                    <p class="batch-card-url">{{ item.url }}</p>
+                    <p v-if="item.description" class="batch-card-desc">{{ item.description }}</p>
+                    <p v-if="!item.success" class="batch-card-warning">⚠️ {{ item.error }}</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <p v-if="batchError" class="batch-error">{{ batchError }}</p>
+            <div class="batch-actions">
+              <button @click="batchStep = 2" class="btn btn-cancel">上一步</button>
+              <button @click="addSelectedCards" class="btn btn-primary" :disabled="batchLoading || selectedCardsCount === 0">
+                {{ batchLoading ? '添加中...' : `添加 (${selectedCardsCount})` }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <footer class="footer">
       <div class="footer-content">
         <button @click="showFriendLinks = true" class="friend-link-btn">
@@ -112,7 +197,7 @@
 
 <script setup>
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
-import { getMenus, getCards, getAds, getFriends } from '../api';
+import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
 
@@ -125,6 +210,19 @@ const leftAds = ref([]);
 const rightAds = ref([]);
 const showFriendLinks = ref(false);
 const friendLinks = ref([]);
+
+// 批量添加相关状态
+const showBatchAddModal = ref(false);
+const batchStep = ref(1); // 1:密码验证 2:输入网址 3:预览选择
+const batchPassword = ref('');
+const batchUrls = ref('');
+const batchLoading = ref(false);
+const batchError = ref('');
+const parsedCards = ref([]);
+
+const selectedCardsCount = computed(() => {
+  return parsedCards.value.filter(card => card.selected).length;
+});
 
 // 聚合搜索配置
 const searchEngines = [
@@ -246,6 +344,101 @@ async function handleSearch() {
 function handleLogoError(event) {
   event.target.style.display = 'none';
   event.target.nextElementSibling.style.display = 'flex';
+}
+
+// 批量添加相关函数
+function closeBatchAdd() {
+  showBatchAddModal.value = false;
+  batchStep.value = 1;
+  batchPassword.value = '';
+  batchUrls.value = '';
+  batchError.value = '';
+  parsedCards.value = [];
+  batchLoading.value = false;
+}
+
+async function verifyPassword() {
+  if (!batchPassword.value) {
+    batchError.value = '请输入密码';
+    return;
+  }
+  
+  batchLoading.value = true;
+  batchError.value = '';
+  
+  try {
+    // 使用默认管理员用户名 admin 进行验证
+    await login('admin', batchPassword.value);
+    batchStep.value = 2;
+  } catch (error) {
+    batchError.value = '密码错误，请重试';
+  } finally {
+    batchLoading.value = false;
+  }
+}
+
+async function parseUrls() {
+  const urls = batchUrls.value
+    .split('\n')
+    .map(url => url.trim())
+    .filter(url => url.length > 0);
+  
+  if (urls.length === 0) {
+    batchError.value = '请输入至少一个网址';
+    return;
+  }
+  
+  batchLoading.value = true;
+  batchError.value = '';
+  
+  try {
+    const response = await batchParseUrls(urls);
+    parsedCards.value = response.data.data.map(card => ({
+      ...card,
+      selected: true // 默认全选
+    }));
+    batchStep.value = 3;
+  } catch (error) {
+    batchError.value = error.response?.data?.error || '解析失败，请重试';
+  } finally {
+    batchLoading.value = false;
+  }
+}
+
+async function addSelectedCards() {
+  const selected = parsedCards.value.filter(card => card.selected);
+  
+  if (selected.length === 0) {
+    batchError.value = '请至少选择一个网站';
+    return;
+  }
+  
+  batchLoading.value = true;
+  batchError.value = '';
+  
+  try {
+    const cardsToAdd = selected.map(card => ({
+      title: card.title,
+      url: card.url,
+      logo: card.logo,
+      description: card.description
+    }));
+    
+    await batchAddCards(
+      activeMenu.value.id,
+      activeSubMenu.value?.id || null,
+      cardsToAdd
+    );
+    
+    // 添加成功，关闭弹窗并刷新卡片列表
+    alert(`成功添加 ${selected.length} 个网站！`);
+    closeBatchAdd();
+    await loadCards();
+  } catch (error) {
+    batchError.value = error.response?.data?.error || '添加失败，请重试';
+  } finally {
+    batchLoading.value = false;
+  }
 }
 </script>
 
@@ -735,6 +928,215 @@ function handleLogoError(event) {
     align-items: center;
     justify-content: center;
     gap: 20px;
+  }
+}
+
+/* 批量添加按钮 */
+.batch-add-btn {
+  position: fixed;
+  right: 30px;
+  bottom: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.batch-add-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+/* 批量添加弹窗 */
+.batch-modal {
+  width: 700px;
+  max-height: 80vh;
+}
+
+.batch-step {
+  min-height: 300px;
+}
+
+.batch-tip {
+  font-size: 16px;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.batch-input,
+.batch-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.batch-textarea {
+  resize: vertical;
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+}
+
+.batch-input:focus,
+.batch-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.batch-error {
+  color: #dc2626;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 预览列表 */
+.batch-preview-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.batch-preview-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.batch-preview-item input[type="checkbox"] {
+  margin-top: 8px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.batch-card-preview {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.batch-card-preview:hover {
+  background: #f3f4f6;
+  border-color: #667eea;
+}
+
+.batch-card-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: white;
+  padding: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.batch-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.batch-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+  word-break: break-word;
+}
+
+.batch-card-url {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 6px 0;
+  word-break: break-all;
+}
+
+.batch-card-desc {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.batch-card-warning {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 4px 0 0 0;
+}
+
+@media (max-width: 768px) {
+  .batch-modal {
+    width: 95vw;
+  }
+  
+  .batch-add-btn {
+    right: 20px;
+    bottom: 20px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .batch-card-preview {
+    flex-direction: column;
   }
 }
 </style> 

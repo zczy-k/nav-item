@@ -50,4 +50,8 @@ export const deleteFriend = (id) => axios.delete(`${BASE}/friends/${id}`, { head
 // 用户API
 export const getUserProfile = () => axios.get(`${BASE}/users/profile`, { headers: authHeaders() });
 export const changePassword = (oldPassword, newPassword) => axios.put(`${BASE}/users/password`, { oldPassword, newPassword }, { headers: authHeaders() });
-export const getUsers = () => axios.get(`${BASE}/users`, { headers: authHeaders() }); 
+export const getUsers = () => axios.get(`${BASE}/users`, { headers: authHeaders() });
+
+// 批量添加API
+export const batchParseUrls = (urls) => axios.post(`${BASE}/batch/parse`, { urls }, { headers: authHeaders() });
+export const batchAddCards = (menuId, subMenuId, cards) => axios.post(`${BASE}/batch/add`, { menu_id: menuId, sub_menu_id: subMenuId, cards }, { headers: authHeaders() });
