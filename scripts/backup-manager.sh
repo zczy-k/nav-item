@@ -792,7 +792,7 @@ clean_local_git_cache() {
 main() {
     while true; do
         show_main_menu
-reading "请选择 (0-7): " choice
+        reading "请选择 (0-7): " choice
         
         case $choice in
             1) create_local_backup ;;
@@ -802,7 +802,8 @@ reading "请选择 (0-7): " choice
             5) list_backups ;;
             6) github_config ;;
             7) clean_local_git_cache ;;
-            0) echo ""; green "再见！"; exit 0 ;;            *) echo ""; red "无效选项" ;;
+            0) echo ""; green "再见！"; exit 0 ;;
+            *) echo ""; red "无效选项" ;;
         esac
         
         echo ""
