@@ -542,7 +542,6 @@ list_backups() {
                 echo ""
                 echo "  无备份记录"
             fi
-            fi
         fi
     else
         echo "  未配置"
