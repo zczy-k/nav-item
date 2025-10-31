@@ -603,15 +603,14 @@ async function changeBackground() {
     const response = await getRandomWallpaper();
     const wallpaperUrl = response.data.url;
     
-    // 更新背景 - 应用到 .home-container 元素
-    const homeContainer = document.querySelector('.home-container');
-    if (homeContainer) {
-      homeContainer.style.backgroundImage = `url(${wallpaperUrl})`;
-      homeContainer.style.backgroundSize = 'cover';
-      homeContainer.style.backgroundPosition = 'center';
-      homeContainer.style.backgroundRepeat = 'no-repeat';
-      homeContainer.style.backgroundAttachment = 'fixed';
+    // 更新背景 - 直接更新或创建 <style> 标签，使用 !important 覆盖
+    let bgStyle = document.getElementById('dynamic-bg-style');
+    if (!bgStyle) {
+      bgStyle = document.createElement('style');
+      bgStyle.id = 'dynamic-bg-style';
+      document.head.appendChild(bgStyle);
     }
+    bgStyle.textContent = `.home-container { background-image: url(${wallpaperUrl}) !important; }`;
     
     // 保存到localStorage，下次刷新时自动应用
     localStorage.setItem('nav_background', wallpaperUrl);
