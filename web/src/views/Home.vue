@@ -224,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
+import { ref, onMounted, onBeforeMount, computed, defineAsyncComponent } from 'vue';
 import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
@@ -307,6 +307,24 @@ const filteredCards = computed(() => {
   );
 });
 
+// 在组件渲染前应用保存的背景，避免闪烁
+onBeforeMount(() => {
+  const savedBg = localStorage.getItem('nav_background');
+  if (savedBg) {
+    // 在 nextTick 中应用，确保 DOM 元素存在
+    document.addEventListener('DOMContentLoaded', () => {
+      const homeContainer = document.querySelector('.home-container');
+      if (homeContainer) {
+        homeContainer.style.backgroundImage = `url(${savedBg})`;
+        homeContainer.style.backgroundSize = 'cover';
+        homeContainer.style.backgroundPosition = 'center';
+        homeContainer.style.backgroundRepeat = 'no-repeat';
+        homeContainer.style.backgroundAttachment = 'fixed';
+      }
+    });
+  }
+});
+
 onMounted(async () => {
   const res = await getMenus();
   menus.value = res.data;
@@ -322,20 +340,17 @@ onMounted(async () => {
   const friendRes = await getFriends();
   friendLinks.value = friendRes.data;
   
-  // 检查是否有保存的背景
+  // 再次检查并应用背景（防止 onBeforeMount 没有执行）
   const savedBg = localStorage.getItem('nav_background');
   if (savedBg) {
-    // 应用保存的背景到 .home-container
-    setTimeout(() => {
-      const homeContainer = document.querySelector('.home-container');
-      if (homeContainer) {
-        homeContainer.style.backgroundImage = `url(${savedBg})`;
-        homeContainer.style.backgroundSize = 'cover';
-        homeContainer.style.backgroundPosition = 'center';
-        homeContainer.style.backgroundRepeat = 'no-repeat';
-        homeContainer.style.backgroundAttachment = 'fixed';
-      }
-    }, 0);
+    const homeContainer = document.querySelector('.home-container');
+    if (homeContainer && !homeContainer.style.backgroundImage.includes(savedBg)) {
+      homeContainer.style.backgroundImage = `url(${savedBg})`;
+      homeContainer.style.backgroundSize = 'cover';
+      homeContainer.style.backgroundPosition = 'center';
+      homeContainer.style.backgroundRepeat = 'no-repeat';
+      homeContainer.style.backgroundAttachment = 'fixed';
+    }
   }
   
   // 检查是否有保存的密码token
