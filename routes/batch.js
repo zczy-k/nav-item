@@ -20,13 +20,19 @@ router.post('/parse', auth, async (req, res) => {
       // 验证URL格式
       const urlObj = new URL(url);
       
-      // 抓取网页内容（设置超时和User-Agent）
+      // 抓取网页内容（设置超时和完整的User-Agent）
       const response = await axios.get(url, {
         timeout: 10000,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
         },
-        maxRedirects: 5
+        maxRedirects: 5,
+        validateStatus: (status) => status < 500 // 接受4xx响应
       });
 
       const html = response.data;
@@ -51,20 +57,14 @@ router.post('/parse', auth, async (req, res) => {
       }
       description = description.trim().substring(0, 200);
 
-      // 提取Logo
+      // 提取Logo - 使用Google Favicon服务避免CORS问题
       let logo = $('link[rel="icon"]').attr('href') || 
                  $('link[rel="shortcut icon"]').attr('href') ||
                  $('link[rel="apple-touch-icon"]').attr('href') ||
                  $('meta[property="og:image"]').attr('content');
 
-      // 处理相对路径
-      if (logo) {
-        if (!logo.startsWith('http')) {
-          logo = new URL(logo, url).href;
-        }
-      } else {
-        logo = `${urlObj.origin}/favicon.ico`;
-      }
+      // 统一使用Google的favicon服务，避免CORS问题
+      logo = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
 
       results.push({
         url: url,
@@ -83,7 +83,7 @@ router.post('/parse', auth, async (req, res) => {
         results.push({
           url: url,
           title: urlObj.hostname,
-          logo: `${urlObj.origin}/favicon.ico`,
+          logo: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`,
           description: '',
           success: false,
           error: error.message
