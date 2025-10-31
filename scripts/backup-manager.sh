@@ -61,6 +61,7 @@ show_main_menu() {
     echo -e "  \e[1;32m5\e[0m) 📋 查看备份列表"
     echo -e "  \e[1;32m6\e[0m) ⚙️  GitHub 配置"
     echo -e "  \e[1;31m7\e[0m) 🧹 清理本地Git缓存"
+    echo -e "  \e[1;36m8\e[0m) ⏰ 定时备份设置"
     echo -e "  \e[1;32m0\e[0m) 🚪 退出"
     echo ""
 }
@@ -762,11 +763,225 @@ clean_local_git_cache() {
     echo ""
 }
 
+# 定时备份设置
+scheduled_backup_config() {
+    echo ""
+    yellow "=========================================="
+    yellow "  定时备份设置"
+    yellow "=========================================="
+    echo ""
+    
+    # 检查 GitHub 配置
+    if [ ! -f "$GITHUB_CONFIG" ]; then
+        red "警告: 未配置 GitHub，定时备份需要GitHub配置。"
+        reading "是否现在配置? (y/N): " CONFIG_NOW
+        if [[ "$CONFIG_NOW" =~ ^[Yy]$ ]]; then
+            github_config
+        else
+            return 0
+        fi
+    fi
+    
+    echo "当前定时任务:"
+    echo ""
+    
+    # 查看当前cron任务
+    CRON_MARKER="# Nav-Item Auto Backup"
+    EXISTING_CRON=$(crontab -l 2>/dev/null | grep "$CRON_MARKER" -A 1 | grep -v "$CRON_MARKER" || echo "")
+    
+    if [ -n "$EXISTING_CRON" ]; then
+        echo -e "  ${green}已启用${re}"
+        echo "  $EXISTING_CRON"
+        echo ""
+        
+        # 解析cron表达式显示友好信息
+        CRON_PARTS=($EXISTING_CRON)
+        MINUTE="${CRON_PARTS[0]}"
+        HOUR="${CRON_PARTS[1]}"
+        DAY="${CRON_PARTS[2]}"
+        MONTH="${CRON_PARTS[3]}"
+        WEEKDAY="${CRON_PARTS[4]}"
+        
+        if [ "$DAY" = "*" ] && [ "$WEEKDAY" = "*" ]; then
+            purple "  频率: 每天 ${HOUR}:${MINUTE}"
+        elif [ "$DAY" = "*" ] && [ "$WEEKDAY" != "*" ]; then
+            case $WEEKDAY in
+                0|7) WEEKDAY_NAME="星期日" ;;
+                1) WEEKDAY_NAME="星期一" ;;
+                2) WEEKDAY_NAME="星期二" ;;
+                3) WEEKDAY_NAME="星期三" ;;
+                4) WEEKDAY_NAME="星期四" ;;
+                5) WEEKDAY_NAME="星期五" ;;
+                6) WEEKDAY_NAME="星期六" ;;
+            esac
+            purple "  频率: 每周${WEEKDAY_NAME} ${HOUR}:${MINUTE}"
+        elif [ "$DAY" != "*" ] && [ "$WEEKDAY" = "*" ]; then
+            purple "  频率: 每月${DAY}日 ${HOUR}:${MINUTE}"
+        else
+            purple "  频率: 自定义 (${MINUTE} ${HOUR} ${DAY} ${MONTH} ${WEEKDAY})"
+        fi
+        
+        echo ""
+        echo "请选择操作:"
+        echo ""
+        echo "  1) 修改定时任务"
+        echo "  2) 删除定时任务"
+        echo "  3) 立即执行一次备份(测试)"
+        echo "  0) 返回"
+        echo ""
+        reading "请选择: " SCHEDULE_CHOICE
+        
+        case $SCHEDULE_CHOICE in
+            1)
+                # 先删除旧任务
+                crontab -l 2>/dev/null | grep -v "$CRON_MARKER" | grep -v "backup-manager.sh" | crontab -
+                # 然后添加新任务
+                setup_new_schedule
+                ;;
+            2)
+                reading "确认删除定时任务? (yes/no): " CONFIRM_DELETE
+                if [ "$CONFIRM_DELETE" = "yes" ]; then
+                    crontab -l 2>/dev/null | grep -v "$CRON_MARKER" | grep -v "backup-manager.sh" | crontab -
+                    green "\n✓ 定时任务已删除"
+                else
+                    yellow "\n已取消"
+                fi
+                ;;
+            3)
+                echo ""
+                yellow "正在执行备份..."
+                backup_to_github
+                ;;
+            0)
+                return 0
+                ;;
+        esac
+    else
+        echo "  未设置"
+        echo ""
+        reading "是否设置定时备份? (y/N): " SETUP_SCHEDULE
+        if [[ "$SETUP_SCHEDULE" =~ ^[Yy]$ ]]; then
+            setup_new_schedule
+        fi
+    fi
+}
+
+# 设置新的定时任务
+setup_new_schedule() {
+    echo ""
+    yellow "请选择备份频率:"
+    echo ""
+    echo "  1) 每天备份"
+    echo "  2) 每周备份"
+    echo "  3) 每月备份"
+    echo "  4) 自定义cron表达式"
+    echo ""
+    reading "请选择 (1-4): " FREQ_CHOICE
+    
+    case $FREQ_CHOICE in
+        1)
+            reading "\n请输入备份时间 (小时, 0-23): " BACKUP_HOUR
+            if [[ ! "$BACKUP_HOUR" =~ ^[0-9]+$ ]] || [ "$BACKUP_HOUR" -lt 0 ] || [ "$BACKUP_HOUR" -gt 23 ]; then
+                red "\n无效的小时"
+                return 1
+            fi
+            CRON_EXPR="0 $BACKUP_HOUR * * *"
+            DESCRIPTION="每天 ${BACKUP_HOUR}:00"
+            ;;
+        2)
+            echo ""
+            echo "请选择星期几:"
+            echo "  0) 星期日"
+            echo "  1) 星期一"
+            echo "  2) 星期二"
+            echo "  3) 星期三"
+            echo "  4) 星期四"
+            echo "  5) 星期五"
+            echo "  6) 星期六"
+            reading "\n请选择 (0-6): " BACKUP_WEEKDAY
+            if [[ ! "$BACKUP_WEEKDAY" =~ ^[0-6]$ ]]; then
+                red "\n无效的选择"
+                return 1
+            fi
+            reading "\n请输入备份时间 (小时, 0-23): " BACKUP_HOUR
+            if [[ ! "$BACKUP_HOUR" =~ ^[0-9]+$ ]] || [ "$BACKUP_HOUR" -lt 0 ] || [ "$BACKUP_HOUR" -gt 23 ]; then
+                red "\n无效的小时"
+                return 1
+            fi
+            CRON_EXPR="0 $BACKUP_HOUR * * $BACKUP_WEEKDAY"
+            case $BACKUP_WEEKDAY in
+                0) WEEKDAY_NAME="星期日" ;;
+                1) WEEKDAY_NAME="星期一" ;;
+                2) WEEKDAY_NAME="星期二" ;;
+                3) WEEKDAY_NAME="星期三" ;;
+                4) WEEKDAY_NAME="星期四" ;;
+                5) WEEKDAY_NAME="星期五" ;;
+                6) WEEKDAY_NAME="星期六" ;;
+            esac
+            DESCRIPTION="每周${WEEKDAY_NAME} ${BACKUP_HOUR}:00"
+            ;;
+        3)
+            reading "\n请输入备份日期 (1-28): " BACKUP_DAY
+            if [[ ! "$BACKUP_DAY" =~ ^[0-9]+$ ]] || [ "$BACKUP_DAY" -lt 1 ] || [ "$BACKUP_DAY" -gt 28 ]; then
+                red "\n无效的日期"
+                return 1
+            fi
+            reading "\n请输入备份时间 (小时, 0-23): " BACKUP_HOUR
+            if [[ ! "$BACKUP_HOUR" =~ ^[0-9]+$ ]] || [ "$BACKUP_HOUR" -lt 0 ] || [ "$BACKUP_HOUR" -gt 23 ]; then
+                red "\n无效的小时"
+                return 1
+            fi
+            CRON_EXPR="0 $BACKUP_HOUR $BACKUP_DAY * *"
+            DESCRIPTION="每月${BACKUP_DAY}日 ${BACKUP_HOUR}:00"
+            ;;
+        4)
+            echo ""
+            yellow "Cron表达式格式: 分 时 日 月 周"
+            yellow "示例: 0 2 * * * (每天2点)"
+            reading "\n请输入cron表达式: " CRON_EXPR
+            if [ -z "$CRON_EXPR" ]; then
+                red "\n表达式不能为空"
+                return 1
+            fi
+            DESCRIPTION="自定义 ($CRON_EXPR)"
+            ;;
+        *)
+            red "\n无效选项"
+            return 1
+            ;;
+    esac
+    
+    # 获取脚本的绝对路径
+    SCRIPT_PATH=$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$(cd "$(dirname "$0")" && pwd)/$(basename "$0")")
+    
+    # 添加cron任务
+    CRON_CMD="$CRON_EXPR DOMAIN=$CURRENT_DOMAIN bash -c 'cd ~ && bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh) <<< \"2\" > /tmp/nav-backup.log 2>&1'"
+    
+    # 先删除旧任务（如果有）
+    crontab -l 2>/dev/null | grep -v "# Nav-Item Auto Backup" | grep -v "backup-manager.sh" > /tmp/crontab.tmp 2>/dev/null || true
+    
+    # 添加新任务
+    echo "# Nav-Item Auto Backup" >> /tmp/crontab.tmp
+    echo "$CRON_CMD" >> /tmp/crontab.tmp
+    
+    # 安装新的crontab
+    crontab /tmp/crontab.tmp
+    rm /tmp/crontab.tmp
+    
+    echo ""
+    green "✓ 定时备份已设置！"
+    purple "频率: $DESCRIPTION"
+    purple "备份方式: GitHub"
+    echo ""
+    yellow "提示: 备份日志保存在 /tmp/nav-backup.log"
+    echo ""
+}
+
 # 主循环
 main() {
     while true; do
         show_main_menu
-        reading "请选择 (0-7): " choice
+        reading "请选择 (0-8): " choice
         
         case $choice in
             1) create_local_backup ;;
@@ -776,6 +991,7 @@ main() {
             5) list_backups ;;
             6) github_config ;;
             7) clean_local_git_cache ;;
+            8) scheduled_backup_config ;;
             0) echo ""; green "再见！"; exit 0 ;;
             *) echo ""; red "无效选项" ;;
         esac
