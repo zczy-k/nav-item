@@ -504,6 +504,11 @@ list_backups() {
         if [ -d "$GITHUB_BACKUP_DIR/.git" ]; then
             cd "$GITHUB_BACKUP_DIR"
             
+            # 先从远程更新最新状态
+            yellow "正在从 GitHub 更新备份列表..."
+            git fetch origin --quiet 2>/dev/null
+            green "✓ 更新完成\n"
+            
             # 获取所有备份提交
             ALL_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:")
             
