@@ -90,11 +90,41 @@ install_application() {
     
     # 移动文件到当前目录
     if [ -d "${WORKDIR}/nav-item-main" ]; then
+        # 备份当前的 data 目录和 .env 文件（如果存在）
+        if [ -d "${WORKDIR}/data" ]; then
+            mv "${WORKDIR}/data" "${WORKDIR}/data.backup"
+        fi
+        if [ -f "${WORKDIR}/.env" ]; then
+            mv "${WORKDIR}/.env" "${WORKDIR}/.env.backup"
+        fi
+        
+        # 清理旧文件（保留 data 和 .env 的备份）
+        find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'data.backup' ! -name '.env.backup' ! -name 'nav-item-main' ! -name 'nav-item.zip' -exec rm -rf {} + 2>/dev/null || true
+        
+        # 复制新文件
         cp -r ${WORKDIR}/nav-item-main/* ${WORKDIR}/
         rm -rf ${WORKDIR}/nav-item-main
+        
+        # 恢复备份的数据
+        if [ -d "${WORKDIR}/data.backup" ]; then
+            mv "${WORKDIR}/data.backup" "${WORKDIR}/data"
+        fi
+        if [ -f "${WORKDIR}/.env.backup" ]; then
+            mv "${WORKDIR}/.env.backup" "${WORKDIR}/.env"
+        fi
     fi
     
     rm -f "${WORKDIR}/nav-item.zip"
+    
+    # 部署前端静态文件（从 web/dist 到 public）
+    if [ -d "${WORKDIR}/web/dist" ]; then
+        yellow "部署前端文件...\n"
+        # 删除旧的 public 目录
+        rm -rf "${WORKDIR}/public"
+        # 将 dist 目录移动为 public
+        mv "${WORKDIR}/web/dist" "${WORKDIR}/public"
+        green "前端文件部署完成\n"
+    fi
     
     # 使用 Serv00 专用的 app.js
     if [ -f "${WORKDIR}/app.serv00.js" ]; then
