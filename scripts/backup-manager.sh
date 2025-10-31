@@ -503,13 +503,45 @@ list_backups() {
         
         if [ -d "$GITHUB_BACKUP_DIR/.git" ]; then
             cd "$GITHUB_BACKUP_DIR"
-            GITHUB_BACKUPS=$(git log --oneline --all 2>/dev/null | grep "Backup:" | head -n 10)
-            if [ -n "$GITHUB_BACKUPS" ]; then
+            
+            # 获取所有备份提交
+            ALL_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:")
+            
+            if [ -n "$ALL_COMMITS" ]; then
                 echo ""
-                echo "  最近 10 次备份:"
-                echo "$GITHUB_BACKUPS" | while read line; do
-                    echo "    - $line"
-                done
+                echo "  可用备份:"
+                
+                VALID_BACKUP_COUNT=0
+                
+                # 遍历每个提交，检查备份文件是否存在
+                while IFS= read -r line; do
+                    COMMIT_HASH=$(echo "$line" | awk '{print $1}')
+                    
+                    # 检查该提交中是否有备份文件
+                    BACKUP_FOLDERS=$(git ls-tree -d --name-only "$COMMIT_HASH" backups 2>/dev/null)
+                    
+                    if [ -n "$BACKUP_FOLDERS" ]; then
+                        # 获取该提交下的备份子目录
+                        BACKUP_SUBDIRS=$(git ls-tree -d --name-only "$COMMIT_HASH:backups" 2>/dev/null)
+                        
+                        if [ -n "$BACKUP_SUBDIRS" ]; then
+                            echo "    - $line"
+                            ((VALID_BACKUP_COUNT++))
+                            
+                            # 只显示最近10个有效备份
+                            if [ $VALID_BACKUP_COUNT -ge 10 ]; then
+                                break
+                            fi
+                        fi
+                    fi
+                done <<< "$ALL_COMMITS"
+                
+                if [ $VALID_BACKUP_COUNT -eq 0 ]; then
+                    echo "    无可用备份"
+                fi
+            else
+                echo ""
+                echo "  无备份记录"
             fi
         fi
     else
@@ -562,10 +594,10 @@ restore_from_github() {
         green "✓ 更新成功\n"
     fi
     
-    # 列出可用的备份
-    BACKUP_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:" | head -n 20)
+    # 列出可用的备份（只显示实际存在备份文件的提交）
+    ALL_COMMITS=$(git log --oneline --all 2>/dev/null | grep "Backup:")
     
-    if [ -z "$BACKUP_COMMITS" ]; then
+    if [ -z "$ALL_COMMITS" ]; then
         red "错误: 未找到任何备份记录"
         return 1
     fi
@@ -581,17 +613,39 @@ restore_from_github() {
     i=1
     while IFS= read -r line; do
         COMMIT_HASH=$(echo "$line" | awk '{print $1}')
-        BACKUP_INFO=$(echo "$line" | grep -o 'Backup: [^ ]* from [^ ]*')
-        BACKUP_TIME=$(echo "$BACKUP_INFO" | awk '{print $2}' | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1-\2-\3 \4:\5:\6/')
-        BACKUP_DOMAIN=$(echo "$BACKUP_INFO" | awk '{print $4}')
         
-        COMMIT_HASHES+=($COMMIT_HASH)
-        BACKUP_TIMES+=("$BACKUP_TIME")
-        BACKUP_DOMAINS+=("$BACKUP_DOMAIN")
+        # 检查该提交中是否实际存在备份文件
+        BACKUP_FOLDERS=$(git ls-tree -d --name-only "$COMMIT_HASH" backups 2>/dev/null)
         
-        echo -e "  ${green}${i}${re}) ${BACKUP_TIME} (from ${BACKUP_DOMAIN})"
-        ((i++))
-    done <<< "$BACKUP_COMMITS"
+        if [ -n "$BACKUP_FOLDERS" ]; then
+            # 获取该提交下的备份子目录
+            BACKUP_SUBDIRS=$(git ls-tree -d --name-only "$COMMIT_HASH:backups" 2>/dev/null)
+            
+            if [ -n "$BACKUP_SUBDIRS" ]; then
+                BACKUP_INFO=$(echo "$line" | grep -o 'Backup: [^ ]* from [^ ]*')
+                BACKUP_TIME=$(echo "$BACKUP_INFO" | awk '{print $2}' | sed 's/\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1-\2-\3 \4:\5:\6/')
+                BACKUP_DOMAIN=$(echo "$BACKUP_INFO" | awk '{print $4}')
+                
+                COMMIT_HASHES+=($COMMIT_HASH)
+                BACKUP_TIMES+=("$BACKUP_TIME")
+                BACKUP_DOMAINS+=("$BACKUP_DOMAIN")
+                
+                echo -e "  ${green}${i}${re}) ${BACKUP_TIME} (from ${BACKUP_DOMAIN})"
+                ((i++))
+                
+                # 最多显示20个有效备份
+                if [ $i -gt 20 ]; then
+                    break
+                fi
+            fi
+        fi
+    done <<< "$ALL_COMMITS"
+    
+    # 检查是否找到有效备份
+    if [ ${#COMMIT_HASHES[@]} -eq 0 ]; then
+        red "错误: 未找到任何可用的备份文件"
+        return 1
+    fi
     
     echo ""
     reading "请选择备份编号 (1-${#COMMIT_HASHES[@]}): " BACKUP_NUM
