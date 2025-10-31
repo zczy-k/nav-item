@@ -54,24 +54,43 @@
     
     <CardGrid :cards="filteredCards"/>
     
-    <!-- 批量添加悬浮按钮 -->
-    <button v-if="activeMenu" @click="openBatchAddModal" class="batch-add-btn" title="批量添加网站">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 5v14M5 12h14"/>
-      </svg>
-    </button>
-    
-    <!-- 切换背景按钮 -->
-    <button @click="changeBackground" class="change-bg-btn" title="切换背景" :disabled="bgLoading">
-      <svg v-if="!bgLoading" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-        <path d="M21 15l-5-5L5 21"></path>
-      </svg>
-      <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-      </svg>
-    </button>
+    <!-- 浮动操作按钮菜单 -->
+    <div class="fab-container" @click.stop>
+      <!-- 切换背景按钮 -->
+      <transition name="fab-item">
+        <button v-show="showFabMenu" @click="changeBackground" class="change-bg-btn" title="切换背景" :disabled="bgLoading">
+          <svg v-if="!bgLoading" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <path d="M21 15l-5-5L5 21"></path>
+          </svg>
+          <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </button>
+      </transition>
+
+      <!-- 批量添加悬浮按钮 -->
+      <transition name="fab-item">
+        <button v-if="activeMenu" v-show="showFabMenu" @click="openBatchAddModal" class="batch-add-btn" title="批量添加网站">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+      </transition>
+      
+      <!-- 主切换按钮 -->
+      <button @click="toggleFabMenu" class="fab-toggle-btn" title="更多功能">
+        <transition name="fab-icon" mode="out-in">
+          <svg v-if="!showFabMenu" key="plus" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <svg v-else key="close" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="12"></line>
+          </svg>
+        </transition>
+      </button>
+    </div>
     
     <!-- 批量添加弹窗 -->
     <div v-if="showBatchAddModal" class="modal-overlay" @click="closeBatchAdd">
@@ -224,7 +243,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeMount, computed, defineAsyncComponent } from 'vue';
+import { ref, onMounted, onBeforeMount, computed, defineAsyncComponent, onUnmounted } from 'vue';
 import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
@@ -248,6 +267,19 @@ const batchLoading = ref(false);
 const batchError = ref('');
 const parsedCards = ref([]);
 const rememberPassword = ref(false);
+
+// FAB 菜单
+const showFabMenu = ref(false);
+
+function toggleFabMenu() {
+  showFabMenu.value = !showFabMenu.value;
+}
+
+function closeFabMenu() {
+  if (showFabMenu.value) {
+    showFabMenu.value = false;
+  }
+}
 
 // 背景切换相关
 const bgLoading = ref(false);
@@ -376,6 +408,12 @@ onMounted(async () => {
   
   // 检查是否有保存的密码token
   checkSavedPassword();
+  
+  document.addEventListener('click', closeFabMenu);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeFabMenu);
 });
 
 async function selectMenu(menu, parentMenu = null) {
@@ -1133,74 +1171,107 @@ async function changeBackground() {
   }
 }
 
-/* 批量添加按钮 */
-.batch-add-btn {
+/* 浮动操作按钮 */
+.fab-container {
   position: fixed;
-  right: -45px;
+  right: 30px;
   bottom: 30px;
-  width: 56px;
-  height: 56px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+}
+
+.fab-toggle-btn {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.85), rgba(118, 75, 162, 0.85));
+  background: linear-gradient(135deg, #667eea, #764ba2);
   border: none;
   color: white;
   cursor: pointer;
-  box-shadow: 0 2px 15px rgba(102, 126, 234, 0.3);
-  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, opacity 0.3s ease;
-  z-index: 999;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.7;
-  backdrop-filter: blur(5px);
+  z-index: 10;
 }
 
-.batch-add-btn:hover {
-  right: 16px;
-  opacity: 1;
-  box-shadow: 0 6px 30px rgba(102, 126, 234, 0.5);
+.fab-toggle-btn:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
 }
 
-/* 切换背景按钮 */
+.batch-add-btn,
 .change-bg-btn {
-  position: fixed;
-  right: -45px;
-  bottom: 100px;
+  /* Common styles for FAB items */
+  position: relative;
   width: 56px;
   height: 56px;
+  margin-bottom: 15px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(52, 168, 83, 0.85), rgba(15, 157, 88, 0.85));
   border: none;
   color: white;
   cursor: pointer;
-  box-shadow: 0 2px 15px rgba(52, 168, 83, 0.3);
-  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, opacity 0.3s ease;
-  z-index: 999;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.7;
-  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
 }
 
+.batch-add-btn {
+  background: linear-gradient(135deg, #89f7fe, #66a6ff);
+}
+
+.change-bg-btn {
+  background: linear-gradient(135deg, #34a853, #0f9d58);
+}
+
+.batch-add-btn:hover,
 .change-bg-btn:hover:not(:disabled) {
-  right: 16px;
-  opacity: 1;
-  box-shadow: 0 6px 30px rgba(52, 168, 83, 0.5);
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
 }
 
 .change-bg-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 .change-bg-btn:disabled svg {
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Transitions for FAB items */
+.fab-item-enter-active,
+.fab-item-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-item-enter-from,
+.fab-item-leave-to {
+  opacity: 0;
+  transform: translateY(30px) scale(0.9);
+}
+
+/* Transitions for the icon inside toggle button */
+.fab-icon-enter-active,
+.fab-icon-leave-active {
+  transition: all 0.2s ease-in-out;
+  position: absolute;
+}
+.fab-icon-enter-from {
+  transform: rotate(-135deg);
+  opacity: 0;
+}
+.fab-icon-leave-to {
+  transform: rotate(135deg);
+  opacity: 0;
 }
 
 /* 批量添加弹窗 */
@@ -1435,30 +1506,5 @@ async function changeBackground() {
     width: 95vw;
   }
   
-  .batch-add-btn {
-    right: -40px;
-    bottom: 20px;
-    width: 48px;
-    height: 48px;
-  }
-  
-  .batch-add-btn:hover {
-    right: 12px;
-  }
-  
-  .change-bg-btn {
-    right: -40px;
-    bottom: 80px;
-    width: 48px;
-    height: 48px;
-  }
-  
-  .change-bg-btn:hover:not(:disabled) {
-    right: 12px;
-  }
-  
-  .batch-card-preview {
-    flex-direction: column;
-  }
 }
 </style> 
