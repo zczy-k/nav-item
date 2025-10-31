@@ -213,7 +213,7 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 > ⚠️ **安全提示**：请在首次登录后立即修改默认密码！
 
-## 💾 备份与恢复
+## 💾 数据备份与恢复
 
 ### 快速开始
 
@@ -330,6 +330,7 @@ cd nav-item/browser-extension
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！ 
+
 
 
 
