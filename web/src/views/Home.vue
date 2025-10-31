@@ -322,22 +322,6 @@ onMounted(async () => {
   const friendRes = await getFriends();
   friendLinks.value = friendRes.data;
   
-  // 检查是否有保存的背景
-  const savedBg = localStorage.getItem('nav_background');
-  if (savedBg) {
-    // 应用保存的背景到 .home-container
-    setTimeout(() => {
-      const homeContainer = document.querySelector('.home-container');
-      if (homeContainer) {
-        homeContainer.style.backgroundImage = `url(${savedBg})`;
-        homeContainer.style.backgroundSize = 'cover';
-        homeContainer.style.backgroundPosition = 'center';
-        homeContainer.style.backgroundRepeat = 'no-repeat';
-        homeContainer.style.backgroundAttachment = 'fixed';
-      }
-    }, 0);
-  }
-  
   // 检查是否有保存的密码token
   checkSavedPassword();
 });
@@ -598,8 +582,7 @@ async function changeBackground() {
       homeContainer.style.backgroundAttachment = 'fixed';
     }
     
-    // 保存到localStorage
-    localStorage.setItem('nav_background', wallpaperUrl);
+    // 不保存到localStorage，刷新后恢复默认背景
   } catch (error) {
     console.error('获取壁纸失败:', error);
     alert('获取壁纸失败，请稍后重试');
