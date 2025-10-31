@@ -1136,7 +1136,7 @@ async function changeBackground() {
 /* 批量添加按钮 */
 .batch-add-btn {
   position: fixed;
-  right: 30px;
+  right: -40px;
   bottom: 30px;
   width: 60px;
   height: 60px;
@@ -1146,7 +1146,7 @@ async function changeBackground() {
   color: white;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
+  transition: right 0.3s ease, box-shadow 0.3s ease;
   z-index: 999;
   display: flex;
   align-items: center;
@@ -1154,14 +1154,14 @@ async function changeBackground() {
 }
 
 .batch-add-btn:hover {
-  transform: scale(1.1);
+  right: 20px;
   box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
 }
 
 /* 切换背景按钮 */
 .change-bg-btn {
   position: fixed;
-  right: 30px;
+  right: -40px;
   bottom: 110px;
   width: 60px;
   height: 60px;
@@ -1171,7 +1171,7 @@ async function changeBackground() {
   color: white;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(52, 168, 83, 0.4);
-  transition: all 0.3s ease;
+  transition: right 0.3s ease, box-shadow 0.3s ease;
   z-index: 999;
   display: flex;
   align-items: center;
@@ -1179,7 +1179,7 @@ async function changeBackground() {
 }
 
 .change-bg-btn:hover:not(:disabled) {
-  transform: scale(1.1);
+  right: 20px;
   box-shadow: 0 6px 30px rgba(52, 168, 83, 0.6);
 }
 
@@ -1430,17 +1430,25 @@ async function changeBackground() {
   }
   
   .batch-add-btn {
-    right: 20px;
+    right: -35px;
     bottom: 20px;
     width: 50px;
     height: 50px;
   }
   
+  .batch-add-btn:hover {
+    right: 15px;
+  }
+  
   .change-bg-btn {
-    right: 20px;
+    right: -35px;
     bottom: 85px;
     width: 50px;
     height: 50px;
+  }
+  
+  .change-bg-btn:hover:not(:disabled) {
+    right: 15px;
   }
   
   .batch-card-preview {
