@@ -57,4 +57,48 @@ router.delete('/:id', auth, (req, res) => {
   });
 });
 
-module.exports = router; 
+// 批量更新卡片（用于拖拽排序和分类）
+router.patch('/batch-update', auth, (req, res) => {
+  const { cards } = req.body;
+  
+  if (!Array.isArray(cards) || cards.length === 0) {
+    return res.status(400).json({ error: '无效的请求数据' });
+  }
+  
+  // 使用事务批量更新
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    
+    let completed = 0;
+    let hasError = false;
+    
+    cards.forEach((card, index) => {
+      const { id, order, menu_id, sub_menu_id } = card;
+      
+      db.run(
+        'UPDATE cards SET "order"=?, menu_id=?, sub_menu_id=? WHERE id=?',
+        [order, menu_id, sub_menu_id || null, id],
+        function(err) {
+          if (err && !hasError) {
+            hasError = true;
+            db.run('ROLLBACK');
+            return res.status(500).json({ error: err.message });
+          }
+          
+          completed++;
+          
+          if (completed === cards.length && !hasError) {
+            db.run('COMMIT', (err) => {
+              if (err) {
+                return res.status(500).json({ error: err.message });
+              }
+              res.json({ success: true, updated: completed });
+            });
+          }
+        }
+      );
+    });
+  });
+});
+
+module.exports = router;

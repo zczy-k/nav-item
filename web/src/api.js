@@ -28,6 +28,7 @@ export const getCards = (menuId, subMenuId = null) => {
 export const addCard = (data) => axios.post(`${BASE}/cards`, data, { headers: authHeaders() });
 export const updateCard = (id, data) => axios.put(`${BASE}/cards/${id}`, data, { headers: authHeaders() });
 export const deleteCard = (id) => axios.delete(`${BASE}/cards/${id}`, { headers: authHeaders() });
+export const batchUpdateCards = (cards) => axios.patch(`${BASE}/cards/batch-update`, { cards }, { headers: authHeaders() });
 
 export const uploadLogo = (file) => {
   const formData = new FormData();

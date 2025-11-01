@@ -1,7 +1,9 @@
 <template>
-  <div class="container card-grid" :class="animationClass">
+  <div class="container card-grid" :class="[animationClass, { 'edit-mode': editMode }]">
     <div v-for="(card, index) in cards" :key="card.id" 
          class="link-item" 
+         :class="{ 'draggable': editMode }"
+         :data-card-id="card.id"
          :style="getCardStyle(index)">
       <a :href="card.url" target="_blank" :title="getTooltip(card)">
         <img class="link-icon" :src="getLogo(card)" alt="" @error="onImgError($event, card)" loading="lazy">
@@ -12,13 +14,73 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import Sortable from 'sortablejs';
 
-const props = defineProps({ cards: Array });
+const props = defineProps({ 
+  cards: Array,
+  editMode: Boolean
+});
+
+const emit = defineEmits(['cardsReordered']);
+
+let sortableInstance = null;
 
 // 动画状态
 const animationClass = ref('');
 const animationType = ref('slideUp'); // 'slideUp' 或 'radial'
+
+// 初始化拖拽功能
+function initSortable() {
+  if (!props.editMode || sortableInstance) return;
+  
+  const container = document.querySelector('.card-grid');
+  if (!container) return;
+  
+  sortableInstance = new Sortable(container, {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    handle: '.link-item',
+    onEnd: (evt) => {
+      // 拖拽结束后，通知父组件更新顺序
+      const reorderedCards = Array.from(container.children).map((el, index) => {
+        const cardId = parseInt(el.getAttribute('data-card-id'));
+        return props.cards.find(c => c.id === cardId);
+      }).filter(Boolean);
+      
+      emit('cardsReordered', reorderedCards);
+    }
+  });
+}
+
+// 销毁拖拽功能
+function destroySortable() {
+  if (sortableInstance) {
+    sortableInstance.destroy();
+    sortableInstance = null;
+  }
+}
+
+// 监听编辑模式变化
+watch(() => props.editMode, (newVal) => {
+  if (newVal) {
+    nextTick(() => initSortable());
+  } else {
+    destroySortable();
+  }
+});
+
+onMounted(() => {
+  if (props.editMode) {
+    nextTick(() => initSortable());
+  }
+});
+
+onUnmounted(() => {
+  destroySortable();
+});
 
 // 监听 cards 变化，触发动画
 watch(() => props.cards, (newCards, oldCards) => {
@@ -441,5 +503,39 @@ function truncate(str) {
     opacity: 1;
     transform: none;
   }
+}
+
+/* 拖拽相关样式 */
+.edit-mode .link-item.draggable {
+  cursor: move;
+  cursor: grab;
+}
+
+.edit-mode .link-item.draggable:active {
+  cursor: grabbing;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.sortable-chosen {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.sortable-drag {
+  opacity: 0.8;
+  transform: rotate(2deg);
+}
+
+/* 编辑模式下的视觉提示 */
+.edit-mode .link-item {
+  border: 2px dashed transparent;
+  transition: all 0.2s;
+}
+
+.edit-mode .link-item:hover {
+  border-color: rgba(59, 130, 246, 0.5);
 }
 </style>
