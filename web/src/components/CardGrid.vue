@@ -1,6 +1,6 @@
 <template>
-  <div class="container card-grid" :class="[animationClass, { 'edit-mode': editMode }]">
-    <div v-for="(card, index) in cards" :key="card.id" 
+  <div ref="cardGridRef" class="container card-grid" :class="[animationClass, { 'edit-mode': editMode }]">
+    <div v-for="(card, index) in cards" :key="card.id"
          class="link-item" 
          :class="{ 'draggable': editMode }"
          :data-card-id="card.id"
@@ -30,6 +30,8 @@ const props = defineProps({
 
 const emit = defineEmits(['cardsReordered', 'editCard', 'deleteCard']);
 
+// 容器引用
+const cardGridRef = ref(null);
 let sortableInstance = null;
 
 // 动画状态
@@ -40,7 +42,8 @@ const animationType = ref('slideUp'); // 'slideUp' 或 'radial'
 function initSortable() {
   if (!props.editMode || sortableInstance) return;
   
-  const container = document.querySelector('.card-grid');
+  // 使用组件自己的 ref，而不是全局选择器
+  const container = cardGridRef.value;
   if (!container) return;
   
   sortableInstance = new Sortable(container, {
@@ -91,7 +94,7 @@ onUnmounted(() => {
   destroySortable();
 });
 
-// 监听 cards 变化，触发动画
+// 监听 cards 变化，触发动画并重新初始化 Sortable
 watch(() => props.cards, (newCards, oldCards) => {
   // 如果是新的卡片数据或者从有数据变成其他数据
   if (newCards && newCards.length > 0) {
@@ -101,6 +104,11 @@ watch(() => props.cards, (newCards, oldCards) => {
       // 延迟一下确保DOM更新完成
       nextTick(() => {
         triggerAnimation();
+        // 在编辑模式下，重新初始化 Sortable（因为 DOM 可能已重新渲染）
+        if (props.editMode) {
+          destroySortable();
+          nextTick(() => initSortable());
+        }
       });
     }
   }
