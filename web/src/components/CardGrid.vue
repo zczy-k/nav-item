@@ -12,6 +12,7 @@
       <div v-if="editMode" class="card-btns">
         <button @click.stop="$emit('editCard', card)" class="card-btn edit-btn" title="编辑">✏️</button>
         <button @click.stop="$emit('deleteCard', card)" class="card-btn del-btn" title="删除">🗑️</button>
+        <button @click.stop="$emit('cardDragStart', card)" class="card-btn move-btn" title="移动到...">👉</button>
       </div>
     </div>
   </div>
@@ -28,7 +29,7 @@ const props = defineProps({
   subCategoryId: [Number, null]
 });
 
-const emit = defineEmits(['cardsReordered', 'editCard', 'deleteCard']);
+const emit = defineEmits(['cardsReordered', 'editCard', 'deleteCard', 'cardDragStart', 'cardDragEnd']);
 
 // 容器引用
 const cardGridRef = ref(null);
@@ -590,5 +591,9 @@ function truncate(str) {
 
 .del-btn:hover {
   background: rgba(239, 68, 68, 0.9);
+}
+
+.move-btn:hover {
+  background: rgba(16, 185, 129, 0.9);
 }
 </style>

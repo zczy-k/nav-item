@@ -53,39 +53,38 @@
     </div>
     
     
-    <!-- 编辑模式：展示所有分类 -->
-    <div v-if="editMode" class="categories-view">
-      <div v-for="menu in menus" :key="menu.id" class="category-section">
-        <h3 class="category-title">{{ menu.name }}</h3>
-        <CardGrid 
-          :cards="getCategoryCards(menu.id, null)" 
-          :editMode="editMode"
-          :categoryId="menu.id"
-          :subCategoryId="null"
-          @cardsReordered="handleCardsReordered"
-          @editCard="handleEditCard"
-          @deleteCard="handleDeleteCard"
-        />
-        <!-- 子分类 -->
-        <div v-if="menu.sub_menus && menu.sub_menus.length" class="sub-categories">
-          <div v-for="subMenu in menu.sub_menus" :key="subMenu.id" class="sub-category-section">
-            <h4 class="sub-category-title">{{ subMenu.name }}</h4>
-            <CardGrid 
-              :cards="getCategoryCards(menu.id, subMenu.id)" 
-              :editMode="editMode"
-              :categoryId="menu.id"
-              :subCategoryId="subMenu.id"
-              @cardsReordered="handleCardsReordered"
-              @editCard="handleEditCard"
-              @deleteCard="handleDeleteCard"
-            />
+    <!-- 编辑模式目标分类选择面板 -->
+    <div v-if="editMode && draggedCard" class="move-target-panel">
+      <div class="move-target-header">
+        <h4>移动到：</h4>
+        <button @click="cancelMove" class="cancel-move-btn">×</button>
+      </div>
+      <div class="move-target-list">
+        <div v-for="menu in menus" :key="menu.id" class="target-menu-group">
+          <button 
+            @click="moveCardToCategory(menu.id, null)" 
+            class="target-menu-btn"
+            :class="{ 'active': targetMenuId === menu.id && targetSubMenuId === null }"
+          >
+            {{ menu.name }}
+          </button>
+          <div v-if="menu.sub_menus && menu.sub_menus.length" class="target-submenu-list">
+            <button 
+              v-for="subMenu in menu.sub_menus" 
+              :key="subMenu.id"
+              @click="moveCardToCategory(menu.id, subMenu.id)" 
+              class="target-submenu-btn"
+              :class="{ 'active': targetMenuId === menu.id && targetSubMenuId === subMenu.id }"
+            >
+              ⤷ {{ subMenu.name }}
+            </button>
           </div>
         </div>
       </div>
     </div>
-    <!-- 普通模式：只展示当前选中分类 -->
+    
+    <!-- 始终显示当前选中的分类 -->
     <CardGrid 
-      v-else
       :cards="filteredCards" 
       :editMode="editMode"
       :categoryId="activeMenu?.id"
@@ -93,6 +92,8 @@
       @cardsReordered="handleCardsReordered"
       @editCard="handleEditCard"
       @deleteCard="handleDeleteCard"
+      @cardDragStart="handleCardDragStart"
+      @cardDragEnd="handleCardDragEnd"
     />
     
     <!-- 浮动操作按钮菜单 -->
@@ -439,6 +440,11 @@ const editPassword = ref('');
 const showEditPasswordModal = ref(false);
 const editLoading = ref(false);
 const editError = ref('');
+
+// 拖动移动相关状态
+const draggedCard = ref(null);
+const targetMenuId = ref(null);
+const targetSubMenuId = ref(null);
 
 // 卡片编辑模态框相关状态
 const showEditCardModal = ref(false);
@@ -915,9 +921,6 @@ async function verifyEditPassword() {
     const res = await login('admin', editPassword.value);
     localStorage.setItem('token', res.data.token);
     
-    // 加载所有分类的卡片
-    await loadAllCards();
-    
     // 进入编辑模式
     editMode.value = true;
     showEditPasswordModal.value = false;
@@ -931,6 +934,57 @@ async function verifyEditPassword() {
 // 退出编辑模式
 function exitEditMode() {
   editMode.value = false;
+  draggedCard.value = null;
+  targetMenuId.value = null;
+  targetSubMenuId.value = null;
+}
+
+// ========== 拖动移动相关函数 ==========
+
+// 处理卡片拖动开始
+function handleCardDragStart(card) {
+  draggedCard.value = card;
+  // 默认目标为当前分类
+  targetMenuId.value = activeMenu.value?.id || null;
+  targetSubMenuId.value = activeSubMenu.value?.id || null;
+}
+
+// 处理卡片拖动结束
+function handleCardDragEnd() {
+  draggedCard.value = null;
+}
+
+// 取消移动
+function cancelMove() {
+  draggedCard.value = null;
+  targetMenuId.value = null;
+  targetSubMenuId.value = null;
+}
+
+// 移动卡片到指定分类
+async function moveCardToCategory(menuId, subMenuId) {
+  if (!draggedCard.value) return;
+  
+  try {
+    // 更新卡片分类
+    await updateCard(draggedCard.value.id, {
+      ...draggedCard.value,
+      menu_id: menuId,
+      sub_menu_id: subMenuId
+    });
+    
+    alert('移动成功！');
+    
+    // 重新加载当前分类
+    await loadCards();
+    
+    // 清空状态
+    draggedCard.value = null;
+    targetMenuId.value = null;
+    targetSubMenuId.value = null;
+  } catch (error) {
+    alert('移动失败：' + (error.response?.data?.error || error.message));
+  }
 }
 
 // 卡片重新排序处理（拖拽完成后自动保存）
@@ -1918,6 +1972,129 @@ async function saveCardEdit() {
 
 .exit-edit-btn:hover {
   box-shadow: 0 6px 25px rgba(239, 68, 68, 0.3);
+}
+
+/* ========== 移动目标面板样式 ========== */
+
+.move-target-panel {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 280px;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.move-target-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.move-target-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cancel-move-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.cancel-move-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.move-target-list {
+  max-height: calc(80vh - 60px);
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.target-menu-group {
+  margin-bottom: 10px;
+}
+
+.target-menu-btn,
+.target-submenu-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px 15px;
+  border: 2px solid transparent;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 5px;
+}
+
+.target-menu-btn:hover,
+.target-submenu-btn:hover {
+  background: #e5e7eb;
+  border-color: #667eea;
+}
+
+.target-menu-btn.active,
+.target-submenu-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.target-submenu-list {
+  margin-left: 15px;
+  margin-top: 5px;
+}
+
+.target-submenu-btn {
+  font-size: 13px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .move-target-panel {
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: 90vw;
+  }
 }
 
 /* ========== 编辑模式分类视图样式 ========== */
