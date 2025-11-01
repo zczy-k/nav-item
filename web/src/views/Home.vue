@@ -566,15 +566,40 @@ onBeforeMount(() => {
   }
 });
 
-// 在 onMounted 中调用
 onMounted(async () => {
   const res = await getMenus();
+  console.log('Original menu data:', res.data);
   menus.value = buildMenuTree(res.data); // 使用转换后的数据
+  console.log('Built menu tree:', menus.value);
   if (menus.value.length) {
     activeMenu.value = menus.value[0];
     loadCards();
   }
-  // ...
+  // 加载广告
+  const adRes = await getAds();
+  leftAds.value = adRes.data.filter(ad => ad.position === 'left');
+  rightAds.value = adRes.data.filter(ad => ad.position === 'right');
+  
+  const friendRes = await getFriends();
+  friendLinks.value = friendRes.data;
+  
+  // 再次检查并应用背景（防止 onBeforeMount 没有执行）
+  const savedBg = localStorage.getItem('nav_background');
+  if (savedBg) {
+    const homeContainer = document.querySelector('.home-container');
+    if (homeContainer && !homeContainer.style.backgroundImage.includes(savedBg)) {
+      homeContainer.style.backgroundImage = `url(${savedBg})`;
+      homeContainer.style.backgroundSize = 'cover';
+      homeContainer.style.backgroundPosition = 'center';
+      homeContainer.style.backgroundRepeat = 'no-repeat';
+      homeContainer.style.backgroundAttachment = 'fixed';
+    }
+  }
+  
+  // 检查是否有保存的密码token
+  checkSavedPassword();
+  
+  document.addEventListener('click', closeFabMenu);
 });
 
 // 构建菜单树结构
