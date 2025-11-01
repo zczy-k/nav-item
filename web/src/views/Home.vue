@@ -124,21 +124,6 @@
         </button>
       </transition>
       
-      <!-- 批量移动按钮 -->
-      <transition name="fab-item">
-        <button 
-          v-if="editMode && selectedCards.length > 0" 
-          v-show="showFabMenu" 
-          @click="openBatchMovePanel" 
-          class="batch-move-btn" 
-          title="批量移动"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-          </svg>
-          <span class="batch-count">{{ selectedCards.length }}</span>
-        </button>
-      </transition>
       
       <!-- 退出编辑模式按钮 -->
       <transition name="fab-item">
@@ -1003,9 +988,21 @@ function cancelMove() {
 function toggleCardSelection(card) {
   const index = selectedCards.value.findIndex(c => c.id === card.id);
   if (index > -1) {
+    // 取消选中
     selectedCards.value.splice(index, 1);
+    // 如果没有选中的卡片了，关闭面板
+    if (selectedCards.value.length === 0) {
+      showMovePanel.value = false;
+    }
   } else {
+    // 选中
     selectedCards.value.push(card);
+    // 自动打开移动面板
+    if (!showMovePanel.value) {
+      showMovePanel.value = true;
+      targetMenuId.value = activeMenu.value?.id || null;
+      targetSubMenuId.value = activeSubMenu.value?.id || null;
+    }
   }
 }
 
