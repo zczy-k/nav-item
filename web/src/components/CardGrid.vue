@@ -5,10 +5,14 @@
          :class="{ 'draggable': editMode }"
          :data-card-id="card.id"
          :style="getCardStyle(index)">
-      <a :href="card.url" target="_blank" :title="getTooltip(card)">
+      <a :href="editMode ? 'javascript:void(0)' : card.url" :target="editMode ? '' : '_blank'" :title="getTooltip(card)" @click="editMode ? $event.preventDefault() : null">
         <img class="link-icon" :src="getLogo(card)" alt="" @error="onImgError($event, card)" loading="lazy">
         <span class="link-text">{{ truncate(card.title) }}</span>
       </a>
+      <div v-if="editMode" class="card-btns">
+        <button @click.stop="$emit('editCard', card)" class="card-btn edit-btn" title="编辑">✏️</button>
+        <button @click.stop="$emit('deleteCard', card)" class="card-btn del-btn" title="删除">🗑️</button>
+      </div>
     </div>
   </div>
 </template>
@@ -22,7 +26,7 @@ const props = defineProps({
   editMode: Boolean
 });
 
-const emit = defineEmits(['cardsReordered']);
+const emit = defineEmits(['cardsReordered', 'editCard', 'deleteCard']);
 
 let sortableInstance = null;
 
@@ -533,9 +537,45 @@ function truncate(str) {
 .edit-mode .link-item {
   border: 2px dashed transparent;
   transition: all 0.2s;
+  position: relative;
 }
 
 .edit-mode .link-item:hover {
   border-color: rgba(59, 130, 246, 0.5);
+}
+
+.card-btns {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px;
+}
+
+.card-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-btn:hover {
+  transform: scale(1.1);
+}
+
+.edit-btn:hover {
+  background: rgba(59, 130, 246, 0.9);
+}
+
+.del-btn:hover {
+  background: rgba(239, 68, 68, 0.9);
 }
 </style>

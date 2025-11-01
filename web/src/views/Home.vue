@@ -85,6 +85,8 @@
       :cards="filteredCards" 
       :editMode="editMode"
       @cardsReordered="handleCardsReordered"
+      @editCard="handleEditCard"
+      @deleteCard="handleDeleteCard"
     />
     
     <!-- 浮动操作按钮菜单 -->
@@ -325,7 +327,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeMount, computed, defineAsyncComponent, onUnmounted } from 'vue';
-import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards } from '../api';
+import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards, deleteCard, updateCard } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
 
@@ -858,6 +860,33 @@ function cancelEdit() {
   cards.value = originalCards.value;
   editMode.value = false;
   pendingChanges.value = [];
+}
+
+// 删除卡片
+async function handleDeleteCard(card) {
+  if (!confirm(`确定要删除「${card.title}」吗？`)) return;
+  try {
+    await deleteCard(card.id);
+    alert('删除成功');
+    await loadCards();
+  } catch (error) {
+    alert('删除失败：' + (error.response?.data?.error || error.message));
+  }
+}
+
+// 编辑卡片
+async function handleEditCard(card) {
+  const title = prompt('修改标题：', card.title);
+  if (!title) return;
+  const url = prompt('修改链接：', card.url);
+  if (!url) return;
+  try {
+    await updateCard(card.id, { ...card, title, url });
+    alert('修改成功');
+    await loadCards();
+  } catch (error) {
+    alert('修改失败：' + (error.response?.data?.error || error.message));
+  }
 }
 </script>
 
