@@ -31,6 +31,63 @@ router.get('/:menuId', (req, res) => {
   });
 });
 
+// 批量更新卡片（用于拖拽排序和分类）- 必须放在/:id之前
+router.patch('/batch-update', auth, (req, res) => {
+  const { cards } = req.body;
+  
+  if (!Array.isArray(cards) || cards.length === 0) {
+    return res.status(400).json({ error: '无效的请求数据' });
+  }
+  
+  // 使用Promise优化批量更新
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION', (err) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      
+      let completed = 0;
+      let hasError = false;
+      
+      if (cards.length === 0) {
+        db.run('COMMIT');
+        return res.json({ success: true, updated: 0 });
+      }
+      
+      cards.forEach((card) => {
+        const { id, order, menu_id, sub_menu_id } = card;
+        
+        db.run(
+          'UPDATE cards SET "order"=?, menu_id=?, sub_menu_id=? WHERE id=?',
+          [order, menu_id, sub_menu_id || null, id],
+          function(err) {
+            if (hasError) return; // 已经处理过错误
+            
+            if (err) {
+              hasError = true;
+              db.run('ROLLBACK', () => {
+                res.status(500).json({ error: err.message });
+              });
+              return;
+            }
+            
+            completed++;
+            
+            if (completed === cards.length) {
+              db.run('COMMIT', (err) => {
+                if (err) {
+                  return res.status(500).json({ error: err.message });
+                }
+                res.json({ success: true, updated: completed });
+              });
+            }
+          }
+        );
+      });
+    });
+  });
+});
+
 // 新增、修改、删除卡片需认证
 router.post('/', auth, (req, res) => {
   const { menu_id, sub_menu_id, title, url, logo_url, custom_logo_path, desc, order } = req.body;
@@ -54,50 +111,6 @@ router.delete('/:id', auth, (req, res) => {
   db.run('DELETE FROM cards WHERE id=?', [req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
     res.json({ deleted: this.changes });
-  });
-});
-
-// 批量更新卡片（用于拖拽排序和分类）
-router.patch('/batch-update', auth, (req, res) => {
-  const { cards } = req.body;
-  
-  if (!Array.isArray(cards) || cards.length === 0) {
-    return res.status(400).json({ error: '无效的请求数据' });
-  }
-  
-  // 使用事务批量更新
-  db.serialize(() => {
-    db.run('BEGIN TRANSACTION');
-    
-    let completed = 0;
-    let hasError = false;
-    
-    cards.forEach((card, index) => {
-      const { id, order, menu_id, sub_menu_id } = card;
-      
-      db.run(
-        'UPDATE cards SET "order"=?, menu_id=?, sub_menu_id=? WHERE id=?',
-        [order, menu_id, sub_menu_id || null, id],
-        function(err) {
-          if (err && !hasError) {
-            hasError = true;
-            db.run('ROLLBACK');
-            return res.status(500).json({ error: err.message });
-          }
-          
-          completed++;
-          
-          if (completed === cards.length && !hasError) {
-            db.run('COMMIT', (err) => {
-              if (err) {
-                return res.status(500).json({ error: err.message });
-              }
-              res.json({ success: true, updated: completed });
-            });
-          }
-        }
-      );
-    });
   });
 });
 
