@@ -322,6 +322,67 @@
         </div>
       </div>
     </div>
+    
+    <!-- 卡片编辑弹窗 -->
+    <div v-if="showEditCardModal" class="modal-overlay" @click="closeEditCardModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>编辑卡片</h3>
+          <button @click="closeEditCardModal" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="edit-card-form">
+            <div class="form-group">
+              <label>标题</label>
+              <input 
+                v-model="cardEditForm.title" 
+                type="text" 
+                placeholder="请输入标题"
+                class="batch-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>网址</label>
+              <input 
+                v-model="cardEditForm.url" 
+                type="url" 
+                placeholder="请输入网址"
+                class="batch-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Logo 链接</label>
+              <input 
+                v-model="cardEditForm.logo" 
+                type="url" 
+                placeholder="请输入 Logo 图片链接"
+                class="batch-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>描述</label>
+              <textarea 
+                v-model="cardEditForm.description" 
+                placeholder="请输入描述"
+                class="batch-textarea"
+                rows="4"
+              ></textarea>
+            </div>
+            <p v-if="editError" class="batch-error">{{ editError }}</p>
+            <div class="batch-actions" style="margin-top: 20px;">
+              <button @click="closeEditCardModal" class="btn btn-cancel">取消</button>
+              <button @click="saveCardEdit" class="btn btn-primary" :disabled="editLoading">
+                {{ editLoading ? '保存中...' : '保存' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -359,6 +420,16 @@ const originalCards = ref([]); // 保存原始卡片数据用于取消操作
 const pendingChanges = ref([]); // 待保存的更改
 const editLoading = ref(false);
 const editError = ref('');
+
+// 卡片编辑模态框相关状态
+const showEditCardModal = ref(false);
+const editingCard = ref(null);
+const cardEditForm = ref({
+  title: '',
+  url: '',
+  logo: '',
+  description: ''
+});
 
 // FAB 菜单
 const showFabMenu = ref(false);
@@ -875,17 +946,60 @@ async function handleDeleteCard(card) {
 }
 
 // 编辑卡片
-async function handleEditCard(card) {
-  const title = prompt('修改标题：', card.title);
-  if (!title) return;
-  const url = prompt('修改链接：', card.url);
-  if (!url) return;
+function handleEditCard(card) {
+  editingCard.value = card;
+  cardEditForm.value = {
+    title: card.title || '',
+    url: card.url || '',
+    logo: card.logo || '',
+    description: card.description || ''
+  };
+  editError.value = '';
+  showEditCardModal.value = true;
+}
+
+// 关闭卡片编辑模态框
+function closeEditCardModal() {
+  showEditCardModal.value = false;
+  editingCard.value = null;
+  cardEditForm.value = {
+    title: '',
+    url: '',
+    logo: '',
+    description: ''
+  };
+  editError.value = '';
+}
+
+// 保存卡片编辑
+async function saveCardEdit() {
+  if (!cardEditForm.value.title.trim()) {
+    editError.value = '请输入标题';
+    return;
+  }
+  if (!cardEditForm.value.url.trim()) {
+    editError.value = '请输入网址';
+    return;
+  }
+  
+  editLoading.value = true;
+  editError.value = '';
+  
   try {
-    await updateCard(card.id, { ...card, title, url });
+    await updateCard(editingCard.value.id, {
+      ...editingCard.value,
+      title: cardEditForm.value.title,
+      url: cardEditForm.value.url,
+      logo: cardEditForm.value.logo,
+      description: cardEditForm.value.description
+    });
     alert('修改成功');
+    closeEditCardModal();
     await loadCards();
   } catch (error) {
-    alert('修改失败：' + (error.response?.data?.error || error.message));
+    editError.value = '修改失败：' + (error.response?.data?.error || error.message);
+  } finally {
+    editLoading.value = false;
   }
 }
 </script>
@@ -1532,6 +1646,25 @@ async function handleEditCard(card) {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+/* 卡片编辑表单 */
+.edit-card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
 }
 
 .btn {
