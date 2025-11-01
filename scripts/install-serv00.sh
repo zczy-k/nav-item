@@ -98,8 +98,8 @@ install_application() {
             mv "${WORKDIR}/.env" "${WORKDIR}/.env.backup"
         fi
         
-        # 清理旧文件（保留 data 和 .env 的备份）
-        find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'data.backup' ! -name '.env.backup' ! -name 'nav-item-main' ! -name 'nav-item.zip' -exec rm -rf {} + 2>/dev/null || true
+        # 清理旧文件（保留 data、.env 和 node_modules）
+        find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'data.backup' ! -name '.env.backup' ! -name 'node_modules' ! -name 'nav-item-main' ! -name 'nav-item.zip' -exec rm -rf {} + 2>/dev/null || true
         
         # 复制新文件
         cp -r ${WORKDIR}/nav-item-main/* ${WORKDIR}/
@@ -153,6 +153,9 @@ install_application() {
     yellow "安装后端依赖...（这可能需要几分钟）\n"
     
     LOG_FILE="${HOME}/npm-install.log"
+    # 确保在正确的目录下安装
+    cd "${WORKDIR}" || exit 1
+    
     if npm install 2>&1 | tee "$LOG_FILE" | grep -v "^npm warn"; then
         green "依赖安装成功\n"
         rm -f "$LOG_FILE"
@@ -160,7 +163,16 @@ install_application() {
         red "依赖安装失败！\n"
         yellow "错误日志："
         tail -20 "$LOG_FILE"
-        exit 1
+        yellow "\n尝试重新安装依赖...\n"
+        # 删除可能损坏的 node_modules 并重试
+        rm -rf "${WORKDIR}/node_modules"
+        if npm install 2>&1 | tee "$LOG_FILE"; then
+            green "重试成功，依赖安装完成\n"
+            rm -f "$LOG_FILE"
+        else
+            red "依赖安装彻底失败，请手动运行: cd ${WORKDIR} && npm install\n"
+            exit 1
+        fi
     fi
     
     # 重启应用
