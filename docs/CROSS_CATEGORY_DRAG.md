@@ -116,6 +116,53 @@ function initSortable()
 - Safari 14+
 - 移动端浏览器支持
 
+## 已修复的问题
+
+### 问题 1：全局选择器冲突（已修复）
+
+**现象**：
+- 只有第一个分类可以拖动
+- 其他分类内部无法拖动排序
+- 无法跨分类拖动
+
+**原因**：
+```javascript
+// 错误的实现：使用全局选择器
+const container = document.querySelector('.card-grid');
+// 所有 CardGrid 组件实例都选中了第一个 .card-grid 元素
+```
+
+当多个 CardGrid 组件同时渲染时：
+1. 每个组件都尝试初始化 Sortable
+2. 但它们都使用 `document.querySelector('.card-grid')`
+3. 这个选择器只会返回 **第一个** 匹配的元素
+4. 结果：所有 Sortable 实例都绑定在同一个 DOM 上
+
+**修复方案**：
+```javascript
+// 正确的实现：使用组件内部的 ref
+<template>
+  <div ref="cardGridRef" class="container card-grid">
+    <!-- ... -->
+  </div>
+</template>
+
+<script setup>
+const cardGridRef = ref(null);
+
+function initSortable() {
+  const container = cardGridRef.value; // 使用组件自己的 ref
+  // ...
+}
+</script>
+```
+
+**效果**：
+- 每个 CardGrid 组件都有自己的 ref 引用
+- 每个 Sortable 实例绑定在正确的容器上
+- 所有分类都可以独立拖动
+- 支持跨分类拖动
+
 ## 已知限制
 
 1. 不支持 IE 浏览器
