@@ -357,7 +357,7 @@
             <div class="form-group">
               <label>Logo 链接</label>
               <input 
-                v-model="cardEditForm.logo" 
+                v-model="cardEditForm.logo_url" 
                 type="url" 
                 placeholder="请输入 Logo 图片链接"
                 class="batch-input"
@@ -366,7 +366,7 @@
             <div class="form-group">
               <label>描述</label>
               <textarea 
-                v-model="cardEditForm.description" 
+                v-model="cardEditForm.desc" 
                 placeholder="请输入描述"
                 class="batch-textarea"
                 rows="4"
@@ -427,8 +427,8 @@ const editingCard = ref(null);
 const cardEditForm = ref({
   title: '',
   url: '',
-  logo: '',
-  description: ''
+  logo_url: '',
+  desc: ''
 });
 
 // FAB 菜单
@@ -951,8 +951,8 @@ function handleEditCard(card) {
   cardEditForm.value = {
     title: card.title || '',
     url: card.url || '',
-    logo: card.logo || '',
-    description: card.description || ''
+    logo_url: card.logo_url || '',
+    desc: card.desc || ''
   };
   editError.value = '';
   showEditCardModal.value = true;
@@ -965,8 +965,8 @@ function closeEditCardModal() {
   cardEditForm.value = {
     title: '',
     url: '',
-    logo: '',
-    description: ''
+    logo_url: '',
+    desc: ''
   };
   editError.value = '';
 }
@@ -990,8 +990,8 @@ async function saveCardEdit() {
       ...editingCard.value,
       title: cardEditForm.value.title,
       url: cardEditForm.value.url,
-      logo: cardEditForm.value.logo,
-      description: cardEditForm.value.description
+      logo_url: cardEditForm.value.logo_url,
+      desc: cardEditForm.value.desc
     });
     alert('修改成功');
     closeEditCardModal();
