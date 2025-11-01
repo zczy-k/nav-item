@@ -52,34 +52,6 @@
       </a>
     </div>
     
-    <!-- 编辑模式工具栏 -->
-    <transition name="fade">
-      <div v-if="editMode" class="edit-toolbar">
-        <div class="edit-toolbar-content">
-          <div class="edit-info">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-            </svg>
-            <span>编辑模式：拖拽卡片可调整顺序</span>
-            <span v-if="pendingChanges.length > 0" class="changes-count">
-              ({{ pendingChanges.length }} 项更改)
-            </span>
-          </div>
-          <div class="edit-actions">
-            <button @click="cancelEdit" class="btn btn-cancel" :disabled="editLoading">
-              取消
-            </button>
-            <button 
-              @click="saveChanges" 
-              class="btn btn-primary" 
-              :disabled="editLoading || pendingChanges.length === 0"
-            >
-              {{ editLoading ? '保存中...' : '保存' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
     
     <CardGrid 
       :cards="filteredCards" 
@@ -114,7 +86,22 @@
         </button>
       </transition>
       
-      <!-- 编辑模式按钮 -->
+      <!-- 退出编辑模式按钮 -->
+      <transition name="fab-item">
+        <button 
+          v-if="editMode" 
+          v-show="showFabMenu" 
+          @click="exitEditMode" 
+          class="exit-edit-btn" 
+          title="退出编辑模式"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </transition>
+      
+      <!-- 进入编辑模式按钮 -->
       <transition name="fab-item">
         <button 
           v-if="!editMode" 
@@ -416,8 +403,6 @@ const rememberPassword = ref(false);
 const editMode = ref(false);
 const editPassword = ref('');
 const showEditPasswordModal = ref(false);
-const originalCards = ref([]); // 保存原始卡片数据用于取消操作
-const pendingChanges = ref([]); // 待保存的更改
 const editLoading = ref(false);
 const editError = ref('');
 
@@ -867,9 +852,6 @@ async function verifyEditPassword() {
     const res = await login('admin', editPassword.value);
     localStorage.setItem('token', res.data.token);
     
-    // 保存原始卡片数据
-    originalCards.value = JSON.parse(JSON.stringify(cards.value));
-    
     // 进入编辑模式
     editMode.value = true;
     showEditPasswordModal.value = false;
@@ -880,57 +862,35 @@ async function verifyEditPassword() {
   }
 }
 
-// 卡片重新排序处理
-function handleCardsReordered(reorderedCards) {
+// 退出编辑模式
+function exitEditMode() {
+  editMode.value = false;
+}
+
+// 卡片重新排序处理（拖拽完成后自动保存）
+async function handleCardsReordered(reorderedCards) {
   // 更新卡片order
   cards.value = reorderedCards.map((card, index) => ({
     ...card,
     order: index
   }));
   
-  // 记录更改
-  pendingChanges.value = cards.value.map((card, index) => ({
+  // 自动保存
+  const updates = cards.value.map((card, index) => ({
     id: card.id,
     order: index,
     menu_id: card.menu_id || activeMenu.value.id,
     sub_menu_id: card.sub_menu_id || activeSubMenu.value?.id || null
   }));
-}
-
-// 保存更改
-async function saveChanges() {
-  if (pendingChanges.value.length === 0) {
-    alert('没有需要保存的更改');
-    return;
-  }
-  
-  editLoading.value = true;
   
   try {
-    await batchUpdateCards(pendingChanges.value);
-    alert('保存成功');
-    editMode.value = false;
-    pendingChanges.value = [];
-    await loadCards(); // 重新加载卡片
+    await batchUpdateCards(updates);
+    // 静默保存，不弹出提示
   } catch (error) {
     alert('保存失败：' + (error.response?.data?.error || error.message));
-  } finally {
-    editLoading.value = false;
+    // 保存失败时重新加载，恢复原始顺序
+    await loadCards();
   }
-}
-
-// 取消编辑
-function cancelEdit() {
-  if (pendingChanges.value.length > 0) {
-    if (!confirm('有未保存的更改，确定要取消吗？')) {
-      return;
-    }
-  }
-  
-  // 恢复原始数据
-  cards.value = originalCards.value;
-  editMode.value = false;
-  pendingChanges.value = [];
 }
 
 // 删除卡片
@@ -1848,54 +1808,10 @@ async function saveCardEdit() {
   }
 }
 
-/* ========== 编辑模式样式 ==========  */
+/* ========== 编辑模式按钮样式 ==========  */
 
-/* 编辑工具栏 */
-.edit-toolbar {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 999;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 15px 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 800px;
-  width: 90%;
-}
-
-.edit-toolbar-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-}
-
-.edit-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #3b82f6;
-  font-weight: 500;
-}
-
-.edit-info svg {
-  flex-shrink: 0;
-}
-
-.changes-count {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.edit-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.edit-mode-btn {
+.edit-mode-btn,
+.exit-edit-btn {
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -1911,42 +1827,18 @@ async function saveCardEdit() {
   margin-bottom: 15px;
 }
 
-.edit-mode-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+.edit-mode-btn:hover,
+.exit-edit-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.3);
 }
 
-/* 动画 */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.exit-edit-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
-  .edit-toolbar {
-    top: 60px;
-    padding: 12px 15px;
-  }
-  
-  .edit-toolbar-content {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .edit-info {
-    font-size: 14px;
-  }
-  
-  .edit-actions {
-    width: 100%;
-  }
-  
-  .edit-actions button {
-    flex: 1;
-  }
+.exit-edit-btn:hover {
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.3);
 }
 </style>
