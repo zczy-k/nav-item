@@ -68,9 +68,9 @@
           >
             {{ menu.name }}
           </button>
-          <div v-if="menu.sub_menus && menu.sub_menus.length" class="target-submenu-list">
+          <div v-if="menu.subMenus && menu.subMenus.length" class="target-submenu-list">
             <button 
-              v-for="subMenu in menu.sub_menus" 
+              v-for="subMenu in menu.subMenus" 
               :key="subMenu.id"
               @click="moveCardToCategory(menu.id, subMenu.id)" 
               class="target-submenu-btn"
@@ -568,9 +568,7 @@ onBeforeMount(() => {
 
 onMounted(async () => {
   const res = await getMenus();
-  console.log('Original menu data:', res.data);
-  menus.value = buildMenuTree(res.data); // 使用转换后的数据
-  console.log('Built menu tree:', menus.value);
+  menus.value = res.data; // 直接使用后端返回的数据，不需要再次构建
   if (menus.value.length) {
     activeMenu.value = menus.value[0];
     loadCards();
@@ -602,29 +600,6 @@ onMounted(async () => {
   document.addEventListener('click', closeFabMenu);
 });
 
-// 构建菜单树结构
-function buildMenuTree(menuList) {
-  const menuMap = {};
-  const tree = [];
-
-  // 第一次遍历，创建映射
-  menuList.forEach(menu => {
-    menuMap[menu.id] = { ...menu, sub_menus: [] };
-  });
-
-  // 第二次遍历，构建树
-  menuList.forEach(menu => {
-    if (menu.parent_id) {
-      if (menuMap[menu.parent_id]) {
-        menuMap[menu.parent_id].sub_menus.push(menuMap[menu.id]);
-      }
-    } else {
-      tree.push(menuMap[menu.id]);
-    }
-  });
-
-  return tree;
-}
 
 onUnmounted(() => {
   document.removeEventListener('click', closeFabMenu);
@@ -661,8 +636,8 @@ async function loadAllCards() {
     tempCards[key] = res.data;
     
     // 加载子分类
-    if (menu.sub_menus && menu.sub_menus.length) {
-      for (const subMenu of menu.sub_menus) {
+    if (menu.subMenus && menu.subMenus.length) {
+      for (const subMenu of menu.subMenus) {
         const subRes = await getCards(menu.id, subMenu.id);
         const subKey = `${menu.id}_${subMenu.id}`;
         tempCards[subKey] = subRes.data;
