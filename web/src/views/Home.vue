@@ -54,10 +54,9 @@
     
     
     <!-- 编辑模式目标分类选择面板 -->
-    <div v-if="editMode && (draggedCard || showMovePanel)" class="move-target-panel">
+    <div v-if="editMode && showMovePanel" class="move-target-panel">
       <div class="move-target-header">
-        <h4 v-if="selectedCards.length > 0">批量移动 ({{ selectedCards.length }})</h4>
-        <h4 v-else>移动到：</h4>
+        <h4>移动到 ({{ selectedCards.length }})</h4>
         <button @click="cancelMove" class="cancel-move-btn">×</button>
       </div>
       <div class="move-target-list">
@@ -94,8 +93,6 @@
       @cardsReordered="handleCardsReordered"
       @editCard="handleEditCard"
       @deleteCard="handleDeleteCard"
-      @cardDragStart="handleCardDragStart"
-      @cardDragEnd="handleCardDragEnd"
       @toggleCardSelection="toggleCardSelection"
     />
     
@@ -452,14 +449,11 @@ const showEditPasswordModal = ref(false);
 const editLoading = ref(false);
 const editError = ref('');
 
-// 拖动移动相关状态
-const draggedCard = ref(null);
-const targetMenuId = ref(null);
-const targetSubMenuId = ref(null);
-
 // 批量移动相关状态
 const selectedCards = ref([]);
 const showMovePanel = ref(false);
+const targetMenuId = ref(null);
+const targetSubMenuId = ref(null);
 
 // Toast 提示状态
 const toastMessage = ref('');
@@ -954,31 +948,16 @@ async function verifyEditPassword() {
 // 退出编辑模式
 function exitEditMode() {
   editMode.value = false;
-  draggedCard.value = null;
   selectedCards.value = [];
   showMovePanel.value = false;
   targetMenuId.value = null;
   targetSubMenuId.value = null;
 }
 
-// ========== 拖动移动相关函数 ==========
-
-// 处理卡片拖动开始
-function handleCardDragStart(card) {
-  draggedCard.value = card;
-  // 默认目标为当前分类
-  targetMenuId.value = activeMenu.value?.id || null;
-  targetSubMenuId.value = activeSubMenu.value?.id || null;
-}
-
-// 处理卡片拖动结束
-function handleCardDragEnd() {
-  draggedCard.value = null;
-}
+// ========== 批量移动相关函数 ==========
 
 // 取消移动
 function cancelMove() {
-  draggedCard.value = null;
   showMovePanel.value = false;
   targetMenuId.value = null;
   targetSubMenuId.value = null;
@@ -1006,16 +985,6 @@ function toggleCardSelection(card) {
   }
 }
 
-// 打开批量移动面板
-function openBatchMovePanel() {
-  if (selectedCards.value.length === 0) {
-    showToastMessage('请先选择要移动的卡片');
-    return;
-  }
-  showMovePanel.value = true;
-  targetMenuId.value = activeMenu.value?.id || null;
-  targetSubMenuId.value = activeSubMenu.value?.id || null;
-}
 
 // 显示 Toast 提示
 function showToastMessage(message, duration = 2000) {
@@ -1028,59 +997,34 @@ function showToastMessage(message, duration = 2000) {
 
 // 移动卡片到指定分类
 async function moveCardToCategory(menuId, subMenuId) {
-  // 批量移动
-  if (selectedCards.value.length > 0) {
-    try {
-      const updates = selectedCards.value.map(card => ({
-        id: card.id,
-        menu_id: menuId,
-        sub_menu_id: subMenuId
-      }));
-      
-      // 批量更新
-      for (const update of updates) {
-        const card = selectedCards.value.find(c => c.id === update.id);
-        await updateCard(update.id, {
-          ...card,
-          menu_id: update.menu_id,
-          sub_menu_id: update.sub_menu_id
-        });
-      }
-      
-      showToastMessage(`已移动 ${selectedCards.value.length} 个卡片！`);
-      
-      // 清空选中列表
-      selectedCards.value = [];
-      showMovePanel.value = false;
-      
-      // 重新加载
-      await loadCards();
-    } catch (error) {
-      showToastMessage(`批量移动失败：${error.response?.data?.error || error.message}`);
-    }
-    return;
-  }
-  
-  // 单个移动
-  if (!draggedCard.value) return;
-  
-  const cardTitle = draggedCard.value.title;
+  if (selectedCards.value.length === 0) return;
   
   try {
-    // 更新卡片分类
-    await updateCard(draggedCard.value.id, {
-      ...draggedCard.value,
+    const updates = selectedCards.value.map(card => ({
+      id: card.id,
       menu_id: menuId,
       sub_menu_id: subMenuId
-    });
+    }));
     
-    showToastMessage(`「${cardTitle}」移动成功！`);
+    // 批量更新
+    for (const update of updates) {
+      const card = selectedCards.value.find(c => c.id === update.id);
+      await updateCard(update.id, {
+        ...card,
+        menu_id: update.menu_id,
+        sub_menu_id: update.sub_menu_id
+      });
+    }
     
-    // 重新加载当前分类
+    const count = selectedCards.value.length;
+    showToastMessage(`已移动 ${count} 个卡片！`);
+    
+    // 清空选中列表
+    selectedCards.value = [];
+    showMovePanel.value = false;
+    
+    // 重新加载
     await loadCards();
-    
-    // 不关闭面板，只清空当前选中的卡片，方便继续移动其他卡片
-    draggedCard.value = null;
   } catch (error) {
     showToastMessage(`移动失败：${error.response?.data?.error || error.message}`);
   }
