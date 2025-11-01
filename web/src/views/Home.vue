@@ -405,6 +405,13 @@
         </div>
       </div>
     </div>
+    
+    <!-- Toast 提示 -->
+    <transition name="toast">
+      <div v-if="showToast" class="toast-notification">
+        {{ toastMessage }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -445,6 +452,10 @@ const editError = ref('');
 const draggedCard = ref(null);
 const targetMenuId = ref(null);
 const targetSubMenuId = ref(null);
+
+// Toast 提示状态
+const toastMessage = ref('');
+const showToast = ref(false);
 
 // 卡片编辑模态框相关状态
 const showEditCardModal = ref(false);
@@ -962,9 +973,20 @@ function cancelMove() {
   targetSubMenuId.value = null;
 }
 
+// 显示 Toast 提示
+function showToastMessage(message, duration = 2000) {
+  toastMessage.value = message;
+  showToast.value = true;
+  setTimeout(() => {
+    showToast.value = false;
+  }, duration);
+}
+
 // 移动卡片到指定分类
 async function moveCardToCategory(menuId, subMenuId) {
   if (!draggedCard.value) return;
+  
+  const cardTitle = draggedCard.value.title;
   
   try {
     // 更新卡片分类
@@ -974,17 +996,15 @@ async function moveCardToCategory(menuId, subMenuId) {
       sub_menu_id: subMenuId
     });
     
-    alert('移动成功！');
+    showToastMessage(`「${cardTitle}」移动成功！`);
     
     // 重新加载当前分类
     await loadCards();
     
-    // 清空状态
+    // 不关闭面板，只清空当前选中的卡片，方便继续移动其他卡片
     draggedCard.value = null;
-    targetMenuId.value = null;
-    targetSubMenuId.value = null;
   } catch (error) {
-    alert('移动失败：' + (error.response?.data?.error || error.message));
+    showToastMessage(`移动失败：${error.response?.data?.error || error.message}`);
   }
 }
 
@@ -2096,6 +2116,40 @@ async function saveCardEdit() {
     width: auto;
     max-width: 90vw;
   }
+}
+
+/* ========== Toast 提示样式 ========== */
+
+.toast-notification {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
 }
 
 /* ========== 编辑模式分类视图样式 ========== */
