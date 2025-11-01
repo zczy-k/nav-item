@@ -23,7 +23,9 @@ import Sortable from 'sortablejs';
 
 const props = defineProps({ 
   cards: Array,
-  editMode: Boolean
+  editMode: Boolean,
+  categoryId: Number,
+  subCategoryId: [Number, null]
 });
 
 const emit = defineEmits(['cardsReordered', 'editCard', 'deleteCard']);
@@ -43,18 +45,21 @@ function initSortable() {
   
   sortableInstance = new Sortable(container, {
     animation: 150,
+    group: 'cards', // 设置组名，允许跨分类拖动
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
     dragClass: 'sortable-drag',
     handle: '.link-item',
     onEnd: (evt) => {
       // 拖拽结束后，通知父组件更新顺序
-      const reorderedCards = Array.from(container.children).map((el, index) => {
-        const cardId = parseInt(el.getAttribute('data-card-id'));
-        return props.cards.find(c => c.id === cardId);
-      }).filter(Boolean);
+      const targetContainer = evt.to;
+      // 只需要传递卡片ID列表，父组件会处理完整数据
+      const cardIds = Array.from(targetContainer.children).map((el) => {
+        return parseInt(el.getAttribute('data-card-id'));
+      }).filter(id => !isNaN(id));
       
-      emit('cardsReordered', reorderedCards);
+      // 传递卡片ID列表和目标分类ID
+      emit('cardsReordered', cardIds, props.categoryId, props.subCategoryId);
     }
   });
 }

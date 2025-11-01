@@ -53,9 +53,43 @@
     </div>
     
     
+    <!-- 编辑模式：展示所有分类 -->
+    <div v-if="editMode" class="categories-view">
+      <div v-for="menu in menus" :key="menu.id" class="category-section">
+        <h3 class="category-title">{{ menu.name }}</h3>
+        <CardGrid 
+          :cards="getCategoryCards(menu.id, null)" 
+          :editMode="editMode"
+          :categoryId="menu.id"
+          :subCategoryId="null"
+          @cardsReordered="handleCardsReordered"
+          @editCard="handleEditCard"
+          @deleteCard="handleDeleteCard"
+        />
+        <!-- 子分类 -->
+        <div v-if="menu.sub_menus && menu.sub_menus.length" class="sub-categories">
+          <div v-for="subMenu in menu.sub_menus" :key="subMenu.id" class="sub-category-section">
+            <h4 class="sub-category-title">{{ subMenu.name }}</h4>
+            <CardGrid 
+              :cards="getCategoryCards(menu.id, subMenu.id)" 
+              :editMode="editMode"
+              :categoryId="menu.id"
+              :subCategoryId="subMenu.id"
+              @cardsReordered="handleCardsReordered"
+              @editCard="handleEditCard"
+              @deleteCard="handleDeleteCard"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 普通模式：只展示当前选中分类 -->
     <CardGrid 
+      v-else
       :cards="filteredCards" 
       :editMode="editMode"
+      :categoryId="activeMenu?.id"
+      :subCategoryId="activeSubMenu?.id"
       @cardsReordered="handleCardsReordered"
       @editCard="handleEditCard"
       @deleteCard="handleDeleteCard"
@@ -577,10 +611,39 @@ async function selectMenu(menu, parentMenu = null) {
   loadCards();
 }
 
+// 加载所有分类的卡片（编辑模式用）
+const allCategoryCards = ref({});
+
 async function loadCards() {
   if (!activeMenu.value) return;
   const res = await getCards(activeMenu.value.id, activeSubMenu.value?.id);
   cards.value = res.data;
+}
+
+// 加载所有分类的卡片
+async function loadAllCards() {
+  const tempCards = {};
+  for (const menu of menus.value) {
+    const res = await getCards(menu.id, null);
+    const key = `${menu.id}_null`;
+    tempCards[key] = res.data;
+    
+    // 加载子分类
+    if (menu.sub_menus && menu.sub_menus.length) {
+      for (const subMenu of menu.sub_menus) {
+        const subRes = await getCards(menu.id, subMenu.id);
+        const subKey = `${menu.id}_${subMenu.id}`;
+        tempCards[subKey] = subRes.data;
+      }
+    }
+  }
+  allCategoryCards.value = tempCards;
+}
+
+// 根据分类ID获取卡片
+function getCategoryCards(menuId, subMenuId) {
+  const key = `${menuId}_${subMenuId}`;
+  return allCategoryCards.value[key] || [];
 }
 
 async function handleSearch() {
@@ -832,7 +895,7 @@ async function changeBackground() {
 // ========== 编辑模式相关函数 ==========
 
 // 进入编辑模式
-function enterEditMode() {
+async function enterEditMode() {
   showEditPasswordModal.value = true;
   editPassword.value = '';
   editError.value = '';
@@ -852,6 +915,9 @@ async function verifyEditPassword() {
     const res = await login('admin', editPassword.value);
     localStorage.setItem('token', res.data.token);
     
+    // 加载所有分类的卡片
+    await loadAllCards();
+    
     // 进入编辑模式
     editMode.value = true;
     showEditPasswordModal.value = false;
@@ -868,28 +934,32 @@ function exitEditMode() {
 }
 
 // 卡片重新排序处理（拖拽完成后自动保存）
-async function handleCardsReordered(reorderedCards) {
-  // 更新卡片order
-  cards.value = reorderedCards.map((card, index) => ({
-    ...card,
-    order: index
-  }));
-  
-  // 自动保存
-  const updates = cards.value.map((card, index) => ({
-    id: card.id,
+async function handleCardsReordered(cardIds, targetMenuId, targetSubMenuId) {
+  // 自动保存，包含分类信息
+  const updates = cardIds.map((cardId, index) => ({
+    id: cardId,
     order: index,
-    menu_id: card.menu_id || activeMenu.value.id,
-    sub_menu_id: card.sub_menu_id || activeSubMenu.value?.id || null
+    menu_id: targetMenuId,
+    sub_menu_id: targetSubMenuId
   }));
   
   try {
     await batchUpdateCards(updates);
     // 静默保存，不弹出提示
+    // 更新缓存的卡片数据
+    if (editMode.value) {
+      await loadAllCards();
+    } else {
+      await loadCards();
+    }
   } catch (error) {
     alert('保存失败：' + (error.response?.data?.error || error.message));
     // 保存失败时重新加载，恢复原始顺序
-    await loadCards();
+    if (editMode.value) {
+      await loadAllCards();
+    } else {
+      await loadCards();
+    }
   }
 }
 
@@ -899,7 +969,11 @@ async function handleDeleteCard(card) {
   try {
     await deleteCard(card.id);
     alert('删除成功');
-    await loadCards();
+    if (editMode.value) {
+      await loadAllCards();
+    } else {
+      await loadCards();
+    }
   } catch (error) {
     alert('删除失败：' + (error.response?.data?.error || error.message));
   }
@@ -955,7 +1029,11 @@ async function saveCardEdit() {
     });
     alert('修改成功');
     closeEditCardModal();
-    await loadCards();
+    if (editMode.value) {
+      await loadAllCards();
+    } else {
+      await loadCards();
+    }
   } catch (error) {
     editError.value = '修改失败：' + (error.response?.data?.error || error.message);
   } finally {
@@ -1840,5 +1918,88 @@ async function saveCardEdit() {
 
 .exit-edit-btn:hover {
   box-shadow: 0 6px 25px rgba(239, 68, 68, 0.3);
+}
+
+/* ========== 编辑模式分类视图样式 ========== */
+
+.categories-view {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.category-section {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.category-title {
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.sub-categories {
+  margin-top: 20px;
+}
+
+.sub-category-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.sub-category-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 空分类提示 */
+.category-section:has(.card-grid:empty)::after,
+.sub-category-section:has(.card-grid:empty)::after {
+  content: '拖动卡片到此处';
+  display: block;
+  text-align: center;
+  padding: 30px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .categories-view {
+    padding: 15px;
+  }
+  
+  .category-section {
+    padding: 15px;
+    margin-bottom: 30px;
+  }
+  
+  .category-title {
+    font-size: 20px;
+  }
+  
+  .sub-category-title {
+    font-size: 16px;
+  }
 }
 </style>
