@@ -10,6 +10,13 @@
         <span class="link-text">{{ truncate(card.title) }}</span>
       </a>
       <div v-if="editMode" class="card-btns">
+        <input 
+          type="checkbox" 
+          class="card-checkbox"
+          :checked="isCardSelected(card)"
+          @click.stop="$emit('toggleCardSelection', card)"
+          title="选中"
+        />
         <button @click.stop="$emit('editCard', card)" class="card-btn edit-btn" title="编辑">✏️</button>
         <button @click.stop="$emit('deleteCard', card)" class="card-btn del-btn" title="删除">🗑️</button>
         <button @click.stop="$emit('cardDragStart', card)" class="card-btn move-btn" title="移动到...">👉</button>
@@ -25,11 +32,12 @@ import Sortable from 'sortablejs';
 const props = defineProps({ 
   cards: Array,
   editMode: Boolean,
+  selectedCards: Array,
   categoryId: Number,
   subCategoryId: [Number, null]
 });
 
-const emit = defineEmits(['cardsReordered', 'editCard', 'deleteCard', 'cardDragStart', 'cardDragEnd']);
+const emit = defineEmits(['cardsReordered', 'editCard', 'deleteCard', 'cardDragStart', 'cardDragEnd', 'toggleCardSelection']);
 
 // 容器引用
 const cardGridRef = ref(null);
@@ -225,6 +233,11 @@ function getTooltip(card) {
 function truncate(str) {
   if (!str) return '';
   return str.length > 20 ? str.slice(0, 20) + '...' : str;
+}
+
+// 检查卡片是否被选中
+function isCardSelected(card) {
+  return props.selectedCards?.some(c => c.id === card.id) || false;
 }
 </script>
 
@@ -563,7 +576,15 @@ function truncate(str) {
   top: 2px;
   right: 2px;
   display: flex;
-  gap: 2px;
+  gap: 4px;
+  align-items: center;
+}
+
+.card-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
 }
 
 .card-btn {

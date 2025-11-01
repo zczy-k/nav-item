@@ -54,9 +54,10 @@
     
     
     <!-- 编辑模式目标分类选择面板 -->
-    <div v-if="editMode && draggedCard" class="move-target-panel">
+    <div v-if="editMode && (draggedCard || showMovePanel)" class="move-target-panel">
       <div class="move-target-header">
-        <h4>移动到：</h4>
+        <h4 v-if="selectedCards.length > 0">批量移动 ({{ selectedCards.length }})</h4>
+        <h4 v-else>移动到：</h4>
         <button @click="cancelMove" class="cancel-move-btn">×</button>
       </div>
       <div class="move-target-list">
@@ -87,6 +88,7 @@
     <CardGrid 
       :cards="filteredCards" 
       :editMode="editMode"
+      :selectedCards="selectedCards"
       :categoryId="activeMenu?.id"
       :subCategoryId="activeSubMenu?.id"
       @cardsReordered="handleCardsReordered"
@@ -94,6 +96,7 @@
       @deleteCard="handleDeleteCard"
       @cardDragStart="handleCardDragStart"
       @cardDragEnd="handleCardDragEnd"
+      @toggleCardSelection="toggleCardSelection"
     />
     
     <!-- 浮动操作按钮菜单 -->
@@ -118,6 +121,22 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14"/>
           </svg>
+        </button>
+      </transition>
+      
+      <!-- 批量移动按钮 -->
+      <transition name="fab-item">
+        <button 
+          v-if="editMode && selectedCards.length > 0" 
+          v-show="showFabMenu" 
+          @click="openBatchMovePanel" 
+          class="batch-move-btn" 
+          title="批量移动"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+          </svg>
+          <span class="batch-count">{{ selectedCards.length }}</span>
         </button>
       </transition>
       
@@ -452,6 +471,10 @@ const editError = ref('');
 const draggedCard = ref(null);
 const targetMenuId = ref(null);
 const targetSubMenuId = ref(null);
+
+// 批量移动相关状态
+const selectedCards = ref([]);
+const showMovePanel = ref(false);
 
 // Toast 提示状态
 const toastMessage = ref('');
@@ -947,6 +970,8 @@ async function verifyEditPassword() {
 function exitEditMode() {
   editMode.value = false;
   draggedCard.value = null;
+  selectedCards.value = [];
+  showMovePanel.value = false;
   targetMenuId.value = null;
   targetSubMenuId.value = null;
 }
@@ -969,8 +994,30 @@ function handleCardDragEnd() {
 // 取消移动
 function cancelMove() {
   draggedCard.value = null;
+  showMovePanel.value = false;
   targetMenuId.value = null;
   targetSubMenuId.value = null;
+}
+
+// 切换卡片选中状态
+function toggleCardSelection(card) {
+  const index = selectedCards.value.findIndex(c => c.id === card.id);
+  if (index > -1) {
+    selectedCards.value.splice(index, 1);
+  } else {
+    selectedCards.value.push(card);
+  }
+}
+
+// 打开批量移动面板
+function openBatchMovePanel() {
+  if (selectedCards.value.length === 0) {
+    showToastMessage('请先选择要移动的卡片');
+    return;
+  }
+  showMovePanel.value = true;
+  targetMenuId.value = activeMenu.value?.id || null;
+  targetSubMenuId.value = activeSubMenu.value?.id || null;
 }
 
 // 显示 Toast 提示
@@ -984,6 +1031,40 @@ function showToastMessage(message, duration = 2000) {
 
 // 移动卡片到指定分类
 async function moveCardToCategory(menuId, subMenuId) {
+  // 批量移动
+  if (selectedCards.value.length > 0) {
+    try {
+      const updates = selectedCards.value.map(card => ({
+        id: card.id,
+        menu_id: menuId,
+        sub_menu_id: subMenuId
+      }));
+      
+      // 批量更新
+      for (const update of updates) {
+        const card = selectedCards.value.find(c => c.id === update.id);
+        await updateCard(update.id, {
+          ...card,
+          menu_id: update.menu_id,
+          sub_menu_id: update.sub_menu_id
+        });
+      }
+      
+      showToastMessage(`已移动 ${selectedCards.value.length} 个卡片！`);
+      
+      // 清空选中列表
+      selectedCards.value = [];
+      showMovePanel.value = false;
+      
+      // 重新加载
+      await loadCards();
+    } catch (error) {
+      showToastMessage(`批量移动失败：${error.response?.data?.error || error.message}`);
+    }
+    return;
+  }
+  
+  // 单个移动
   if (!draggedCard.value) return;
   
   const cardTitle = draggedCard.value.title;
@@ -1995,7 +2076,45 @@ async function saveCardEdit() {
   box-shadow: 0 6px 25px rgba(239, 68, 68, 0.3);
 }
 
-/* ========== 移动目标面板样式 ========== */
+.batch-move-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.batch-move-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.3);
+}
+
+.batch-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* ========== Toast 提示样式 ========== */
 
 .move-target-panel {
   position: fixed;
