@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 
 module.exports = {
   admin: {
@@ -7,6 +7,6 @@ module.exports = {
   },
   server: {
     port: process.env.PORT || 3000,
-    jwtSecret: process.env.JWT_SECRET || 'nav-item-jwt-secret-2024-secure-key'
+    jwtSecret: process.env.JWT_SECRET || 'Con-Nav-Item-jwt-secret-2024-secure-key'
   }
 }; 

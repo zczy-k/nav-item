@@ -1,4 +1,4 @@
-# 导航站浏览器扩展
+﻿# 导航站浏览器扩展
 
 将新标签页替换为你的个人导航站。
 
@@ -112,4 +112,4 @@ MIT License
 
 ## 联系方式
 
-项目地址: https://github.com/zczy-k/nav-item
+项目地址: https://github.com/zczy-k/Con-Nav-Item

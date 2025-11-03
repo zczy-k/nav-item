@@ -1,4 +1,4 @@
-// 加载当前设置
+﻿// 加载当前设置
 function loadSettings() {
     chrome.storage.sync.get(['navUrl'], function(result) {
         if (result.navUrl) {

@@ -1,9 +1,9 @@
-# 构建说明
+﻿# 构建说明
 
 ## 📦 项目结构
 
 ```
-nav-item/
+Con-Nav-Item/
 ├── web/              # 前端源码（Vue 3）
 │   ├── src/         # Vue 组件和页面
 │   ├── public/      # 前端静态资源
@@ -105,7 +105,7 @@ git push origin main
 ### 方法 1：一键脚本
 
 ```bash
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
 脚本会自动：
@@ -124,10 +124,10 @@ ssh your-username@s3.serv00.com
 cd ~/domains/your-domain.com/public_nodejs
 
 # 下载代码
-curl -sLo nav.zip https://github.com/zczy-k/nav-item/archive/refs/heads/main.zip
+curl -sLo nav.zip https://github.com/zczy-k/Con-Nav-Item/archive/refs/heads/main.zip
 unzip -oq nav.zip
-cp -r nav-item-main/* .
-rm -rf nav-item-main nav.zip
+cp -r Con-Nav-Item-main/* .
+rm -rf Con-Nav-Item-main nav.zip
 
 # 使用 Serv00 配置
 cp app.serv00.js app.js
@@ -151,10 +151,10 @@ git push
 
 # Serv00 上更新
 cd ~/domains/your-domain.com/public_nodejs
-curl -sLo nav.zip https://github.com/zczy-k/nav-item/archive/refs/heads/main.zip
+curl -sLo nav.zip https://github.com/zczy-k/Con-Nav-Item/archive/refs/heads/main.zip
 unzip -oq nav.zip
-cp -r nav-item-main/* .
-rm -rf nav-item-main nav.zip
+cp -r Con-Nav-Item-main/* .
+rm -rf Con-Nav-Item-main nav.zip
 cp app.serv00.js app.js
 devil www restart your-domain.com
 ```
@@ -178,10 +178,10 @@ git push
 
 # Serv00 上只需重新下载 public 目录
 cd ~/domains/your-domain.com/public_nodejs
-curl -sLo nav.zip https://github.com/zczy-k/nav-item/archive/refs/heads/main.zip
-unzip -oq nav.zip "nav-item-main/public/*"
-cp -r nav-item-main/public/* public/
-rm -rf nav-item-main nav.zip
+curl -sLo nav.zip https://github.com/zczy-k/Con-Nav-Item/archive/refs/heads/main.zip
+unzip -oq nav.zip "Con-Nav-Item-main/public/*"
+cp -r Con-Nav-Item-main/public/* public/
+rm -rf Con-Nav-Item-main nav.zip
 devil www restart your-domain.com
 ```
 

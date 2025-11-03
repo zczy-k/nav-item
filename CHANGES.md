@@ -1,10 +1,10 @@
-# 项目修改总结
+﻿# 项目修改总结
 
 ## 最新更新 (2025-10-30)
 
 ### 仓库信息更新
-- **新仓库地址**: https://github.com/zczy-k/nav-item
-- **原项目**: https://github.com/eooce/nav-item
+- **新仓库地址**: https://github.com/zczy-k/Con-Nav-Item
+- **原项目**: https://github.com/eooce/Con-Nav-Item
 - **作者**: zczy-k
 
 ### 更新内容

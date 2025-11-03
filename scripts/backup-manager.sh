@@ -1,6 +1,6 @@
-#!/bin/bash
+﻿#!/bin/bash
 
-# Nav-Item 备份管理脚本
+# Con-Nav-Item 备份管理脚本
 # 作者: zczy-k
 # 用途: 统一管理备份和恢复操作
 
@@ -37,17 +37,17 @@ else
 fi
 
 WORKDIR="${HOME}/domains/${CURRENT_DOMAIN}/public_nodejs"
-LOCAL_BACKUP_DIR="${HOME}/nav-item-backups"
-GITHUB_BACKUP_DIR="${HOME}/nav-item-github-backup"
-GITHUB_CONFIG="${HOME}/.nav-item-github-config"
+LOCAL_BACKUP_DIR="${HOME}/Con-Nav-Item-backups"
+GITHUB_BACKUP_DIR="${HOME}/Con-Nav-Item-github-backup"
+GITHUB_CONFIG="${HOME}/.Con-Nav-Item-github-config"
 
 # 显示主菜单
 show_main_menu() {
     clear
     echo ""
     green "=========================================="
-    green "  Nav-Item 备份管理工具"
-    green "  GitHub: github.com/zczy-k/nav-item"
+    green "  Con-Nav-Item 备份管理工具"
+    green "  GitHub: github.com/zczy-k/Con-Nav-Item"
     green "=========================================="
     echo ""
     echo -e "\e[1;34m当前域名: \e[1;33m${CURRENT_DOMAIN}\033[0m"
@@ -80,7 +80,7 @@ create_local_backup() {
     fi
     
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-    BACKUP_NAME="nav-item-backup-${TIMESTAMP}"
+    BACKUP_NAME="Con-Nav-Item-backup-${TIMESTAMP}"
     BACKUP_PATH="${LOCAL_BACKUP_DIR}/${BACKUP_NAME}"
     
     mkdir -p "$LOCAL_BACKUP_DIR"
@@ -105,7 +105,7 @@ create_local_backup() {
     
     # 创建备份信息
     cat > "$BACKUP_PATH/backup-info.txt" <<EOF
-Nav-Item 备份信息
+Con-Nav-Item 备份信息
 ================
 备份时间: $(date '+%Y-%m-%d %H:%M:%S')
 服务器: $HOSTNAME
@@ -190,8 +190,8 @@ backup_to_github() {
                 green "✓ 仓库创建成功\n"
                 sleep 2
                 git init
-                git config user.name "Nav-Item Backup"
-                git config user.email "backup@nav-item.local"
+                git config user.name "Con-Nav-Item Backup"
+                git config user.email "backup@Con-Nav-Item.local"
                 git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
                 git checkout -b main 2>/dev/null
             elif echo "$CREATE_RESULT" | grep -q "name already exists"; then
@@ -362,7 +362,7 @@ restore_local_backup() {
     mkdir -p "$TEMP_DIR"
     tar -xzf "$SELECTED_BACKUP" -C "$TEMP_DIR" 2>/dev/null
     
-    EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "nav-item-backup-*" | head -n 1)
+    EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "Con-Nav-Item-backup-*" | head -n 1)
     
     [ -d "$EXTRACTED_DIR/database" ] && rm -rf "$WORKDIR/database" && cp -r "$EXTRACTED_DIR/database" "$WORKDIR/" && green "✓ 数据库已恢复"
     [ -d "$EXTRACTED_DIR/uploads" ] && rm -rf "$WORKDIR/uploads" && cp -r "$EXTRACTED_DIR/uploads" "$WORKDIR/" && green "✓ 上传文件已恢复"
@@ -422,7 +422,7 @@ github_config() {
     
     echo "步骤2: 配置仓库"
     echo "  格式: username/repo-name"
-    echo "  示例: zczy-k/nav-item-backup"
+    echo "  示例: zczy-k/Con-Nav-Item-backup"
     echo ""
     reading "仓库名称: " NEW_GITHUB_REPO
     echo ""
@@ -786,7 +786,7 @@ scheduled_backup_config() {
     echo ""
     
     # 查看当前cron任务
-    CRON_MARKER="# Nav-Item Auto Backup"
+    CRON_MARKER="# Con-Nav-Item Auto Backup"
     EXISTING_CRON=$(crontab -l 2>/dev/null | grep "$CRON_MARKER" -A 1 | grep -v "$CRON_MARKER" || echo "")
     
     if [ -n "$EXISTING_CRON" ]; then
@@ -955,13 +955,13 @@ setup_new_schedule() {
     SCRIPT_PATH=$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$(cd "$(dirname "$0")" && pwd)/$(basename "$0")")
     
     # 添加cron任务
-    CRON_CMD="$CRON_EXPR DOMAIN=$CURRENT_DOMAIN bash -c 'cd ~ && bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh) <<< \"2\" > /tmp/nav-backup.log 2>&1'"
+    CRON_CMD="$CRON_EXPR DOMAIN=$CURRENT_DOMAIN bash -c 'cd ~ && bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh) <<< \"2\" > /tmp/nav-backup.log 2>&1'"
     
     # 先删除旧任务（如果有）
-    crontab -l 2>/dev/null | grep -v "# Nav-Item Auto Backup" | grep -v "backup-manager.sh" > /tmp/crontab.tmp 2>/dev/null || true
+    crontab -l 2>/dev/null | grep -v "# Con-Nav-Item Auto Backup" | grep -v "backup-manager.sh" > /tmp/crontab.tmp 2>/dev/null || true
     
     # 添加新任务
-    echo "# Nav-Item Auto Backup" >> /tmp/crontab.tmp
+    echo "# Con-Nav-Item Auto Backup" >> /tmp/crontab.tmp
     echo "$CRON_CMD" >> /tmp/crontab.tmp
     
     # 安装新的crontab

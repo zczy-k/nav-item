@@ -1,7 +1,7 @@
-# Nav-item(增强版) - 个人导航站
+﻿# Con-Nav-Item(增强版) - 个人导航站
 
-> 🔗 **仓库地址**: [github.com/zczy-k/nav-item](https://github.com/zczy-k/nav-item)  
-> 👤 **Fork 自**: [github.com/eooce/nav-item](https://github.com/eooce/nav-item)并进行功能的改进与增强
+> 🔗 **仓库地址**: [github.com/zczy-k/Con-Nav-Item](https://github.com/zczy-k/Con-Nav-Item)  
+> 👤 **Fork 自**: [github.com/eooce/Con-Nav-Item](https://github.com/eooce/Con-Nav-Item)并进行功能的改进与增强
 > 
 > ## 增强功能:
 - Serv00 一键部署脚本、完善部署文档
@@ -52,7 +52,7 @@
 ## 🏗️ 项目结构
 
 ```
-nav-item/
+Con-Nav-Item/
 ├── app.js                 # 后端主入口文件
 ├── config.js             # 配置文件
 ├── db.js                 # 数据库初始化
@@ -114,8 +114,8 @@ nav-item/
 
 #### 1. 克隆项目
 ```bash
-git clone https://github.com/zczy-k/nav-item.git
-cd nav-item
+git clone https://github.com/zczy-k/Con-Nav-Item.git
+cd Con-Nav-Item
 ```
 
 #### 2. 安装后端依赖
@@ -144,23 +144,23 @@ cd .. && npm start
 #### 1：docker快速部署
    ```bash
    docker run -d \
-     --name nav-item \
+     --name Con-Nav-Item \
      -p 3000:3000 \
      -v $(pwd)/database:/app/database \
      -v $(pwd)/uploads:/app/uploads \
      -e NODE_ENV=production \
      -e ADMIN_USERNAME=admin \
      -e ADMIN_PASSWORD=123456 \
-     eooce/nav-item
+     eooce/Con-Nav-Item
    ```
 ### 2: docker-compose.yaml 部署
 ```bash
 version: '3'
 
 services:
-  nav-item:
-    image: eooce/nav-item
-    container_name: nav-item
+  Con-Nav-Item:
+    image: eooce/Con-Nav-Item
+    container_name: Con-Nav-Item
     ports:
       - "3000:3000"
     environment:
@@ -173,11 +173,11 @@ services:
 ```
 ### 3: docker容器等使用docker image配合环境变量部署
 ```bash
-eooce/nav-item
+eooce/Con-Nav-Item
 ```
 或
 ```bash
-ghcr.io/eooce/nav-item:latest
+ghcr.io/eooce/Con-Nav-Item:latest
 ```
 
 ## Serv00 / CT8 / Hostuno 一键部署
@@ -186,12 +186,12 @@ ghcr.io/eooce/nav-item:latest
 
 **使用默认域名（username.serv00.net）：**
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
 **使用自定义域名：**
 ```bash
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
 ### 重置脚本
@@ -200,12 +200,12 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 **重置默认域名站点：**
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/reset-serv00.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/reset-serv00.sh)
 ```
 
 **重置自定义域名站点：**
 ```bash
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/reset-serv00.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/reset-serv00.sh)
 ```
 
 > ⚠️ **注意**：重置脚本将删除所有应用数据、数据库和配置，请谨慎操作！
@@ -225,15 +225,15 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 ```bash
 # 默认域名
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh)
 
 # 自定义域名
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh)
 ```
 
 ### 主要功能
 
-- 📦 **本地备份** - 快速创建本地备份，保存在 `~/nav-item-backups/`
+- 📦 **本地备份** - 快速创建本地备份，保存在 `~/Con-Nav-Item-backups/`
 - 💙 **GitHub 云端备份** - 自动推送到私有 GitHub 仓库
 - 🔄 **备份恢复** - 从本地或 GitHub 恢复数据
 - 📋 **备份管理** - 查看和管理所有备份
@@ -276,8 +276,8 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 ```bash
 # 克隆项目
-git clone https://github.com/zczy-k/nav-item.git
-cd nav-item/browser-extension
+git clone https://github.com/zczy-k/Con-Nav-Item.git
+cd Con-Nav-Item/browser-extension
 ```
 
 然后按照方法1的步骤加载扩展。

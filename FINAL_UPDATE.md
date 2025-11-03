@@ -1,4 +1,4 @@
-# 最终更新总结 (2025-10-30)
+﻿# 最终更新总结 (2025-10-30)
 
 ## ✅ 所有修改已完成
 
@@ -46,7 +46,7 @@ public/
 ## 📤 提交到 GitHub 的命令
 
 ```bash
-cd D:\Users\i\Desktop\modal\nav-item-check
+cd D:\Users\i\Desktop\modal\Con-Nav-Item-check
 
 # 初始化 Git（如果还没有）
 git init
@@ -67,7 +67,7 @@ git commit -m "Complete deployment setup with compiled frontend
 All features tested and working on Serv00."
 
 # 关联远程仓库
-git remote add origin https://github.com/zczy-k/nav-item.git
+git remote add origin https://github.com/zczy-k/Con-Nav-Item.git
 
 # 推送
 git branch -M main
@@ -80,7 +80,7 @@ git push -u origin main
 
 ```bash
 # 运行一键安装脚本
-DOMAIN=test.your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+DOMAIN=test.your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
 应该看到：
@@ -140,9 +140,9 @@ DOMAIN=test.your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zc
 
 ## 🔗 相关链接
 
-- **仓库地址**: https://github.com/zczy-k/nav-item
-- **原项目**: https://github.com/eooce/nav-item
-- **部署脚本**: https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh
+- **仓库地址**: https://github.com/zczy-k/Con-Nav-Item
+- **原项目**: https://github.com/eooce/Con-Nav-Item
+- **部署脚本**: https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh
 
 ## 📞 支持
 
@@ -150,7 +150,7 @@ DOMAIN=test.your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zc
 1. 查看 `BUILD.md` 了解构建流程
 2. 查看 `DEPLOY_SERV00.md` 了解部署步骤
 3. 查看 `HOTFIX.md` 了解常见问题
-4. 提交 Issue: https://github.com/zczy-k/nav-item/issues
+4. 提交 Issue: https://github.com/zczy-k/Con-Nav-Item/issues
 
 ---
 

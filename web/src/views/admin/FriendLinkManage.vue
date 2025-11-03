@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="friend-manage">
     <div class="friend-header"></div>
     <div class="friend-add">

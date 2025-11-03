@@ -1,4 +1,4 @@
-// 检查是否已保存导航站地址
+﻿// 检查是否已保存导航站地址
 chrome.storage.sync.get(['navUrl', 'offlineHtml'], function(result) {
     const navFrame = document.getElementById('navFrame');
     const setupContainer = document.getElementById('setupContainer');

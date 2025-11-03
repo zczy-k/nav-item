@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="card-manage">
     <div class="card-header">
       <div class="header-content">

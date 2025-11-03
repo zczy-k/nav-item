@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="menu-manage">
     <div class="menu-header">
       <div class="header-content">

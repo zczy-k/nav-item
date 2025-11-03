@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="ad-manage">
     <div class="ad-header">
       <form class="ad-add-row" @submit.prevent="handleAddAd">

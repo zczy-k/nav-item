@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-if="!isLoggedIn" class="login-container">
     <div class="login-card">
       <h2 class="login-title">后台管理登录</h2>
@@ -59,7 +59,7 @@
       </div>
       <div class="admin-content">
         <div v-if="page==='welcome'" class="welcome-page">
-          <h2 class="welcome-title">欢迎您进入 Nav-Item 后台管理系统</h2>
+          <h2 class="welcome-title">欢迎您进入 Con-Nav-Item 后台管理系统</h2>
           <div class="welcome-cards">
             <div class="welcome-card">
               <div class="welcome-icon time-icon">
@@ -84,7 +84,7 @@
         <UserManage v-if="page==='user'" />
       </div>
       <footer class="admin-footer">
-        <p class="admin-copyright">Copyright © 2025 Nav-Item | <a href="https://github.com/zczy-k/nav-item" target="_blank" class="footer-link">Powered by zczy-k</a></p>
+        <p class="admin-copyright">Copyright © 2025 Con-Nav-Item | <a href="https://github.com/zczy-k/Con-Nav-Item" target="_blank" class="footer-link">Powered by zczy-k</a></p>
       </footer>
     </main>
   </div>

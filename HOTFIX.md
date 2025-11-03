@@ -1,4 +1,4 @@
-# 紧急修复 (2025-10-30)
+﻿# 紧急修复 (2025-10-30)
 
 ## 🐛 问题
 
@@ -62,7 +62,7 @@ engine-strict=false
 ### 如果你已经克隆了仓库：
 
 ```bash
-cd D:\Users\i\Desktop\modal\nav-item-check
+cd D:\Users\i\Desktop\modal\Con-Nav-Item-check
 git add .
 git commit -m "Hotfix: Fix npm install errors and bash_profile issues"
 git push
@@ -72,7 +72,7 @@ git push
 
 **方法 1：重新运行脚本（推荐）**
 ```bash
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
 **方法 2：手动修复**
@@ -82,11 +82,11 @@ cd ~/domains/your-domain.com/public_nodejs
 # 修复 package.json - 删除 devEngines
 cat > package.json << 'EOF'
 {
-  "name": "nav-item-backend",
+  "name": "Con-Nav-Item-backend",
   "version": "1.0.0",
   "author": "zczy-k",
-  "description": "nav-item-backend - 个人导航站后端",
-  "repository": "https://github.com/zczy-k/nav-item",
+  "description": "Con-Nav-Item-backend - 个人导航站后端",
+  "repository": "https://github.com/zczy-k/Con-Nav-Item",
   "license": "MIT",
   "main": "app.js",
   "scripts": {
@@ -167,4 +167,4 @@ git push
 
 ---
 
-**如有问题，请查看**: [Issues](https://github.com/zczy-k/nav-item/issues)
+**如有问题，请查看**: [Issues](https://github.com/zczy-k/Con-Nav-Item/issues)

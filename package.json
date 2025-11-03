@@ -1,9 +1,9 @@
 {
-  "name": "nav-item-backend",
+  "name": "Con-Nav-Item-backend",
   "version": "1.0.0",
   "author": "zczy-k",
-  "description": "nav-item-backend - 个人导航站后端",
-  "repository": "https://github.com/zczy-k/nav-item",
+  "description": "Con-Nav-Item-backend - 个人导航站后端",
+  "repository": "https://github.com/zczy-k/Con-Nav-Item",
   "license": "MIT",
   "main": "app.js",
   "scripts": {

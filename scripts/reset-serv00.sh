@@ -1,8 +1,8 @@
-#!/bin/bash
+﻿#!/bin/bash
 
-# Nav-Item Serv00 重置脚本
+# Con-Nav-Item Serv00 重置脚本
 # 作者: zczy-k
-# GitHub: https://github.com/zczy-k/nav-item
+# GitHub: https://github.com/zczy-k/Con-Nav-Item
 
 export LC_ALL=C
 re="\033[0m"
@@ -37,7 +37,7 @@ WORKDIR="${HOME}/domains/${CURRENT_DOMAIN}/public_nodejs"
 
 echo ""
 red "=========================================="
-red "  Nav-Item Serv00 重置脚本"
+red "  Con-Nav-Item Serv00 重置脚本"
 red "  这将删除所有数据！"
 red "=========================================="
 echo ""
@@ -97,6 +97,6 @@ echo ""
 
 yellow "现在你可以重新运行安装脚本：\n"
 echo ""
-echo -e "${purple}DOMAIN=${CURRENT_DOMAIN} bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)${re}"
+echo -e "${purple}DOMAIN=${CURRENT_DOMAIN} bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)${re}"
 echo ""
 green "=========================================="

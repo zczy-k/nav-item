@@ -1,10 +1,10 @@
-# 仓库更新说明
+﻿# 仓库更新说明
 
 ## 📦 新仓库信息
 
-- **仓库地址**: https://github.com/zczy-k/nav-item
+- **仓库地址**: https://github.com/zczy-k/Con-Nav-Item
 - **作者**: zczy-k
-- **Fork 自**: https://github.com/eooce/nav-item (原作者: eooce)
+- **Fork 自**: https://github.com/eooce/Con-Nav-Item (原作者: eooce)
 
 ---
 
@@ -27,15 +27,15 @@
 ```json
 {
   "author": "zczy-k",
-  "description": "nav-item-backend - 个人导航站后端",
-  "repository": "https://github.com/zczy-k/nav-item"
+  "description": "Con-Nav-Item-backend - 个人导航站后端",
+  "repository": "https://github.com/zczy-k/Con-Nav-Item"
 }
 ```
 
 #### README.md
 - 顶部添加 Fork 说明和新仓库链接
-- 克隆命令更新为：`git clone https://github.com/zczy-k/nav-item.git`
-- 安装脚本更新为：`bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)`
+- 克隆命令更新为：`git clone https://github.com/zczy-k/Con-Nav-Item.git`
+- 安装脚本更新为：`bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)`
 - 作者信息更新，并注明原项目作者
 
 #### 新增文件：scripts/install-serv00.sh
@@ -51,17 +51,17 @@
 
 ### 克隆项目
 ```bash
-git clone https://github.com/zczy-k/nav-item.git
-cd nav-item
+git clone https://github.com/zczy-k/Con-Nav-Item.git
+cd Con-Nav-Item
 ```
 
 ### Serv00 一键部署
 ```bash
 # 使用默认域名
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 
 # 或指定自定义域名
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
 ### 本地开发
@@ -82,7 +82,7 @@ npm run dev
 
 ### 1. 初始化 Git（如果还没有）
 ```bash
-cd D:\Users\i\Desktop\modal\nav-item-check
+cd D:\Users\i\Desktop\modal\Con-Nav-Item-check
 git init
 ```
 
@@ -93,10 +93,10 @@ git add .
 
 ### 3. 提交更改
 ```bash
-git commit -m "Fork from eooce/nav-item with Serv00 deployment enhancements
+git commit -m "Fork from eooce/Con-Nav-Item with Serv00 deployment enhancements
 
 - Add Serv00 one-click installation script
-- Update all repository links to zczy-k/nav-item
+- Update all repository links to zczy-k/Con-Nav-Item
 - Add comprehensive deployment documentation
 - Improve package.json configuration
 - Create DEPLOY_SERV00.md guide"
@@ -104,7 +104,7 @@ git commit -m "Fork from eooce/nav-item with Serv00 deployment enhancements
 
 ### 4. 关联远程仓库
 ```bash
-git remote add origin https://github.com/zczy-k/nav-item.git
+git remote add origin https://github.com/zczy-k/Con-Nav-Item.git
 ```
 
 ### 5. 推送到 GitHub
@@ -130,9 +130,9 @@ navigation, bookmark, vue3, nodejs, sqlite, serv00, express, personal-website
 ### 3. README.md 徽章（可选）
 在 README.md 顶部添加：
 ```markdown
-![GitHub stars](https://img.shields.io/github/stars/zczy-k/nav-item?style=social)
-![GitHub forks](https://img.shields.io/github/forks/zczy-k/nav-item?style=social)
-![License](https://img.shields.io/github/license/zczy-k/nav-item)
+![GitHub stars](https://img.shields.io/github/stars/zczy-k/Con-Nav-Item?style=social)
+![GitHub forks](https://img.shields.io/github/forks/zczy-k/Con-Nav-Item?style=social)
+![License](https://img.shields.io/github/license/zczy-k/Con-Nav-Item)
 ```
 
 ### 4. 创建 Release（可选）
@@ -146,7 +146,7 @@ navigation, bookmark, vue3, nodejs, sqlite, serv00, express, personal-website
 ## 🔄 与原项目的关系
 
 ### Fork 声明
-本项目 Fork 自 [eooce/nav-item](https://github.com/eooce/nav-item)，在原项目基础上增加了以下功能：
+本项目 Fork 自 [eooce/Con-Nav-Item](https://github.com/eooce/Con-Nav-Item)，在原项目基础上增加了以下功能：
 
 1. **Serv00 一键部署脚本**
    - 自动下载和配置
@@ -175,8 +175,8 @@ navigation, bookmark, vue3, nodejs, sqlite, serv00, express, personal-website
 
 ## 📞 联系方式
 
-- **GitHub Issues**: https://github.com/zczy-k/nav-item/issues
-- **原项目 Issues**: https://github.com/eooce/nav-item/issues
+- **GitHub Issues**: https://github.com/zczy-k/Con-Nav-Item/issues
+- **原项目 Issues**: https://github.com/eooce/Con-Nav-Item/issues
 
 ---
 

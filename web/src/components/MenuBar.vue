@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <nav class="menu-bar">
     <div 
       v-for="menu in menus" 

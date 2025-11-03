@@ -1,4 +1,4 @@
-// 加载当前设置
+﻿// 加载当前设置
 chrome.storage.sync.get(['navUrl'], function(result) {
     const urlElement = document.getElementById('currentUrl');
     const openNavBtn = document.getElementById('openNav');

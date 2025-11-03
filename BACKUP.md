@@ -1,4 +1,4 @@
-# Nav-Item 备份与恢复指南
+﻿# Con-Nav-Item 备份与恢复指南
 
 ## 🚀 快速开始
 
@@ -10,10 +10,10 @@
 
 ```bash
 # 默认域名
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh)
 
 # 自定义域名
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh)
 ```
 
 ---
@@ -24,8 +24,8 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 ```
 ==========================================
-  Nav-Item 备份管理工具
-  GitHub: github.com/zczy-k/nav-item
+  Con-Nav-Item 备份管理工具
+  GitHub: github.com/zczy-k/Con-Nav-Item
 ==========================================
 
 当前域名: your-domain.com
@@ -48,7 +48,7 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 ### 特点
 - ✅ 快速，存储在服务器本地
 - ✅ `.tar.gz` 压缩格式
-- ✅ 保存在 `~/nav-item-backups/`
+- ✅ 保存在 `~/Con-Nav-Item-backups/`
 
 ### 使用
 1. 选择菜单选项 `1`
@@ -57,7 +57,7 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 
 ### 下载到本地
 ```bash
-scp username@hostname:~/nav-item-backups/nav-item-backup-*.tar.gz .
+scp username@hostname:~/Con-Nav-Item-backups/Con-Nav-Item-backup-*.tar.gz .
 ```
 
 ---
@@ -82,7 +82,7 @@ scp username@hostname:~/nav-item-backups/nav-item-backup-*.tar.gz .
    - 选择选项 `6` (GitHub 配置)
    - 输入 Token
    - 输入仓库名（格式：`username/repo-name`）
-   - 例如：`zczy-k/nav-item-backup`
+   - 例如：`zczy-k/Con-Nav-Item-backup`
 
 > ✨ **自动创建**：如果仓库不存在，脚本会自动创建私有仓库，无需手动操作！
 
@@ -96,13 +96,13 @@ scp username@hostname:~/nav-item-backups/nav-item-backup-*.tar.gz .
 crontab -e
 
 # 每6小时自动备份
-0 */6 * * * DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh) <<< "2" > /dev/null 2>&1
+0 */6 * * * DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh) <<< "2" > /dev/null 2>&1
 ```
 
 ### 安全说明
 ⚠️ **重要：**
 - 必须使用私有仓库
-- Token 安全存储（`~/.nav-item-github-config`）
+- Token 安全存储（`~/.Con-Nav-Item-github-config`）
 - 备份包含敏感信息（密码、数据库）
 
 ---
@@ -118,10 +118,10 @@ crontab -e
 ### 从 GitHub 恢复
 ```bash
 # 克隆备份仓库
-git clone https://github.com/your-username/nav-item-backup.git
+git clone https://github.com/your-username/Con-Nav-Item-backup.git
 
 # 选择要恢复的备份
-cd nav-item-backup/backups/20250131_030000
+cd Con-Nav-Item-backup/backups/20250131_030000
 
 # 恢复到项目目录
 cp -r database ~/domains/your-domain.com/public_nodejs/
@@ -140,18 +140,18 @@ devil www restart your-domain.com
 
 **旧服务器：**
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/backup-manager.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh)
 # 选择: 2 (备份到 GitHub)
 ```
 
 **新服务器：**
 ```bash
 # 安装应用
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 
 # 从 GitHub 恢复备份
-git clone https://github.com/your-username/nav-item-backup.git
-cd nav-item-backup/backups/latest
+git clone https://github.com/your-username/Con-Nav-Item-backup.git
+cd Con-Nav-Item-backup/backups/latest
 cp -r * ~/domains/your-domain.com/public_nodejs/
 ```
 
@@ -186,7 +186,7 @@ DOMAIN=new-domain.com bash <(curl -Ls .../backup-manager.sh)
 
 ### Q: 备份文件保存在哪里？
 **A:** 
-- 本地：`~/nav-item-backups/`
+- 本地：`~/Con-Nav-Item-backups/`
 - GitHub：你配置的私有仓库
 
 ### Q: 备份文件有多大？
@@ -229,10 +229,10 @@ DOMAIN=correct-domain.com bash <(curl -Ls .../backup-manager.sh)
 **解决：**
 ```bash
 # 查看备份目录
-ls -la ~/nav-item-backups/
+ls -la ~/Con-Nav-Item-backups/
 
 # 如果在其他位置，先移动
-mv /path/to/backup.tar.gz ~/nav-item-backups/
+mv /path/to/backup.tar.gz ~/Con-Nav-Item-backups/
 ```
 
 ---
@@ -249,5 +249,5 @@ mv /path/to/backup.tar.gz ~/nav-item-backups/
 
 ## 📞 获取帮助
 
-- GitHub Issues: https://github.com/zczy-k/nav-item/issues
-- 项目文档: https://github.com/zczy-k/nav-item
+- GitHub Issues: https://github.com/zczy-k/Con-Nav-Item/issues
+- 项目文档: https://github.com/zczy-k/Con-Nav-Item

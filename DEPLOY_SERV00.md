@@ -1,4 +1,4 @@
-# Nav-Item Serv00 部署指南
+﻿# Con-Nav-Item Serv00 部署指南
 
 ## 重要说明
 
@@ -13,10 +13,10 @@
 
 ```bash
 # 使用默认域名（username.serv00.net）
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 
 # 或指定自定义域名
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/nav-item/main/scripts/install-serv00.sh)
+DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
 **如果遇到问题，按以下步骤手动修复：**
@@ -209,7 +209,7 @@ public_nodejs/
 
 ## 更多帮助
 
-- 项目地址：https://github.com/zczy-k/nav-item
-- 原项目：https://github.com/eooce/nav-item
+- 项目地址：https://github.com/zczy-k/Con-Nav-Item
+- 原项目：https://github.com/eooce/Con-Nav-Item
 - Serv00 文档：https://wiki.serv00.com/
-- 问题反馈：https://github.com/zczy-k/nav-item/issues
+- 问题反馈：https://github.com/zczy-k/Con-Nav-Item/issues

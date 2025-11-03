@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div ref="cardGridRef" class="container card-grid" :class="[animationClass, { 'edit-mode': editMode }]">
     <div v-for="(card, index) in cards" :key="card.id"
          class="link-item" 

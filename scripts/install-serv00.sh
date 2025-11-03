@@ -1,8 +1,8 @@
-#!/bin/bash
+﻿#!/bin/bash
 
-# Nav-Item Serv00 一键安装脚本
+# Con-Nav-Item Serv00 一键安装脚本
 # 作者: zczy-k
-# GitHub: https://github.com/zczy-k/nav-item
+# GitHub: https://github.com/zczy-k/Con-Nav-Item
 
 export LC_ALL=C
 re="\033[0m"
@@ -37,8 +37,8 @@ WORKDIR="${HOME}/domains/${CURRENT_DOMAIN}/public_nodejs"
 
 echo ""
 green "=========================================="
-green "  Nav-Item Serv00 一键安装脚本"
-green "  GitHub: github.com/zczy-k/nav-item"
+green "  Con-Nav-Item Serv00 一键安装脚本"
+green "  GitHub: github.com/zczy-k/Con-Nav-Item"
 green "=========================================="
 echo ""
 
@@ -75,21 +75,21 @@ install_application() {
     cd "$WORKDIR" || exit 1
     
     # 下载项目文件
-    DOWNLOAD_URL="https://github.com/zczy-k/nav-item/archive/refs/heads/main.zip"
+    DOWNLOAD_URL="https://github.com/zczy-k/Con-Nav-Item/archive/refs/heads/main.zip"
     yellow "下载项目文件...\n"
-    $COMMAND "${WORKDIR}/nav-item.zip" "$DOWNLOAD_URL"
+    $COMMAND "${WORKDIR}/Con-Nav-Item.zip" "$DOWNLOAD_URL"
     
-    if [ ! -f "${WORKDIR}/nav-item.zip" ]; then
+    if [ ! -f "${WORKDIR}/Con-Nav-Item.zip" ]; then
         red "下载失败！请检查网络连接。"
         exit 1
     fi
     
     # 解压文件
     yellow "解压文件...\n"
-    unzip -oq "${WORKDIR}/nav-item.zip" -d "${WORKDIR}"
+    unzip -oq "${WORKDIR}/Con-Nav-Item.zip" -d "${WORKDIR}"
     
     # 移动文件到当前目录
-    if [ -d "${WORKDIR}/nav-item-main" ]; then
+    if [ -d "${WORKDIR}/Con-Nav-Item-main" ]; then
         # 备份当前的 data 目录和 .env 文件（如果存在）
         if [ -d "${WORKDIR}/data" ]; then
             mv "${WORKDIR}/data" "${WORKDIR}/data.backup"
@@ -99,11 +99,11 @@ install_application() {
         fi
         
         # 清理旧文件（保留 data、.env 和 node_modules）
-        find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'data.backup' ! -name '.env.backup' ! -name 'node_modules' ! -name 'nav-item-main' ! -name 'nav-item.zip' -exec rm -rf {} + 2>/dev/null || true
+        find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'data.backup' ! -name '.env.backup' ! -name 'node_modules' ! -name 'Con-Nav-Item-main' ! -name 'Con-Nav-Item.zip' -exec rm -rf {} + 2>/dev/null || true
         
         # 复制新文件
-        cp -r ${WORKDIR}/nav-item-main/* ${WORKDIR}/
-        rm -rf ${WORKDIR}/nav-item-main
+        cp -r ${WORKDIR}/Con-Nav-Item-main/* ${WORKDIR}/
+        rm -rf ${WORKDIR}/Con-Nav-Item-main
         
         # 恢复备份的数据
         if [ -d "${WORKDIR}/data.backup" ]; then
@@ -114,7 +114,7 @@ install_application() {
         fi
     fi
     
-    rm -f "${WORKDIR}/nav-item.zip"
+    rm -f "${WORKDIR}/Con-Nav-Item.zip"
     
     # 部署前端静态文件（从 web/dist 到 public）
     if [ -d "${WORKDIR}/web/dist" ]; then
@@ -210,7 +210,7 @@ show_info() {
     echo ""
     red "⚠️  请登录后立即修改密码！"
     echo ""
-    echo -e "${yellow}项目地址：${re}${purple}https://github.com/zczy-k/nav-item${re}"
+    echo -e "${yellow}项目地址：${re}${purple}https://github.com/zczy-k/Con-Nav-Item${re}"
     echo -e "${yellow}部署文档：${re}${purple}查看 DEPLOY_SERV00.md${re}"
     echo ""
     green "=========================================="
