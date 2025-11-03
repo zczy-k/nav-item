@@ -384,7 +384,6 @@ const gradients = [
   white-space: normal;
   line-height: 1.2;
   min-height: 1.5em;
-  font-weight: 600;
   letter-spacing: -0.01em;
   color: #1d1d1f;
 }

@@ -15,10 +15,8 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <span class="engine-icon-wrapper">
-                <img v-if="selectedEngine.iconUrl" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="handleIconError" crossorigin="anonymous" />
-                <span class="engine-icon engine-icon-fallback">{{ selectedEngine.icon || '🔍' }}</span>
-              </span>
+              <img v-if="selectedEngine.iconUrl && !selectedEngine.iconError" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="selectedEngine.iconError = true" crossorigin="anonymous" />
+              <span v-else class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -37,10 +35,8 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <span class="engine-icon-wrapper">
-                      <img v-if="engine.iconUrl" :src="engine.iconUrl" class="engine-icon-img" @error="handleIconError" crossorigin="anonymous" />
-                      <span class="engine-icon engine-icon-fallback">{{ engine.icon || '🔍' }}</span>
-                    </span>
+                    <img v-if="engine.iconUrl && !engine.iconError" :src="engine.iconUrl" class="engine-icon-img" @error="engine.iconError = true" crossorigin="anonymous" />
+                    <span v-else class="engine-icon">{{ engine.icon || '🔍' }}</span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
                       ×
@@ -626,7 +622,8 @@ const defaultEngines = [
     icon: '🌐',
     iconUrl: 'https://www.gstatic.com/images/branding/product/1x/gsa_32dp.png',
     placeholder: 'Google 搜索...',
-    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
+    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    iconError: false
   },
   {
     name: 'baidu',
@@ -634,7 +631,8 @@ const defaultEngines = [
     icon: '🔍',
     iconUrl: 'https://www.baidu.com/img/baidu_85beaf5496f291521eb75ba38eacbd87.svg',
     placeholder: '百度搜索...',
-    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
+    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
+    iconError: false
   },
   {
     name: 'bing',
@@ -642,7 +640,8 @@ const defaultEngines = [
     icon: '🅱️',
     iconUrl: 'https://www.bing.com/favicon.ico',
     placeholder: 'Bing 搜索...',
-    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
+    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+    iconError: false
   },
   {
     name: 'github',
@@ -650,7 +649,8 @@ const defaultEngines = [
     icon: '💻',
     iconUrl: 'https://github.githubassets.com/favicons/favicon.svg',
     placeholder: 'GitHub 搜索...',
-    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
+    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`,
+    iconError: false
   }
 ];
 
