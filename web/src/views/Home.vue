@@ -15,8 +15,8 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <img v-if="selectedEngine.iconUrl" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="e => e.target.style.display = 'none'" />
-              <span v-else class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
+              <img v-if="selectedEngine.iconUrl" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="handleEngineIconError" />
+              <span class="engine-icon" :style="{ display: selectedEngine.iconUrl ? 'none' : 'inline-block' }">{{ selectedEngine.icon || '🔍' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -35,8 +35,8 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <img v-if="engine.iconUrl" :src="engine.iconUrl" class="engine-icon-img" @error="e => e.target.style.display = 'none'" />
-                    <span v-else class="engine-icon">{{ engine.icon || '🔍' }}</span>
+                    <img v-if="engine.iconUrl" :src="engine.iconUrl" class="engine-icon-img" @error="handleEngineIconError" />
+                    <span class="engine-icon" :style="{ display: engine.iconUrl ? 'none' : 'inline-block' }">{{ engine.icon || '🔍' }}</span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
                       ×
@@ -965,6 +965,16 @@ function closeEngineDropdown() {
   }
 }
 
+// 处理搜索引擎图标加载失败
+function handleEngineIconError(event) {
+  event.target.style.display = 'none';
+  // 显示旁边的默认图标
+  const defaultIcon = event.target.nextElementSibling;
+  if (defaultIcon && defaultIcon.classList.contains('engine-icon')) {
+    defaultIcon.style.display = 'inline-block';
+  }
+}
+
 async function selectMenu(menu, parentMenu = null) {
   if (parentMenu) {
     // 选择的是子菜单
@@ -1830,10 +1840,12 @@ async function saveCardEdit() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.8rem 0;
-  margin-top: 10px;
-  position: relative;
-  z-index: 2;
+  padding: 1.5rem 0;
+  position: fixed;
+  top: 12vh;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 .search-box-wrapper {
