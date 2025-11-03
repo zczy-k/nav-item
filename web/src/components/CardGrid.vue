@@ -386,8 +386,7 @@ const gradients = [
   min-height: 1.5em;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  color: #1d1d1f;
 }
 
 /* 动画样式 */

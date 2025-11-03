@@ -15,7 +15,10 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <span class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
+              <span class="engine-icon-wrapper">
+                <img v-if="selectedEngine.iconUrl" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="handleIconError" crossorigin="anonymous" />
+                <span class="engine-icon engine-icon-fallback">{{ selectedEngine.icon || '🔍' }}</span>
+              </span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -34,7 +37,10 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <span class="engine-icon">{{ engine.icon || '🔍' }}</span>
+                    <span class="engine-icon-wrapper">
+                      <img v-if="engine.iconUrl" :src="engine.iconUrl" class="engine-icon-img" @error="handleIconError" crossorigin="anonymous" />
+                      <span class="engine-icon engine-icon-fallback">{{ engine.icon || '🔍' }}</span>
+                    </span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
                       ×
@@ -618,7 +624,7 @@ const defaultEngines = [
     name: 'google',
     label: 'Google',
     icon: '🌐',
-    iconUrl: 'https://www.google.com/favicon.ico',
+    iconUrl: 'https://www.gstatic.com/images/branding/product/1x/gsa_32dp.png',
     placeholder: 'Google 搜索...',
     url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
@@ -626,7 +632,7 @@ const defaultEngines = [
     name: 'baidu',
     label: '百度',
     icon: '🔍',
-    iconUrl: 'https://www.baidu.com/favicon.ico',
+    iconUrl: 'https://www.baidu.com/img/baidu_85beaf5496f291521eb75ba38eacbd87.svg',
     placeholder: '百度搜索...',
     url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
@@ -642,7 +648,7 @@ const defaultEngines = [
     name: 'github',
     label: 'GitHub',
     icon: '💻',
-    iconUrl: 'https://github.com/favicon.ico',
+    iconUrl: 'https://github.githubassets.com/favicons/favicon.svg',
     placeholder: 'GitHub 搜索...',
     url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
   }
@@ -960,6 +966,17 @@ onUnmounted(() => {
 function closeEngineDropdown() {
   if (showEngineDropdown.value) {
     showEngineDropdown.value = false;
+  }
+}
+
+// 处理图标加载失败
+function handleIconError(event) {
+  // 隐藏失败的图片，显示 emoji 图标
+  event.target.style.display = 'none';
+  // 显示备用的 emoji 图标
+  const fallback = event.target.nextElementSibling;
+  if (fallback && fallback.classList.contains('engine-icon-fallback')) {
+    fallback.style.display = 'inline-block';
   }
 }
 
@@ -1601,11 +1618,28 @@ async function saveCardEdit() {
   font-size: 1.2rem;
 }
 
+.engine-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
 .engine-icon-img {
   width: 20px;
   height: 20px;
   object-fit: contain;
   border-radius: 4px;
+  display: block;
+}
+
+.engine-icon-fallback {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .engine-dropdown-menu {
