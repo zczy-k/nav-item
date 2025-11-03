@@ -136,23 +136,25 @@ function triggerAnimation() {
   }, 1200);
 }
 
-// 获取卡片样式（用于延迟动画）
+// 获取卡片样式（用于延迟动画 + 随机渐变色）
 function getCardStyle(index) {
-  if (!animationClass.value) return {};
+  const gradient = gradients[index % gradients.length];
+  const style = {
+    background: gradient
+  };
+  
+  if (!animationClass.value) return style;
   
   // 在移动设备上不使用延迟动画
   const isMobile = window.innerWidth <= 480;
   if (isMobile) {
-    return {
-      animationDelay: '0s'
-    };
+    style.animationDelay = '0s';
+    return style;
   }
   
   if (animationType.value === 'slideUp') {
     // 从下往上：按索引顺序延迟
-    return {
-      animationDelay: `${index * 0.05}s`
-    };
+    style.animationDelay = `${index * 0.05}s`;
   } else if (animationType.value === 'radial') {
     // 从中心扩散：根据距离中心的位置计算延迟
     const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
@@ -160,29 +162,21 @@ function getCardStyle(index) {
     const col = index % cols;
     const centerCol = Math.floor(cols / 2);
     const distance = Math.abs(col - centerCol) + row;
-    return {
-      animationDelay: `${distance * 0.08}s`
-    };
+    style.animationDelay = `${distance * 0.08}s`;
   } else if (animationType.value === 'fadeIn') {
     // 淡入动画：随机延迟
-    return {
-      animationDelay: `${Math.random() * 0.5}s`
-    };
+    style.animationDelay = `${Math.random() * 0.5}s`;
   } else if (animationType.value === 'slideLeft') {
     // 从左往右：按行延迟
     const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
     const row = Math.floor(index / cols);
-    return {
-      animationDelay: `${row * 0.1}s`
-    };
+    style.animationDelay = `${row * 0.1}s`;
   } else if (animationType.value === 'slideRight') {
     // 从右往左：按行延迟（反向）
     const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
     const row = Math.floor(index / cols);
     const col = index % cols;
-    return {
-      animationDelay: `${(row + (cols - col - 1) * 0.02) * 0.08}s`
-    };
+    style.animationDelay = `${(row + (cols - col - 1) * 0.02) * 0.08}s`;
   } else if (animationType.value === 'convergeIn') {
     // 从两边往中间靠拢：根据列的位置计算延迟
     const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
@@ -190,20 +184,16 @@ function getCardStyle(index) {
     const centerCol = Math.floor(cols / 2);
     const distanceFromCenter = Math.abs(col - centerCol);
     // 边缘的元素先出现，中间的最后出现
-    return {
-      animationDelay: `${(cols - distanceFromCenter - 1) * 0.08}s`
-    };
+    style.animationDelay = `${(cols - distanceFromCenter - 1) * 0.08}s`;
   } else if (animationType.value === 'flipIn') {
     // 翻转入场：按对角线延迟
     const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
     const row = Math.floor(index / cols);
     const col = index % cols;
-    return {
-      animationDelay: `${(row + col) * 0.06}s`
-    };
+    style.animationDelay = `${(row + col) * 0.06}s`;
   }
   
-  return {};
+  return style;
 }
 
 function getLogo(card) {
@@ -238,6 +228,28 @@ function truncate(str) {
 function isCardSelected(card) {
   return props.selectedCards?.some(c => c.id === card.id) || false;
 }
+
+// 随机渐变色配置
+const gradients = [
+  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+  'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+  'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+  'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+  'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+  'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)',
+  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+  'linear-gradient(135deg, #f8b195 0%, #f67280 100%)',
+  'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+  'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',
+  'linear-gradient(135deg, #9890e3 0%, #b1f4cf 100%)',
+  'linear-gradient(135deg, #ebc0fd 0%, #d9ded8 100%)',
+  'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)',
+  'linear-gradient(135deg, #fda085 0%, #f6d365 100%)'
+];
 </script>
 
 <style scoped>
@@ -267,16 +279,16 @@ function isCardSelected(card) {
   }
 }
 .link-item {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  /* background 由 JS 动态设置 */
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
   border-radius: 16px;
   padding: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
   text-align: center;
   min-height: 85px;
   height: 85px;
@@ -284,7 +296,7 @@ function isCardSelected(card) {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: 0.5px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -311,13 +323,13 @@ function isCardSelected(card) {
 }
 
 .link-item:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 100%);
+  filter: brightness(1.08);
   transform: translateY(-4px) scale(1.02);
   box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 8px 24px rgba(0, 0, 0, 0.12),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-  border-color: rgba(255, 255, 255, 0.6);
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .link-item:active {
@@ -327,8 +339,8 @@ function isCardSelected(card) {
 .link-item a {
   /* margin-top: 8px; */
   text-decoration: none;
-  color: #1d1d1f;
-  font-weight: 500;
+  color: #ffffff;
+  font-weight: 600;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -339,18 +351,20 @@ function isCardSelected(card) {
   box-sizing: border-box;
   position: relative;
   z-index: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 .link-icon {
   width: 28px;
   height: 28px;
   margin: 4px auto;
   object-fit: contain;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .link-item:hover .link-icon {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
 }
 .link-text {
   padding-right: 4px;
