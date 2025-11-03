@@ -283,8 +283,8 @@ const gradients = [
 }
 .link-item {
   /* background 由 JS 动态设置 */
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
   border-radius: 16px;
   padding: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -384,9 +384,10 @@ const gradients = [
   white-space: normal;
   line-height: 1.2;
   min-height: 1.5em;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  color: #1d1d1f;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* 动画样式 */
