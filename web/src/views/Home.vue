@@ -1831,6 +1831,7 @@ async function saveCardEdit() {
   align-items: center;
   justify-content: center;
   padding: 2.8rem 0;
+  margin-top: 10px;
   position: relative;
   z-index: 2;
 }

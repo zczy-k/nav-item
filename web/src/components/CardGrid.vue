@@ -157,7 +157,7 @@ function getCardStyle(index) {
     style.animationDelay = `${index * 0.05}s`;
   } else if (animationType.value === 'radial') {
     // 从中心扩散：根据距离中心的位置计算延迟
-    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
+    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 8);
     const row = Math.floor(index / cols);
     const col = index % cols;
     const centerCol = Math.floor(cols / 2);
@@ -168,18 +168,18 @@ function getCardStyle(index) {
     style.animationDelay = `${Math.random() * 0.5}s`;
   } else if (animationType.value === 'slideLeft') {
     // 从左往右：按行延迟
-    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
+    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 8);
     const row = Math.floor(index / cols);
     style.animationDelay = `${row * 0.1}s`;
   } else if (animationType.value === 'slideRight') {
     // 从右往左：按行延迟（反向）
-    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
+    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 8);
     const row = Math.floor(index / cols);
     const col = index % cols;
     style.animationDelay = `${(row + (cols - col - 1) * 0.02) * 0.08}s`;
   } else if (animationType.value === 'convergeIn') {
     // 从两边往中间靠拢：根据列的位置计算延迟
-    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
+    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 8);
     const col = index % cols;
     const centerCol = Math.floor(cols / 2);
     const distanceFromCenter = Math.abs(col - centerCol);
@@ -187,7 +187,7 @@ function getCardStyle(index) {
     style.animationDelay = `${(cols - distanceFromCenter - 1) * 0.08}s`;
   } else if (animationType.value === 'flipIn') {
     // 翻转入场：按对角线延迟
-    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 6);
+    const cols = window.innerWidth <= 768 ? 3 : (window.innerWidth <= 1200 ? 4 : 8);
     const row = Math.floor(index / cols);
     const col = index % cols;
     style.animationDelay = `${(row + col) * 0.06}s`;
@@ -254,11 +254,11 @@ const gradients = [
 
 <style scoped>
 .container {
-  max-width: 55rem;
+  max-width: 70rem;
   margin: 0 auto;
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   gap: 15px;
   opacity: 1;
   transition: opacity 0.2s ease;
@@ -488,21 +488,27 @@ const gradients = [
   opacity: 0;
 }
 
-.animate-convergeIn .link-item:nth-child(6n+1),
-.animate-convergeIn .link-item:nth-child(6n+6) {
-  /* 最边缘的列（第1列和第6列） */
-  transform: translateX(-80px);
+.animate-convergeIn .link-item:nth-child(8n+1),
+.animate-convergeIn .link-item:nth-child(8n+8) {
+  /* 最边缘的列（第1列和第8列） */
+  transform: translateX(-100px);
 }
 
-.animate-convergeIn .link-item:nth-child(6n+2),
-.animate-convergeIn .link-item:nth-child(6n+5) {
-  /* 次边缘的列（第2列和第5列） */
-  transform: translateX(-40px);
+.animate-convergeIn .link-item:nth-child(8n+2),
+.animate-convergeIn .link-item:nth-child(8n+7) {
+  /* 次边缘的列（第2列和第7列） */
+  transform: translateX(-60px);
 }
 
-.animate-convergeIn .link-item:nth-child(6n+3),
-.animate-convergeIn .link-item:nth-child(6n+4) {
-  /* 中间的列（第3列和第4列） */
+.animate-convergeIn .link-item:nth-child(8n+3),
+.animate-convergeIn .link-item:nth-child(8n+6) {
+  /* 第3列和第6列 */
+  transform: translateX(-30px);
+}
+
+.animate-convergeIn .link-item:nth-child(8n+4),
+.animate-convergeIn .link-item:nth-child(8n+5) {
+  /* 中间的列（第4列和第5列） */
   transform: translateY(-30px);
 }
 
