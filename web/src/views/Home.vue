@@ -11,23 +11,39 @@
     
     <div class="search-section">
       <div class="search-box-wrapper">
-        <div class="search-engine-select">
-          <button v-for="engine in searchEngines" :key="engine.name"
-            :class="['engine-btn', {active: selectedEngine.name === engine.name}]"
-            @click="selectEngine(engine)"
-          >
-            <span class="engine-icon">{{ engine.icon || '🔍' }}</span>
-            <span class="engine-label">{{ engine.label }}</span>
-            <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn" title="删除">
-              ×
-            </button>
-          </button>
-          <button @click="openAddEngineModal" class="engine-btn add-engine-btn" title="添加搜索引擎">
-            <span class="engine-icon">+</span>
-            <span class="engine-label">添加</span>
-          </button>
-        </div>
         <div class="search-container">
+          <!-- 搜索引擎下拉选择器 -->
+          <div class="search-engine-dropdown">
+            <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
+              <span class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <!-- 下拉菜单 -->
+            <transition name="dropdown">
+              <div v-if="showEngineDropdown" class="engine-dropdown-menu" @click.stop>
+                <div class="engine-menu-header">
+                  <span>搜索引擎</span>
+                  <button @click="openAddEngineModal" class="add-engine-icon-btn" title="添加自定义">
+                    +
+                  </button>
+                </div>
+                <div class="engine-menu-items">
+                  <button v-for="engine in searchEngines" :key="engine.name"
+                    :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
+                    @click="selectEngineFromDropdown(engine)"
+                  >
+                    <span class="engine-icon">{{ engine.icon || '🔍' }}</span>
+                    <span class="engine-label">{{ engine.label }}</span>
+                    <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
+                      ×
+                    </button>
+                  </button>
+                </div>
+              </div>
+            </transition>
+          </div>
           <input 
             v-model="searchQuery" 
             type="text" 
@@ -624,6 +640,7 @@ const searchEngines = ref([...defaultEngines, ...loadCustomEngines()]);
 
 // 自定义搜索引擎相关状态
 const showAddEngineModal = ref(false);
+const showEngineDropdown = ref(false);
 const engineError = ref('');
 const newEngine = ref({
   icon: '',
@@ -655,6 +672,17 @@ function selectEngine(engine) {
   } catch (e) {
     console.error('Failed to save default search engine:', e);
   }
+}
+
+// 切换下拉菜单显示
+function toggleEngineDropdown() {
+  showEngineDropdown.value = !showEngineDropdown.value;
+}
+
+// 从下拉菜单选择搜索引擎
+function selectEngineFromDropdown(engine) {
+  selectEngine(engine);
+  showEngineDropdown.value = false;
 }
 
 function clearSearch() {
@@ -794,12 +822,21 @@ onMounted(async () => {
   checkSavedPassword();
   
   document.addEventListener('click', closeFabMenu);
+  document.addEventListener('click', closeEngineDropdown);
 });
 
 
 onUnmounted(() => {
   document.removeEventListener('click', closeFabMenu);
+  document.removeEventListener('click', closeEngineDropdown);
 });
+
+// 关闭搜索引擎下拉菜单
+function closeEngineDropdown() {
+  if (showEngineDropdown.value) {
+    showEngineDropdown.value = false;
+  }
+}
 
 async function selectMenu(menu, parentMenu = null) {
   if (parentMenu) {
@@ -1412,65 +1449,65 @@ async function saveCardEdit() {
   /* backdrop-filter: blur(8px);  /*  毛玻璃效果 */
 }
 
-.search-engine-select {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: .5rem;
-  gap: 10px;
-  z-index: 2;
-  flex-wrap: wrap;
-}
-
-.engine-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  color: #ffffff;
-  font-size: .85rem;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* 搜索引擎下拉选择器 */
+.search-engine-dropdown {
   position: relative;
+  margin-right: 8px;
 }
 
-.engine-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.engine-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.engine-btn.active {
+.engine-selector:hover {
+  background: rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.engine-selector .engine-icon {
+  font-size: 1.2rem;
+}
+
+.engine-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.engine-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  font-weight: 600;
+  font-size: 14px;
 }
 
-.engine-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.engine-label {
-  font-weight: 500;
-}
-
-.delete-engine-btn {
-  margin-left: 4px;
-  width: 18px;
-  height: 18px;
+.add-engine-icon-btn {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
-  font-size: 16px;
-  line-height: 1;
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1478,19 +1515,79 @@ async function saveCardEdit() {
   transition: all 0.2s;
 }
 
-.delete-engine-btn:hover {
-  background: #ef4444;
+.add-engine-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1);
 }
 
-.add-engine-btn {
-  background: rgba(16, 185, 129, 0.2);
-  border: 2px dashed rgba(255, 255, 255, 0.3);
+.engine-menu-items {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-.add-engine-btn:hover {
-  background: rgba(16, 185, 129, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+.engine-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  color: #333;
+}
+
+.engine-menu-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.engine-menu-item.active {
+  background: rgba(102, 126, 234, 0.15);
+  color: #667eea;
+  font-weight: 600;
+}
+
+.engine-menu-item .engine-icon {
+  font-size: 1.2rem;
+}
+
+.engine-menu-item .engine-label {
+  flex: 1;
+}
+
+.delete-engine-btn-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  border: none;
+  color: #ef4444;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-engine-btn-small:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* 下拉菜单动画 */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .search-container {

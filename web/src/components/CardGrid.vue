@@ -267,11 +267,12 @@ function isCardSelected(card) {
   }
 }
 .link-item {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
   border-radius: 15px;
   padding: 0;
   transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
   min-height: 85px;
   height: 85px;
@@ -281,14 +282,14 @@ function isCardSelected(card) {
   align-items: center;
 }
 .link-item:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .link-item a {
   /* margin-top: 8px; */
   text-decoration: none;
-  color: #ffffff;
+  color: #333;
   font-weight: 500;
   display: flex;
   flex-direction: column;
@@ -546,8 +547,8 @@ function isCardSelected(card) {
 }
 
 .sortable-ghost {
-  opacity: 0.4;
-  background-color: rgba(255, 255, 255, 0.4);
+  opacity: 0.5;
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .sortable-chosen {
