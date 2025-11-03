@@ -15,7 +15,8 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <span class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
+              <img v-if="selectedEngine.iconUrl" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="e => e.target.style.display = 'none'" />
+              <span v-else class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -34,7 +35,8 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <span class="engine-icon">{{ engine.icon || '🔍' }}</span>
+                    <img v-if="engine.iconUrl" :src="engine.iconUrl" class="engine-icon-img" @error="e => e.target.style.display = 'none'" />
+                    <span v-else class="engine-icon">{{ engine.icon || '🔍' }}</span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
                       ×
@@ -442,49 +444,87 @@
     <div v-if="showAddEngineModal" class="modal-overlay" @click="showAddEngineModal = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>添加自定义搜索引擎</h3>
-          <button @click="showAddEngineModal = false" class="close-btn">
+          <h3>{{ engineStep === 1 ? '添加搜索引擎 - 输入URL' : '添加搜索引擎 - 编辑信息' }}</h3>
+          <button @click="closeAddEngineModal" class="close-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12"></path>
             </svg>
           </button>
         </div>
         <div class="modal-body">
-          <div class="form-group">
-            <label>图标 Emoji</label>
-            <input 
-              v-model="newEngine.icon" 
-              type="text" 
-              placeholder="🔍 (可选)"
-              class="batch-input"
-              maxlength="2"
-            />
+          <!-- 步骤1：输入URL -->
+          <div v-if="engineStep === 1">
+            <div class="form-group">
+              <label>搜索引擎URL</label>
+              <input 
+                v-model="engineUrl" 
+                type="url" 
+                placeholder="例如：https://www.google.com"
+                class="batch-input"
+                @keyup.enter="parseEngineUrl"
+              />
+              <p style="font-size: 12px; color: #666; margin-top: 5px;">输入搜索引擎的主页地址，系统会自动解析</p>
+            </div>
+            <p v-if="engineError" class="batch-error">{{ engineError }}</p>
+            <div class="batch-actions" style="margin-top: 20px;">
+              <button @click="closeAddEngineModal" class="btn btn-cancel">取消</button>
+              <button @click="parseEngineUrl" class="btn btn-primary" :disabled="engineLoading || !engineUrl">
+                {{ engineLoading ? '解析中...' : '下一步' }}
+              </button>
+            </div>
           </div>
-          <div class="form-group">
-            <label>名称</label>
-            <input 
-              v-model="newEngine.label" 
-              type="text" 
-              placeholder="例如：Wikipedia"
-              class="batch-input"
-            />
-          </div>
-          <div class="form-group">
-            <label>搜索地址</label>
-            <input 
-              v-model="newEngine.searchUrl" 
-              type="url" 
-              placeholder="例如：https://zh.wikipedia.org/wiki/{query}"
-              class="batch-input"
-            />
-            <p style="font-size: 12px; color: #666; margin-top: 5px;">提示：使用 {query} 作为搜索关键词占位符</p>
-          </div>
-          <p v-if="engineError" class="batch-error">{{ engineError }}</p>
-          <div class="batch-actions" style="margin-top: 20px;">
-            <button @click="showAddEngineModal = false" class="btn btn-cancel">取消</button>
-            <button @click="addCustomEngine" class="btn btn-primary">
-              添加
-            </button>
+          
+          <!-- 步骤2：编辑解析后的信息 -->
+          <div v-if="engineStep === 2">
+            <div class="form-group">
+              <label>图标</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <img v-if="newEngine.iconUrl" :src="newEngine.iconUrl" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px;" @error="e => e.target.style.display = 'none'" />
+                <input 
+                  v-model="newEngine.iconUrl" 
+                  type="url" 
+                  placeholder="图标URL"
+                  class="batch-input"
+                  style="flex: 1;"
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>名称</label>
+              <input 
+                v-model="newEngine.name" 
+                type="text" 
+                placeholder="例如：Google"
+                class="batch-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>搜索URL模板</label>
+              <input 
+                v-model="newEngine.searchUrl" 
+                type="text" 
+                placeholder="例如：https://www.google.com/search?q={searchTerms}"
+                class="batch-input"
+              />
+              <p style="font-size: 12px; color: #666; margin-top: 5px;">使用 {searchTerms} 作为搜索关键词占位符</p>
+            </div>
+            <div class="form-group">
+              <label>关键词（可选）</label>
+              <input 
+                v-model="newEngine.keyword" 
+                type="text" 
+                placeholder="例如：google"
+                class="batch-input"
+              />
+              <p style="font-size: 12px; color: #666; margin-top: 5px;">用于快捷键搜索，例如输入 'g 关键词' 使用Google搜索</p>
+            </div>
+            <p v-if="engineError" class="batch-error">{{ engineError }}</p>
+            <div class="batch-actions" style="margin-top: 20px;">
+              <button @click="engineStep = 1" class="btn btn-cancel">上一步</button>
+              <button @click="addCustomEngine" class="btn btn-primary" :disabled="engineLoading">
+                {{ engineLoading ? '添加中...' : '添加' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -501,7 +541,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeMount, computed, defineAsyncComponent, onUnmounted } from 'vue';
-import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards, deleteCard, updateCard } from '../api';
+import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards, deleteCard, updateCard, getSearchEngines, parseSearchEngine, addSearchEngine, deleteSearchEngine } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
 
@@ -613,39 +653,21 @@ const defaultEngines = [
   }
 ];
 
-// 加载自定义搜索引擎
-const loadCustomEngines = () => {
-  try {
-    const saved = localStorage.getItem('custom_search_engines');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Failed to load custom engines:', e);
-  }
-  return [];
-};
-
-// 保存自定义搜索引擎
-const saveCustomEngines = (engines) => {
-  try {
-    localStorage.setItem('custom_search_engines', JSON.stringify(engines));
-  } catch (e) {
-    console.error('Failed to save custom engines:', e);
-  }
-};
-
-// 合并默认和自定义搜索引擎
-const searchEngines = ref([...defaultEngines, ...loadCustomEngines()]);
+// 搜索引擎列表（默认 + 从后端加载的自定义）
+const searchEngines = ref([...defaultEngines]);
 
 // 自定义搜索引擎相关状态
 const showAddEngineModal = ref(false);
 const showEngineDropdown = ref(false);
 const engineError = ref('');
+const engineLoading = ref(false);
+const engineStep = ref(1); // 1:输入URL 2:编辑信息
+const engineUrl = ref('');
 const newEngine = ref({
-  icon: '',
-  label: '',
-  searchUrl: ''
+  name: '',
+  searchUrl: '',
+  iconUrl: '',
+  keyword: ''
 });
 
 // 从 localStorage 读取保存的默认搜索引擎
@@ -692,70 +714,124 @@ function clearSearch() {
 // 打开添加搜索引擎弹窗
 function openAddEngineModal() {
   showAddEngineModal.value = true;
+  engineStep.value = 1;
   engineError.value = '';
+  engineUrl.value = '';
   newEngine.value = {
-    icon: '',
-    label: '',
-    searchUrl: ''
+    name: '',
+    searchUrl: '',
+    iconUrl: '',
+    keyword: ''
   };
 }
 
+// 关闭添加搜索引擎弹窗
+function closeAddEngineModal() {
+  showAddEngineModal.value = false;
+  engineStep.value = 1;
+  engineError.value = '';
+  engineUrl.value = '';
+  showEngineDropdown.value = false;
+}
+
+// 解析搜索引擎URL
+async function parseEngineUrl() {
+  if (!engineUrl.value.trim()) {
+    engineError.value = '请输入URL';
+    return;
+  }
+  
+  engineLoading.value = true;
+  engineError.value = '';
+  
+  try {
+    const res = await parseSearchEngine(engineUrl.value);
+    newEngine.value = {
+      name: res.data.name,
+      searchUrl: res.data.searchUrl,
+      iconUrl: res.data.iconUrl,
+      keyword: res.data.keyword
+    };
+    engineStep.value = 2;
+  } catch (error) {
+    engineError.value = error.response?.data?.error || '解析失败，请检查URL是否正确';
+  } finally {
+    engineLoading.value = false;
+  }
+}
+
 // 添加自定义搜索引擎
-function addCustomEngine() {
-  if (!newEngine.value.label.trim()) {
+async function addCustomEngine() {
+  if (!newEngine.value.name.trim()) {
     engineError.value = '请输入搜索引擎名称';
     return;
   }
   if (!newEngine.value.searchUrl.trim()) {
-    engineError.value = '请输入搜索地址';
+    engineError.value = '请输入搜索URL模板';
     return;
   }
-  if (!newEngine.value.searchUrl.includes('{query}')) {
-    engineError.value = '搜索地址必须包含 {query} 占位符';
+  if (!newEngine.value.searchUrl.includes('{searchTerms}')) {
+    engineError.value = '搜索URL模板必须包含 {searchTerms} 占位符';
     return;
   }
   
-  // 创建新的搜索引擎
-  const customEngine = {
-    name: 'custom_' + Date.now(),
-    label: newEngine.value.label,
-    icon: newEngine.value.icon || '🔍',
-    placeholder: `${newEngine.value.label} 搜索...`,
-    url: q => newEngine.value.searchUrl.replace('{query}', encodeURIComponent(q)),
-    custom: true,
-    searchUrl: newEngine.value.searchUrl // 保存原始URL模板
-  };
+  engineLoading.value = true;
+  engineError.value = '';
   
-  // 添加到列表
-  searchEngines.value.push(customEngine);
-  
-  // 保存自定义引擎
-  const customEngines = searchEngines.value.filter(e => e.custom);
-  saveCustomEngines(customEngines);
-  
-  // 关闭弹窗
-  showAddEngineModal.value = false;
-  alert('搜索引擎添加成功！');
+  try {
+    const res = await addSearchEngine({
+      name: newEngine.value.name,
+      search_url: newEngine.value.searchUrl,
+      icon_url: newEngine.value.iconUrl,
+      keyword: newEngine.value.keyword
+    });
+    
+    // 添加到前端列表
+    const customEngine = {
+      name: 'custom_' + res.data.id,
+      label: res.data.name,
+      icon: '',
+      iconUrl: res.data.icon_url,
+      placeholder: `${res.data.name} 搜索...`,
+      url: q => res.data.search_url.replace('{searchTerms}', encodeURIComponent(q)),
+      custom: true,
+      id: res.data.id,
+      keyword: res.data.keyword
+    };
+    searchEngines.value.push(customEngine);
+    
+    showToastMessage('搜索引擎添加成功');
+    closeAddEngineModal();
+  } catch (error) {
+    engineError.value = error.response?.data?.error || '添加失败';
+  } finally {
+    engineLoading.value = false;
+  }
 }
 
 // 删除自定义搜索引擎
-function deleteCustomEngine(engine) {
+async function deleteCustomEngine(engine) {
   if (!confirm(`确定要删除「${engine.label}」搜索引擎吗？`)) return;
   
-  // 从列表中移除
-  const index = searchEngines.value.findIndex(e => e.name === engine.name);
-  if (index > -1) {
-    searchEngines.value.splice(index, 1);
+  try {
+    await deleteSearchEngine(engine.id);
+    
+    // 从列表中移除
+    const index = searchEngines.value.findIndex(e => e.name === engine.name);
+    if (index > -1) {
+      searchEngines.value.splice(index, 1);
+    }
+    
+    // 如果删除的是当前选中的引擎，切换到第一个
+    if (selectedEngine.value.name === engine.name) {
+      selectedEngine.value = searchEngines.value[0];
+      selectEngine(searchEngines.value[0]);
+    }
+    
+    showToastMessage('删除成功');
+  } catch (error) {
+    alert('删除失败：' + (error.response?.data?.error || error.message));
   }
-  
-  // 如果删除的是当前选中的引擎，切换到第一个
-  if (selectedEngine.value.name === engine.name) {
-    selectedEngine.value = searchEngines.value[0];
-  }
-  
-  // 保存自定义引擎
-  const customEngines = searchEngines.value.filter(e => e.custom);
-  saveCustomEngines(customEngines);
 }
 
 const filteredCards = computed(() => {
@@ -804,6 +880,25 @@ onMounted(async () => {
   
   const friendRes = await getFriends();
   friendLinks.value = friendRes.data;
+  
+  // 加载自定义搜索引擎
+  try {
+    const enginesRes = await getSearchEngines();
+    const customEngines = enginesRes.data.map(engine => ({
+      name: 'custom_' + engine.id,
+      label: engine.name,
+      icon: '',
+      iconUrl: engine.icon_url,
+      placeholder: `${engine.name} \u641c\u7d22...`,
+      url: q => engine.search_url.replace('{searchTerms}', encodeURIComponent(q)),
+      custom: true,
+      id: engine.id,
+      keyword: engine.keyword
+    }));
+    searchEngines.value = [...defaultEngines, ...customEngines];
+  } catch (error) {
+    console.error('加载自定义搜索引擎失败:', error);
+  }
   
   // 再次检查并应用背景（防止 onBeforeMount 没有执行）
   const savedBg = localStorage.getItem('nav_background');
@@ -1476,6 +1571,13 @@ async function saveCardEdit() {
   font-size: 1.2rem;
 }
 
+.engine-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
 .engine-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -1551,6 +1653,13 @@ async function saveCardEdit() {
 
 .engine-menu-item .engine-icon {
   font-size: 1.2rem;
+}
+
+.engine-menu-item .engine-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .engine-menu-item .engine-label {

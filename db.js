@@ -68,6 +68,18 @@ db.serialize(() => {
     logo TEXT
   )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_friends_title ON friends(title)`);
+  
+  // 自定义搜索引擎表
+  db.run(`CREATE TABLE IF NOT EXISTS custom_search_engines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    search_url TEXT NOT NULL,
+    icon_url TEXT,
+    keyword TEXT,
+    "order" INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_custom_search_engines_order ON custom_search_engines("order")`);
 
   // 检查菜单表是否为空，若为空则插入默认菜单
   db.get('SELECT COUNT(*) as count FROM menus', (err, row) => {

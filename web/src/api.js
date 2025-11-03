@@ -59,3 +59,11 @@ export const batchAddCards = (menuId, subMenuId, cards) => axios.post(`${BASE}/b
 
 // 壁纸API
 export const getRandomWallpaper = () => axios.get(`${BASE}/wallpaper/random`);
+
+// 搜索引擎API
+export const getSearchEngines = () => axios.get(`${BASE}/search-engines`);
+export const parseSearchEngine = (url) => axios.post(`${BASE}/search-engines/parse`, { url }, { headers: authHeaders() });
+export const addSearchEngine = (data) => axios.post(`${BASE}/search-engines`, data, { headers: authHeaders() });
+export const updateSearchEngine = (id, data) => axios.put(`${BASE}/search-engines/${id}`, data, { headers: authHeaders() });
+export const deleteSearchEngine = (id) => axios.delete(`${BASE}/search-engines/${id}`, { headers: authHeaders() });
+export const reorderSearchEngines = (engines) => axios.post(`${BASE}/search-engines/reorder`, { engines }, { headers: authHeaders() });
