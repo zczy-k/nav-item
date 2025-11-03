@@ -13,7 +13,7 @@
       <div class="search-box-wrapper">
         <div class="search-container">
           <!-- 搜索引擎下拉选择器 -->
-          <div class="search-engine-dropdown">
+          <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
               <span class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -267,12 +267,16 @@ function isCardSelected(card) {
   }
 }
 .link-item {
-  background-color: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
   padding: 0;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
   text-align: center;
   min-height: 85px;
   height: 85px;
@@ -280,16 +284,50 @@ function isCardSelected(card) {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  border: 0.5px solid rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
 }
+
+/* 苹果风格光晕效果 */
+.link-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.link-item:hover::before {
+  left: 100%;
+}
+
 .link-item:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 100%);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.link-item:active {
+  transform: translateY(-2px) scale(0.98);
+  transition: all 0.1s;
 }
 .link-item a {
   /* margin-top: 8px; */
   text-decoration: none;
-  color: #333;
+  color: #1d1d1f;
   font-weight: 500;
   display: flex;
   flex-direction: column;
@@ -299,17 +337,25 @@ function isCardSelected(card) {
   height: 100%;
   padding: 0;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 .link-icon {
-  width: 25px;
-  height: 25px;
+  width: 28px;
+  height: 28px;
   margin: 4px auto;
   object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-item:hover .link-icon {
+  transform: scale(1.1);
 }
 .link-text {
   padding-right: 4px;
   padding-left: 4px;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
   word-break: break-all;
   max-width: 100%;
@@ -319,8 +365,11 @@ function isCardSelected(card) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: normal;
-  line-height: 1;
+  line-height: 1.2;
   min-height: 1.5em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: #1d1d1f;
 }
 
 /* 动画样式 */
