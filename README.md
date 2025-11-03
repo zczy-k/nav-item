@@ -1,7 +1,7 @@
 ﻿# Con-Nav-Item(增强版) - 个人导航站
 
 > 🔗 **仓库地址**: [github.com/zczy-k/Con-Nav-Item](https://github.com/zczy-k/Con-Nav-Item)  
-> 👤 **Fork 自**: [github.com/eooce/Con-Nav-Item](https://github.com/eooce/Con-Nav-Item)并进行功能的改进与增强
+> 👤 **Fork 自**: [github.com/eooce/nav-item](https://github.com/eooce/nav-item)并进行功能的改进与增强
 > 
 > ## 增强功能:
 - Serv00 一键部署脚本、完善部署文档
@@ -334,6 +334,7 @@ cd Con-Nav-Item/browser-extension
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！ 
+
 
 
 
