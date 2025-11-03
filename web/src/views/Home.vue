@@ -711,8 +711,28 @@ function clearSearch() {
   searchQuery.value = '';
 }
 
-// 打开添加搜索引擎弹窗
-function openAddEngineModal() {
+// 打开添加搜索引擎弹窗(需要先验证密码)
+async function openAddEngineModal() {
+  // 检查是否已登录
+  const token = localStorage.getItem('token');
+  if (!token) {
+    // 没有token，需要先登录
+    const password = prompt('请输入管理员密码以添加搜索引擎：');
+    if (!password) {
+      showEngineDropdown.value = false;
+      return;
+    }
+    
+    try {
+      const res = await login('admin', password);
+      localStorage.setItem('token', res.data.token);
+    } catch (error) {
+      alert('密码错误');
+      showEngineDropdown.value = false;
+      return;
+    }
+  }
+  
   showAddEngineModal.value = true;
   engineStep.value = 1;
   engineError.value = '';
@@ -812,6 +832,21 @@ async function addCustomEngine() {
 // 删除自定义搜索引擎
 async function deleteCustomEngine(engine) {
   if (!confirm(`确定要删除「${engine.label}」搜索引擎吗？`)) return;
+  
+  // 检查是否已登录
+  const token = localStorage.getItem('token');
+  if (!token) {
+    const password = prompt('请输入管理员密码以删除搜索引擎：');
+    if (!password) return;
+    
+    try {
+      const res = await login('admin', password);
+      localStorage.setItem('token', res.data.token);
+    } catch (error) {
+      alert('密码错误');
+      return;
+    }
+  }
   
   try {
     await deleteSearchEngine(engine.id);
