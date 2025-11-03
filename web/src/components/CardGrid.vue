@@ -229,26 +229,26 @@ function isCardSelected(card) {
   return props.selectedCards?.some(c => c.id === card.id) || false;
 }
 
-// 随机渐变色配置
+// 随机渐变色配置（透明度60%）
 const gradients = [
-  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-  'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
-  'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-  'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-  'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-  'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)',
-  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
-  'linear-gradient(135deg, #f8b195 0%, #f67280 100%)',
-  'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
-  'linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)',
-  'linear-gradient(135deg, #9890e3 0%, #b1f4cf 100%)',
-  'linear-gradient(135deg, #ebc0fd 0%, #d9ded8 100%)',
-  'linear-gradient(135deg, #96fbc4 0%, #f9f586 100%)',
-  'linear-gradient(135deg, #fda085 0%, #f6d365 100%)'
+  'linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(240, 147, 251, 0.6) 0%, rgba(245, 87, 108, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(79, 172, 254, 0.6) 0%, rgba(0, 242, 254, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(67, 233, 123, 0.6) 0%, rgba(56, 249, 215, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(250, 112, 154, 0.6) 0%, rgba(254, 225, 64, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(48, 207, 208, 0.6) 0%, rgba(51, 8, 103, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(168, 237, 234, 0.6) 0%, rgba(254, 214, 227, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(255, 154, 158, 0.6) 0%, rgba(254, 207, 239, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(255, 236, 210, 0.6) 0%, rgba(252, 182, 159, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(255, 110, 127, 0.6) 0%, rgba(191, 233, 255, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(224, 195, 252, 0.6) 0%, rgba(142, 197, 252, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(248, 177, 149, 0.6) 0%, rgba(246, 114, 128, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(210, 153, 194, 0.6) 0%, rgba(254, 249, 215, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(253, 219, 146, 0.6) 0%, rgba(209, 253, 255, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(152, 144, 227, 0.6) 0%, rgba(177, 244, 207, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(235, 192, 253, 0.6) 0%, rgba(217, 222, 216, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(150, 251, 196, 0.6) 0%, rgba(249, 245, 134, 0.6) 100%)',
+  'linear-gradient(135deg, rgba(253, 160, 133, 0.6) 0%, rgba(246, 211, 101, 0.6) 100%)'
 ];
 </script>
 
@@ -262,6 +262,8 @@ const gradients = [
   gap: 15px;
   opacity: 1;
   transition: opacity 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 @media (max-width: 1200px) {
   .container {
