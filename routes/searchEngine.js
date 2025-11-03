@@ -5,8 +5,8 @@ const authMiddleware = require('./authMiddleware');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-// 从URL解析搜索引擎信息
-router.post('/parse', authMiddleware, async (req, res) => {
+// 从URL解析搜索引擎信息(不需要认证)
+router.post('/parse', async (req, res) => {
   const { url } = req.body;
   
   if (!url) {
