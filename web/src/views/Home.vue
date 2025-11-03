@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container">
+  <div class="home-container" @click="handleContainerClick">
     <div class="menu-bar-fixed">
       <MenuBar 
         :menus="menus" 
@@ -94,6 +94,7 @@
       @editCard="handleEditCard"
       @deleteCard="handleDeleteCard"
       @toggleCardSelection="toggleCardSelection"
+      @click.stop
     />
     
     <!-- 浮动操作按钮菜单 -->
@@ -101,12 +102,12 @@
       <!-- 切换背景按钮 -->
       <transition name="fab-item">
         <button v-show="showFabMenu" @click="changeBackground" class="change-bg-btn" title="切换背景" :disabled="bgLoading">
-          <svg v-if="!bgLoading" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg v-if="!bgLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
             <circle cx="8.5" cy="8.5" r="1.5"></circle>
             <path d="M21 15l-5-5L5 21"></path>
           </svg>
-          <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
           </svg>
         </button>
@@ -115,7 +116,7 @@
       <!-- 批量添加悬浮按钮 -->
       <transition name="fab-item">
         <button v-if="activeMenu" v-show="showFabMenu" @click="openBatchAddModal" class="batch-add-btn" title="批量添加网站">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14"/>
           </svg>
         </button>
@@ -131,7 +132,7 @@
           class="exit-edit-btn" 
           title="退出编辑模式"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 6L6 18M6 6l12 12"></path>
           </svg>
         </button>
@@ -146,7 +147,7 @@
           class="edit-mode-btn" 
           title="编辑模式"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
@@ -156,10 +157,10 @@
       <!-- 主切换按钮 -->
       <button @click="toggleFabMenu" class="fab-toggle-btn" title="更多功能">
         <transition name="fab-icon" mode="out-in">
-          <svg v-if="!showFabMenu" key="plus" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg v-if="!showFabMenu" key="plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <svg v-else key="close" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg v-else key="close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="12"></line>
           </svg>
         </transition>
@@ -294,6 +295,12 @@
             @keyup.enter="verifyEditPassword"
             style="width: 100%;"
           />
+          <div class="remember-password-wrapper">
+            <label>
+              <input type="checkbox" v-model="rememberEditPassword" />
+              <span>记住密码（2小时）</span>
+            </label>
+          </div>
           <p v-if="editError" class="batch-error">{{ editError }}</p>
           <div class="batch-actions" style="margin-top: 20px;">
             <button @click="showEditPasswordModal = false" class="btn btn-cancel">取消</button>
@@ -426,6 +433,7 @@ const menus = ref([]);
 const activeMenu = ref(null);
 const activeSubMenu = ref(null);
 const cards = ref([]);
+const allCards = ref([]); // 存储所有菜单的卡片，用于搜索
 const searchQuery = ref('');
 const leftAds = ref([]);
 const rightAds = ref([]);
@@ -448,6 +456,7 @@ const editPassword = ref('');
 const showEditPasswordModal = ref(false);
 const editLoading = ref(false);
 const editError = ref('');
+const rememberEditPassword = ref(false);
 
 // 批量移动相关状态
 const selectedCards = ref([]);
@@ -555,9 +564,13 @@ function clearSearch() {
 
 const filteredCards = computed(() => {
   if (!searchQuery.value) return cards.value;
-  return cards.value.filter(card => 
-    card.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    card.url.toLowerCase().includes(searchQuery.value.toLowerCase())
+  
+  // 如果在搜索状态，搜索所有卡片
+  const searchQueryLower = searchQuery.value.toLowerCase();
+  return allCards.value.filter(card => 
+    card.title.toLowerCase().includes(searchQueryLower) ||
+    card.url.toLowerCase().includes(searchQueryLower) ||
+    (card.desc && card.desc.toLowerCase().includes(searchQueryLower))
   );
 });
 
@@ -585,6 +598,8 @@ onMounted(async () => {
   if (menus.value.length) {
     activeMenu.value = menus.value[0];
     loadCards();
+    // 加载所有卡片用于搜索
+    loadAllCardsForSearch();
   }
   // 加载广告
   const adRes = await getAds();
@@ -638,6 +653,29 @@ async function loadCards() {
   if (!activeMenu.value) return;
   const res = await getCards(activeMenu.value.id, activeSubMenu.value?.id);
   cards.value = res.data;
+}
+
+// 加载所有卡片用于搜索
+async function loadAllCardsForSearch() {
+  const tempCards = [];
+  for (const menu of menus.value) {
+    try {
+      // 加载主菜单的卡片
+      const res = await getCards(menu.id, null);
+      tempCards.push(...res.data);
+      
+      // 加载子菜单的卡片
+      if (menu.subMenus && menu.subMenus.length) {
+        for (const subMenu of menu.subMenus) {
+          const subRes = await getCards(menu.id, subMenu.id);
+          tempCards.push(...subRes.data);
+        }
+      }
+    } catch (error) {
+      console.error(`加载菜单 ${menu.name} 的卡片失败:`, error);
+    }
+  }
+  allCards.value = tempCards;
 }
 
 // 加载所有分类的卡片
@@ -916,9 +954,42 @@ async function changeBackground() {
 
 // 进入编辑模式
 async function enterEditMode() {
+  // 检查是否有保存的密码token
+  const savedData = localStorage.getItem('nav_password_token');
+  if (savedData) {
+    try {
+      const { password, expiry, token } = JSON.parse(savedData);
+      if (Date.now() < expiry && token) {
+        // token未过期，恢复token并直接进入编辑模式
+        localStorage.setItem('token', token);
+        editMode.value = true;
+        return;
+      } else {
+        // 已过期，清除
+        localStorage.removeItem('nav_password_token');
+      }
+    } catch (e) {
+      localStorage.removeItem('nav_password_token');
+    }
+  }
+  
+  // 没有有效token，显示密码验证弹窗
   showEditPasswordModal.value = true;
   editPassword.value = '';
   editError.value = '';
+  
+  // 检查是否有保存的密码并自动填充
+  if (savedData) {
+    try {
+      const { password, expiry } = JSON.parse(savedData);
+      if (Date.now() < expiry) {
+        editPassword.value = password;
+        rememberEditPassword.value = true;
+      }
+    } catch (e) {
+      // 忽略错误
+    }
+  }
 }
 
 // 验证密码并进入编辑模式
@@ -934,6 +1005,18 @@ async function verifyEditPassword() {
   try {
     const res = await login('admin', editPassword.value);
     localStorage.setItem('token', res.data.token);
+    
+    // 如果选择了记住密码，保存到2小时
+    if (rememberEditPassword.value) {
+      const expiry = Date.now() + 2 * 60 * 60 * 1000; // 2小时
+      localStorage.setItem('nav_password_token', JSON.stringify({
+        password: editPassword.value,
+        token: res.data.token,
+        expiry
+      }));
+    } else {
+      localStorage.removeItem('nav_password_token');
+    }
     
     // 进入编辑模式
     editMode.value = true;
@@ -952,6 +1035,17 @@ function exitEditMode() {
   showMovePanel.value = false;
   targetMenuId.value = null;
   targetSubMenuId.value = null;
+}
+
+// 处理容器点击事件，点击空白退出编辑模式
+function handleContainerClick(event) {
+  // 只在编辑模式下生效
+  if (!editMode.value) return;
+  
+  // 如果点击的是容器本身（空白区域），则退出编辑模式
+  if (event.target.classList.contains('home-container')) {
+    exitEditMode();
+  }
 }
 
 // ========== 批量移动相关函数 ==========
@@ -1640,8 +1734,8 @@ async function saveCardEdit() {
 }
 
 .fab-toggle-btn {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea, #764ba2);
   border: none;
@@ -1664,9 +1758,9 @@ async function saveCardEdit() {
 .change-bg-btn {
   /* Common styles for FAB items */
   position: relative;
-  width: 56px;
-  height: 56px;
-  margin-bottom: 15px;
+  width: 37px;
+  height: 37px;
+  margin-bottom: 10px;
   border-radius: 50%;
   border: none;
   color: white;
@@ -1987,8 +2081,8 @@ async function saveCardEdit() {
 
 .edit-mode-btn,
 .exit-edit-btn {
-  width: 50px;
-  height: 50px;
+  width: 33px;
+  height: 33px;
   border-radius: 50%;
   border: none;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1999,7 +2093,7 @@ async function saveCardEdit() {
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   transition: all 0.3s ease;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .edit-mode-btn:hover,

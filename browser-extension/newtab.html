@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>导航站</title>
+    <title>新标签页</title>
     <style>
         * {
             margin: 0;
@@ -15,9 +15,26 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: none; /* 默认隐藏，由 JS 控制显示 */
+            overflow: hidden;
+        }
+        
+        /* iframe 全屏显示导航页 */
+        #navFrame {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        /* 设置页面容器 */
+        #setupContainer {
+            display: none;
             align-items: center;
             justify-content: center;
+            min-height: 100vh;
         }
         
         .container {
@@ -102,7 +119,12 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- 导航页 iframe -->
+    <iframe id="navFrame" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>
+    
+    <!-- 设置页面 -->
+    <div id="setupContainer">
+      <div class="container">
         <h1>🌐 欢迎使用导航站插件</h1>
         <p>请输入你的导航站地址，开始使用吧！</p>
         
@@ -120,7 +142,8 @@
         
         <div class="loading" id="loading">正在跳转...</div>
         
-        <p class="example">示例：https://your-domain.com</p>
+        <p class="example">示例:https://your-domain.com</p>
+      </div>
     </div>
 
     <script src="newtab.js"></script>
