@@ -16,7 +16,15 @@
             :class="['engine-btn', {active: selectedEngine.name === engine.name}]"
             @click="selectEngine(engine)"
           >
-            {{ engine.label }}
+            <span class="engine-icon">{{ engine.icon || '🔍' }}</span>
+            <span class="engine-label">{{ engine.label }}</span>
+            <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn" title="删除">
+              ×
+            </button>
+          </button>
+          <button @click="openAddEngineModal" class="engine-btn add-engine-btn" title="添加搜索引擎">
+            <span class="engine-icon">+</span>
+            <span class="engine-label">添加</span>
           </button>
         </div>
         <div class="search-container">
@@ -414,6 +422,58 @@
       </div>
     </div>
     
+    <!-- 添加搜索引擎弹窗 -->
+    <div v-if="showAddEngineModal" class="modal-overlay" @click="showAddEngineModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>添加自定义搜索引擎</h3>
+          <button @click="showAddEngineModal = false" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>图标 Emoji</label>
+            <input 
+              v-model="newEngine.icon" 
+              type="text" 
+              placeholder="🔍 (可选)"
+              class="batch-input"
+              maxlength="2"
+            />
+          </div>
+          <div class="form-group">
+            <label>名称</label>
+            <input 
+              v-model="newEngine.label" 
+              type="text" 
+              placeholder="例如：Wikipedia"
+              class="batch-input"
+            />
+          </div>
+          <div class="form-group">
+            <label>搜索地址</label>
+            <input 
+              v-model="newEngine.searchUrl" 
+              type="url" 
+              placeholder="例如：https://zh.wikipedia.org/wiki/{query}"
+              class="batch-input"
+            />
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">提示：使用 {query} 作为搜索关键词占位符</p>
+          </div>
+          <p v-if="engineError" class="batch-error">{{ engineError }}</p>
+          <div class="batch-actions" style="margin-top: 20px;">
+            <button @click="showAddEngineModal = false" class="btn btn-cancel">取消</button>
+            <button @click="addCustomEngine" class="btn btn-primary">
+              添加
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Toast 提示 -->
     <transition name="toast">
       <div v-if="showToast" class="toast-notification">
@@ -498,52 +558,91 @@ const selectedCardsCount = computed(() => {
   return parsedCards.value.filter(card => card.selected).length;
 });
 
-// 聚合搜索配置
-const searchEngines = [
+// 默认搜索引擎配置
+const defaultEngines = [
   {
     name: 'google',
     label: 'Google',
+    icon: '🌐',
     placeholder: 'Google 搜索...',
     url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'baidu',
     label: '百度',
+    icon: '🔍',
     placeholder: '百度搜索...',
     url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
   {
     name: 'bing',
     label: 'Bing',
+    icon: '🅱️',
     placeholder: 'Bing 搜索...',
     url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'github',
-    label: 'github',
+    label: 'GitHub',
+    icon: '💻',
     placeholder: 'GitHub 搜索...',
     url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
   },
   {
     name: 'site',
     label: '站内',
+    icon: '🏠',
     placeholder: '站内搜索...',
     url: q => `/search?query=${encodeURIComponent(q)}`
   }
 ];
+
+// 加载自定义搜索引擎
+const loadCustomEngines = () => {
+  try {
+    const saved = localStorage.getItem('custom_search_engines');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to load custom engines:', e);
+  }
+  return [];
+};
+
+// 保存自定义搜索引擎
+const saveCustomEngines = (engines) => {
+  try {
+    localStorage.setItem('custom_search_engines', JSON.stringify(engines));
+  } catch (e) {
+    console.error('Failed to save custom engines:', e);
+  }
+};
+
+// 合并默认和自定义搜索引擎
+const searchEngines = ref([...defaultEngines, ...loadCustomEngines()]);
+
+// 自定义搜索引擎相关状态
+const showAddEngineModal = ref(false);
+const engineError = ref('');
+const newEngine = ref({
+  icon: '',
+  label: '',
+  searchUrl: ''
+});
 
 // 从 localStorage 读取保存的默认搜索引擎
 const getDefaultEngine = () => {
   try {
     const savedEngineName = localStorage.getItem('default_search_engine');
     if (savedEngineName) {
-      const engine = searchEngines.find(e => e.name === savedEngineName);
+      const engine = searchEngines.value.find(e => e.name === savedEngineName);
       if (engine) return engine;
     }
   } catch (e) {
     console.error('Failed to load default search engine:', e);
   }
-  return searchEngines[0]; // 默认返回 Google
+  return searchEngines.value[0]; // 默认返回第一个
 };
 
 const selectedEngine = ref(getDefaultEngine());
@@ -560,6 +659,75 @@ function selectEngine(engine) {
 
 function clearSearch() {
   searchQuery.value = '';
+}
+
+// 打开添加搜索引擎弹窗
+function openAddEngineModal() {
+  showAddEngineModal.value = true;
+  engineError.value = '';
+  newEngine.value = {
+    icon: '',
+    label: '',
+    searchUrl: ''
+  };
+}
+
+// 添加自定义搜索引擎
+function addCustomEngine() {
+  if (!newEngine.value.label.trim()) {
+    engineError.value = '请输入搜索引擎名称';
+    return;
+  }
+  if (!newEngine.value.searchUrl.trim()) {
+    engineError.value = '请输入搜索地址';
+    return;
+  }
+  if (!newEngine.value.searchUrl.includes('{query}')) {
+    engineError.value = '搜索地址必须包含 {query} 占位符';
+    return;
+  }
+  
+  // 创建新的搜索引擎
+  const customEngine = {
+    name: 'custom_' + Date.now(),
+    label: newEngine.value.label,
+    icon: newEngine.value.icon || '🔍',
+    placeholder: `${newEngine.value.label} 搜索...`,
+    url: q => newEngine.value.searchUrl.replace('{query}', encodeURIComponent(q)),
+    custom: true,
+    searchUrl: newEngine.value.searchUrl // 保存原始URL模板
+  };
+  
+  // 添加到列表
+  searchEngines.value.push(customEngine);
+  
+  // 保存自定义引擎
+  const customEngines = searchEngines.value.filter(e => e.custom);
+  saveCustomEngines(customEngines);
+  
+  // 关闭弹窗
+  showAddEngineModal.value = false;
+  alert('搜索引擎添加成功！');
+}
+
+// 删除自定义搜索引擎
+function deleteCustomEngine(engine) {
+  if (!confirm(`确定要删除「${engine.label}」搜索引擎吗？`)) return;
+  
+  // 从列表中移除
+  const index = searchEngines.value.findIndex(e => e.name === engine.name);
+  if (index > -1) {
+    searchEngines.value.splice(index, 1);
+  }
+  
+  // 如果删除的是当前选中的引擎，切换到第一个
+  if (selectedEngine.value.name === engine.name) {
+    selectedEngine.value = searchEngines.value[0];
+  }
+  
+  // 保存自定义引擎
+  const customEngines = searchEngines.value.filter(e => e.custom);
+  saveCustomEngines(customEngines);
 }
 
 const filteredCards = computed(() => {
@@ -1248,32 +1416,90 @@ async function saveCardEdit() {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding-bottom: .3rem;
-  gap: 5px;
+  justify-content: center;
+  padding-bottom: .5rem;
+  gap: 10px;
   z-index: 2;
+  flex-wrap: wrap;
 }
+
 .engine-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   border: none;
-  background: none;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
   color: #ffffff;
-  font-size: .8rem ;
-  padding: 2px 10px;
-  border-radius: 4px;
+  font-size: .85rem;
+  padding: 8px 16px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
-.engine-btn.active, .engine-btn:hover {
-  color: #399dff;
-  background: #ffffff1a;
+
+.engine-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.engine-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.engine-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.engine-label {
+  font-weight: 500;
+}
+
+.delete-engine-btn {
+  margin-left: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-engine-btn:hover {
+  background: #ef4444;
+  transform: scale(1.1);
+}
+
+.add-engine-btn {
+  background: rgba(16, 185, 129, 0.2);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+.add-engine-btn:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .search-container {
   display: flex;
   align-items: center;
-  background: #b3b7b83b;
-  border-radius: 20px;
-  padding: 0.3rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 25px;
+  padding: 0.4rem 0.6rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
   max-width: 640px;
   width: 92%;
@@ -1284,9 +1510,9 @@ async function saveCardEdit() {
   flex: 1;
   border: none;
   background: transparent;
-  padding: .1rem .5rem;
-  font-size: 1.2rem;
-  color: #ffffff;
+  padding: .2rem .8rem;
+  font-size: 1.1rem;
+  color: #333;
   outline: none;
 }
 
@@ -1299,14 +1525,24 @@ async function saveCardEdit() {
   border: none;
   outline: none;
   cursor: pointer;
-  margin-right: 0.2rem;
+  margin-right: 0.3rem;
   display: flex;
   align-items: center;
-  padding: 0;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.clear-btn svg {
+  stroke: #666;
+}
+
+.clear-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .search-btn {
-  background: #e9e9eb00;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
   border: none;
   border-radius: 50%;
@@ -1316,12 +1552,13 @@ async function saveCardEdit() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-right: 0.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .search-btn:hover {
-  background: #3367d6;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
 }
 
 .home-container {
