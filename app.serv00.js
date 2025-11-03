@@ -11,6 +11,7 @@ const friendRoutes = require('./routes/friend');
 const userRoutes = require('./routes/user');
 const batchRoutes = require('./routes/batch');
 const wallpaperRoutes = require('./routes/wallpaper');
+const searchEngineRoutes = require('./routes/searchEngine');
 const compression = require('compression');
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/friends', friendRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/batch', batchRoutes);
 app.use('/api/wallpaper', wallpaperRoutes);
+app.use('/api/search-engines', searchEngineRoutes);
 
 app.listen(PORT, () => {
   console.log(`server is running at http://localhost:${PORT}`);
