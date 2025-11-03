@@ -620,6 +620,7 @@ const defaultEngines = [
     name: 'google',
     label: 'Google',
     icon: '🌐',
+    iconUrl: 'https://www.google.com/favicon.ico',
     placeholder: 'Google 搜索...',
     url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
@@ -627,6 +628,7 @@ const defaultEngines = [
     name: 'baidu',
     label: '百度',
     icon: '🔍',
+    iconUrl: 'https://www.baidu.com/favicon.ico',
     placeholder: '百度搜索...',
     url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
@@ -634,6 +636,7 @@ const defaultEngines = [
     name: 'bing',
     label: 'Bing',
     icon: '🅱️',
+    iconUrl: 'https://www.bing.com/favicon.ico',
     placeholder: 'Bing 搜索...',
     url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
   },
@@ -641,15 +644,9 @@ const defaultEngines = [
     name: 'github',
     label: 'GitHub',
     icon: '💻',
+    iconUrl: 'https://github.com/favicon.ico',
     placeholder: 'GitHub 搜索...',
     url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
-  },
-  {
-    name: 'site',
-    label: '站内',
-    icon: '🏠',
-    placeholder: '站内搜索...',
-    url: q => `/search?query=${encodeURIComponent(q)}`
   }
 ];
 
