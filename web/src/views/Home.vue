@@ -680,7 +680,7 @@ const newEngine = ref({
 });
 
 // 搜索引擎配置版本号
-const ENGINE_CONFIG_VERSION = '2.1';
+const ENGINE_CONFIG_VERSION = '2.2';
 
 
 function selectEngine(engine) {
@@ -939,8 +939,10 @@ onMounted(async () => {
   try {
     const savedVersion = localStorage.getItem('engine_config_version');
     if (savedVersion !== ENGINE_CONFIG_VERSION) {
-      console.log('Search engine config version mismatch, clearing cache.');
+      console.log('Search engine config version mismatch, clearing all related cache.');
+      // 清除所有搜索引擎相关缓存
       localStorage.removeItem('default_search_engine');
+      localStorage.removeItem('search_engines'); // 清除可能存在的旧缓存
       localStorage.setItem('engine_config_version', ENGINE_CONFIG_VERSION);
     }
 
