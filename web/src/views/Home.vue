@@ -15,12 +15,7 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <img v-if="!selectedEngine.iconError && selectedEngine.iconUrl" 
-                   :src="selectedEngine.iconUrl" 
-                   class="engine-icon-img" 
-                   @error="e => selectedEngine.iconError = true" 
-                   alt="" />
-              <span v-else class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
+              <span class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -39,12 +34,7 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <img v-if="!engine.iconError && engine.iconUrl" 
-                         :src="engine.iconUrl" 
-                         class="engine-icon-img" 
-                         @error="e => engine.iconError = true" 
-                         alt="" />
-                    <span v-else class="engine-icon">{{ engine.icon || '🔍' }}</span>
+                    <span class="engine-icon">{{ engine.icon || '🔍' }}</span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
                       ×
@@ -485,19 +475,6 @@
           <!-- 步骤2：编辑解析后的信息 -->
           <div v-if="engineStep === 2">
             <div class="form-group">
-              <label>图标</label>
-              <div style="display: flex; gap: 10px; align-items: center;">
-                <img v-if="newEngine.iconUrl" :src="newEngine.iconUrl" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px;" @error="e => e.target.style.display = 'none'" />
-                <input 
-                  v-model="newEngine.iconUrl" 
-                  type="url" 
-                  placeholder="图标URL"
-                  class="batch-input"
-                  style="flex: 1;"
-                />
-              </div>
-            </div>
-            <div class="form-group">
               <label>名称</label>
               <input 
                 v-model="newEngine.name" 
@@ -628,37 +605,29 @@ const defaultEngines = [
     name: 'google',
     label: 'Google',
     icon: '🌐',
-    iconUrl: 'https://www.google.com/favicon.ico',
     placeholder: 'Google 搜索...',
-    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
-    iconError: false
+    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'baidu',
     label: '百度',
     icon: '🔍',
-    iconUrl: 'https://www.baidu.com/favicon.ico',
     placeholder: '百度搜索...',
-    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
-    iconError: false
+    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
   {
     name: 'bing',
     label: 'Bing',
     icon: '🅱️',
-    iconUrl: 'https://www.bing.com/favicon.ico',
     placeholder: 'Bing 搜索...',
-    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
-    iconError: false
+    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'github',
     label: 'GitHub',
     icon: '💻',
-    iconUrl: 'https://github.com/favicon.ico',
     placeholder: 'GitHub 搜索...',
-    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`,
-    iconError: false
+    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
   }
 ];
 
@@ -675,12 +644,11 @@ const engineUrl = ref('');
 const newEngine = ref({
   name: '',
   searchUrl: '',
-  iconUrl: '',
   keyword: ''
 });
 
-// 搜索引擎配置版本号
-const ENGINE_CONFIG_VERSION = '2.2';
+// 搜索引擎配置版本号（移除图标功能后）
+const ENGINE_CONFIG_VERSION = '3.0';
 
 
 function selectEngine(engine) {
@@ -737,7 +705,6 @@ async function openAddEngineModal() {
   newEngine.value = {
     name: '',
     searchUrl: '',
-    iconUrl: '',
     keyword: ''
   };
 }
@@ -766,7 +733,6 @@ async function parseEngineUrl() {
     newEngine.value = {
       name: res.data.name,
       searchUrl: res.data.searchUrl,
-      iconUrl: res.data.iconUrl,
       keyword: res.data.keyword
     };
     engineStep.value = 2;
@@ -799,7 +765,6 @@ async function addCustomEngine() {
     const res = await addSearchEngine({
       name: newEngine.value.name,
       search_url: newEngine.value.searchUrl,
-      icon_url: newEngine.value.iconUrl,
       keyword: newEngine.value.keyword
     });
     
@@ -808,13 +773,11 @@ async function addCustomEngine() {
       name: 'custom_' + res.data.id,
       label: res.data.name,
       icon: '🔎',
-      iconUrl: res.data.icon_url,
       placeholder: `${res.data.name} 搜索...`,
       url: q => res.data.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: res.data.id,
-      keyword: res.data.keyword,
-      iconError: false
+      keyword: res.data.keyword
     };
     searchEngines.value.push(customEngine);
     
@@ -921,13 +884,11 @@ onMounted(async () => {
       name: 'custom_' + engine.id,
       label: engine.name,
       icon: '🔎',
-      iconUrl: engine.icon_url,
       placeholder: `${engine.name} 搜索...`,
       url: q => engine.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: engine.id,
-      keyword: engine.keyword,
-      iconError: false // 确保 iconError 存在
+      keyword: engine.keyword
     }));
     searchEngines.value = [...defaultEngines, ...customEngines];
   } catch (error) {
@@ -1633,13 +1594,6 @@ async function saveCardEdit() {
   font-size: 1.2rem;
 }
 
-.engine-icon-img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  border-radius: 4px;
-  display: block;
-}
 
 .engine-dropdown-menu {
   position: absolute;
@@ -1718,12 +1672,6 @@ async function saveCardEdit() {
   font-size: 1.2rem;
 }
 
-.engine-menu-item .engine-icon-img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  border-radius: 4px;
-}
 
 .engine-menu-item .engine-label {
   flex: 1;

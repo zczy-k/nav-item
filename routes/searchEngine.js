@@ -30,27 +30,6 @@ router.post('/parse', async (req, res) => {
       name = new URL(url).hostname;
     }
 
-    // 提取favicon
-    let iconUrl = '';
-    const iconSelectors = [
-      'link[rel="icon"]',
-      'link[rel="shortcut icon"]',
-      'link[rel="apple-touch-icon"]',
-      'link[rel="apple-touch-icon-precomposed"]'
-    ];
-    
-    for (const selector of iconSelectors) {
-      const iconLink = $(selector).attr('href');
-      if (iconLink) {
-        iconUrl = new URL(iconLink, url).href;
-        break;
-      }
-    }
-    
-    if (!iconUrl) {
-      const urlObj = new URL(url);
-      iconUrl = `${urlObj.protocol}//${urlObj.host}/favicon.ico`;
-    }
 
     // 尝试检测搜索URL模式
     let searchUrl = '';
@@ -77,7 +56,6 @@ router.post('/parse', async (req, res) => {
     res.json({
       name,
       searchUrl,
-      iconUrl,
       keyword: name.toLowerCase().replace(/\s+/g, '')
     });
 
@@ -102,15 +80,15 @@ router.get('/', (req, res) => {
 
 // 添加自定义搜索引擎
 router.post('/', authMiddleware, (req, res) => {
-  const { name, search_url, icon_url, keyword, order } = req.body;
+  const { name, search_url, keyword, order } = req.body;
 
   if (!name || !search_url) {
     return res.status(400).json({ error: '名称和搜索URL不能为空' });
   }
 
   db.run(
-    'INSERT INTO custom_search_engines (name, search_url, icon_url, keyword, "order") VALUES (?, ?, ?, ?, ?)',
-    [name, search_url, icon_url || '', keyword || '', order || 0],
+    'INSERT INTO custom_search_engines (name, search_url, keyword, "order") VALUES (?, ?, ?, ?)',
+    [name, search_url, keyword || '', order || 0],
     function (err) {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -119,7 +97,6 @@ router.post('/', authMiddleware, (req, res) => {
         id: this.lastID,
         name,
         search_url,
-        icon_url: icon_url || '',
         keyword: keyword || '',
         order: order || 0
       });
@@ -130,15 +107,15 @@ router.post('/', authMiddleware, (req, res) => {
 // 更新自定义搜索引擎
 router.put('/:id', authMiddleware, (req, res) => {
   const { id } = req.params;
-  const { name, search_url, icon_url, keyword, order } = req.body;
+  const { name, search_url, keyword, order } = req.body;
 
   if (!name || !search_url) {
     return res.status(400).json({ error: '名称和搜索URL不能为空' });
   }
 
   db.run(
-    'UPDATE custom_search_engines SET name = ?, search_url = ?, icon_url = ?, keyword = ?, "order" = ? WHERE id = ?',
-    [name, search_url, icon_url || '', keyword || '', order || 0, id],
+    'UPDATE custom_search_engines SET name = ?, search_url = ?, keyword = ?, "order" = ? WHERE id = ?',
+    [name, search_url, keyword || '', order || 0, id],
     function (err) {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -150,7 +127,6 @@ router.put('/:id', authMiddleware, (req, res) => {
         id: parseInt(id),
         name,
         search_url,
-        icon_url: icon_url || '',
         keyword: keyword || '',
         order: order || 0
       });
