@@ -14,11 +14,11 @@
           type="checkbox" 
           class="card-checkbox"
           :checked="isCardSelected(card)"
-          @click.stop="$emit('toggleCardSelection', card)"
+          @click="$emit('toggleCardSelection', card)"
           title="选中"
         />
-        <button @click.stop="$emit('editCard', card)" class="card-btn edit-btn" title="编辑">✏️</button>
-        <button @click.stop="$emit('deleteCard', card)" class="card-btn del-btn" title="删除">🗑️</button>
+        <button @click="$emit('editCard', card)" class="card-btn edit-btn" title="编辑">✏️</button>
+        <button @click="$emit('deleteCard', card)" class="card-btn del-btn" title="删除">🗑️</button>
       </div>
     </div>
   </div>
