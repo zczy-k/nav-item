@@ -811,13 +811,14 @@ async function addCustomEngine() {
     const customEngine = {
       name: 'custom_' + res.data.id,
       label: res.data.name,
-      icon: '',
+      icon: '🔎', // 自定义搜索引擎默认使用放大镜emoji
       iconUrl: res.data.icon_url,
       placeholder: `${res.data.name} 搜索...`,
       url: q => res.data.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: res.data.id,
-      keyword: res.data.keyword
+      keyword: res.data.keyword,
+      iconError: false // 添加错误标记
     };
     searchEngines.value.push(customEngine);
     
@@ -923,13 +924,14 @@ onMounted(async () => {
     const customEngines = enginesRes.data.map(engine => ({
       name: 'custom_' + engine.id,
       label: engine.name,
-      icon: '',
+      icon: '🔎', // 自定义搜索引擎默认使用放大镜emoji
       iconUrl: engine.icon_url,
       placeholder: `${engine.name} \u641c\u7d22...`,
       url: q => engine.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: engine.id,
-      keyword: engine.keyword
+      keyword: engine.keyword,
+      iconError: false // 添加错误标记
     }));
     searchEngines.value = [...defaultEngines, ...customEngines];
   } catch (error) {
