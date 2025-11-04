@@ -1631,28 +1631,12 @@ async function saveCardEdit() {
   font-size: 1.2rem;
 }
 
-.engine-icon-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-}
-
 .engine-icon-img {
   width: 20px;
   height: 20px;
   object-fit: contain;
   border-radius: 4px;
   display: block;
-}
-
-.engine-icon-fallback {
-  display: none;
-  position: absolute;
-  top: 0;
-  left: 0;
 }
 
 .engine-dropdown-menu {
