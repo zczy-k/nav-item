@@ -15,8 +15,9 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <img v-if="selectedEngine.iconUrl && !selectedEngine.iconError" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="selectedEngine.iconError = true" crossorigin="anonymous" />
-              <span v-else class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
+              <span v-if="selectedEngine.custom" class="engine-icon">{{ selectedEngine.icon || '🔎' }}</span>
+              <img v-else-if="selectedEngine.iconUrl" :src="selectedEngine.iconUrl" class="engine-icon-img" />
+              <span v-else class="engine-icon">🔍</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -35,8 +36,9 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <img v-if="engine.iconUrl && !engine.iconError" :src="engine.iconUrl" class="engine-icon-img" @error="engine.iconError = true" crossorigin="anonymous" />
-                    <span v-else class="engine-icon">{{ engine.icon || '🔍' }}</span>
+                    <span v-if="engine.custom" class="engine-icon">{{ engine.icon || '🔎' }}</span>
+                    <img v-else-if="engine.iconUrl" :src="engine.iconUrl" class="engine-icon-img" />
+                    <span v-else class="engine-icon">🔍</span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
                       ×
@@ -811,14 +813,12 @@ async function addCustomEngine() {
     const customEngine = {
       name: 'custom_' + res.data.id,
       label: res.data.name,
-      icon: '🔎', // 自定义搜索引擎默认使用放大镜emoji
-      iconUrl: res.data.icon_url,
+      icon: '🔎', // 自定义搜索引擎使用emoji图标
       placeholder: `${res.data.name} 搜索...`,
       url: q => res.data.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: res.data.id,
-      keyword: res.data.keyword,
-      iconError: false // 添加错误标记
+      keyword: res.data.keyword
     };
     searchEngines.value.push(customEngine);
     
@@ -924,14 +924,12 @@ onMounted(async () => {
     const customEngines = enginesRes.data.map(engine => ({
       name: 'custom_' + engine.id,
       label: engine.name,
-      icon: '🔎', // 自定义搜索引擎默认使用放大镜emoji
-      iconUrl: engine.icon_url,
+      icon: '🔎', // 自定义搜索引擎使用emoji图标
       placeholder: `${engine.name} \u641c\u7d22...`,
       url: q => engine.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: engine.id,
-      keyword: engine.keyword,
-      iconError: false // 添加错误标记
+      keyword: engine.keyword
     }));
     searchEngines.value = [...defaultEngines, ...customEngines];
   } catch (error) {
