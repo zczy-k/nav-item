@@ -10,7 +10,7 @@
     </div>
     
     <div class="search-section">
-      <div class="search-box-wrapper">
+<div class="search-box-wrapper" v-if="selectedEngine">
         <div class="search-container">
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
@@ -54,10 +54,10 @@
               </div>
             </transition>
           </div>
-          <input 
+<input 
             v-model="searchQuery" 
             type="text" 
-            :placeholder="selectedEngine.placeholder" 
+            :placeholder="selectedEngine ? selectedEngine.placeholder : '搜索...'" 
             class="search-input"
             @keyup.enter="handleSearch"
           />
@@ -662,8 +662,8 @@ const defaultEngines = [
   }
 ];
 
-// 搜索引擎列表（默认 + 从后端加载的自定义）
-const searchEngines = ref([...defaultEngines]);
+const searchEngines = ref([]);
+const selectedEngine = ref(null);
 
 // 自定义搜索引擎相关状态
 const showAddEngineModal = ref(false);
@@ -680,30 +680,8 @@ const newEngine = ref({
 });
 
 // 搜索引擎配置版本号
-const ENGINE_CONFIG_VERSION = '2.0';
+const ENGINE_CONFIG_VERSION = '2.1';
 
-// 从 localStorage 读取保存的默认搜索引擎
-const getDefaultEngine = () => {
-  try {
-    // 检查版本，如果版本不匹配则清除旧数据
-    const savedVersion = localStorage.getItem('engine_config_version');
-    if (savedVersion !== ENGINE_CONFIG_VERSION) {
-      localStorage.removeItem('default_search_engine');
-      localStorage.setItem('engine_config_version', ENGINE_CONFIG_VERSION);
-    }
-    
-    const savedEngineName = localStorage.getItem('default_search_engine');
-    if (savedEngineName) {
-      const engine = searchEngines.value.find(e => e.name === savedEngineName);
-      if (engine) return engine;
-    }
-  } catch (e) {
-    console.error('Failed to load default search engine:', e);
-  }
-  return searchEngines.value[0]; // 默认返回第一个
-};
-
-const selectedEngine = ref(getDefaultEngine());
 
 function selectEngine(engine) {
   selectedEngine.value = engine;
@@ -944,16 +922,42 @@ onMounted(async () => {
       label: engine.name,
       icon: '🔎',
       iconUrl: engine.icon_url,
-      placeholder: `${engine.name} \u641c\u7d22...`,
+      placeholder: `${engine.name} 搜索...`,
       url: q => engine.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: engine.id,
       keyword: engine.keyword,
-      iconError: false
+      iconError: false // 确保 iconError 存在
     }));
     searchEngines.value = [...defaultEngines, ...customEngines];
   } catch (error) {
     console.error('加载自定义搜索引擎失败:', error);
+    searchEngines.value = [...defaultEngines]; // Fallback to defaults
+  }
+
+  // 从 localStorage 初始化默认搜索引擎
+  try {
+    const savedVersion = localStorage.getItem('engine_config_version');
+    if (savedVersion !== ENGINE_CONFIG_VERSION) {
+      console.log('Search engine config version mismatch, clearing cache.');
+      localStorage.removeItem('default_search_engine');
+      localStorage.setItem('engine_config_version', ENGINE_CONFIG_VERSION);
+    }
+
+    const savedEngineName = localStorage.getItem('default_search_engine');
+    let engineToSelect = searchEngines.value[0];
+    if (savedEngineName) {
+      const foundEngine = searchEngines.value.find(e => e.name === savedEngineName);
+      if (foundEngine) {
+        engineToSelect = foundEngine;
+      }
+    }
+    selectEngine(engineToSelect);
+  } catch (e) {
+    console.error('Failed to set default search engine:', e);
+    if (searchEngines.value.length > 0) {
+      selectEngine(searchEngines.value[0]);
+    }
   }
   
   // 再次检查并应用背景（防止 onBeforeMount 没有执行）
