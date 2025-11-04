@@ -620,7 +620,7 @@ const defaultEngines = [
     name: 'google',
     label: 'Google',
     icon: '🌐',
-    iconUrl: 'https://www.gstatic.com/images/branding/product/1x/gsa_32dp.png',
+    iconUrl: 'https://www.google.com/favicon.ico',
     placeholder: 'Google 搜索...',
     url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
     iconError: false
@@ -629,7 +629,7 @@ const defaultEngines = [
     name: 'baidu',
     label: '百度',
     icon: '🔍',
-    iconUrl: 'https://www.baidu.com/img/baidu_85beaf5496f291521eb75ba38eacbd87.svg',
+    iconUrl: 'https://www.baidu.com/favicon.ico',
     placeholder: '百度搜索...',
     url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
     iconError: false
@@ -647,7 +647,7 @@ const defaultEngines = [
     name: 'github',
     label: 'GitHub',
     icon: '💻',
-    iconUrl: 'https://github.githubassets.com/favicons/favicon.svg',
+    iconUrl: 'https://github.com/favicon.ico',
     placeholder: 'GitHub 搜索...',
     url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`,
     iconError: false

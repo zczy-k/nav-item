@@ -373,6 +373,7 @@ const gradients = [
   padding-right: 4px;
   padding-left: 4px;
   font-size: 13px;
+  font-weight: normal;
   text-align: center;
   word-break: break-all;
   max-width: 100%;
@@ -385,7 +386,8 @@ const gradients = [
   line-height: 1.2;
   min-height: 1.5em;
   letter-spacing: -0.01em;
-  color: #1d1d1f;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* 动画样式 */
