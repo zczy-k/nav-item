@@ -679,9 +679,19 @@ const newEngine = ref({
   keyword: ''
 });
 
+// 搜索引擎配置版本号
+const ENGINE_CONFIG_VERSION = '2.0';
+
 // 从 localStorage 读取保存的默认搜索引擎
 const getDefaultEngine = () => {
   try {
+    // 检查版本，如果版本不匹配则清除旧数据
+    const savedVersion = localStorage.getItem('engine_config_version');
+    if (savedVersion !== ENGINE_CONFIG_VERSION) {
+      localStorage.removeItem('default_search_engine');
+      localStorage.setItem('engine_config_version', ENGINE_CONFIG_VERSION);
+    }
+    
     const savedEngineName = localStorage.getItem('default_search_engine');
     if (savedEngineName) {
       const engine = searchEngines.value.find(e => e.name === savedEngineName);
@@ -933,12 +943,13 @@ onMounted(async () => {
       name: 'custom_' + engine.id,
       label: engine.name,
       icon: '🔎',
-      iconUrl: engine.icon_url, // 先尝试使用后端解析的图标
+      iconUrl: engine.icon_url,
       placeholder: `${engine.name} \u641c\u7d22...`,
       url: q => engine.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: engine.id,
-      keyword: engine.keyword
+      keyword: engine.keyword,
+      iconError: false
     }));
     searchEngines.value = [...defaultEngines, ...customEngines];
   } catch (error) {
@@ -976,12 +987,6 @@ function closeEngineDropdown() {
   if (showEngineDropdown.value) {
     showEngineDropdown.value = false;
   }
-}
-
-// 处理搜索引擎图标加载失败 - 与卡片图标相同的处理方式
-function handleEngineIconError(event) {
-  // 图标加载失败时，隐藏图片，自动显示emoji fallback
-  event.target.style.display = 'none';
 }
 
 async function selectMenu(menu, parentMenu = null) {
