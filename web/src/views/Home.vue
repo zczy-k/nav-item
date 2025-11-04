@@ -622,8 +622,7 @@ const defaultEngines = [
     icon: '🌐',
     iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%234285F4"/%3E%3Cpath d="M16 12h-4v4h-1v-4H7v-1h4V7h1v4h4v1z" fill="white"/%3E%3C/svg%3E',
     placeholder: 'Google 搜索...',
-    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
-    iconError: false
+    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'baidu',
@@ -631,8 +630,7 @@ const defaultEngines = [
     icon: '🔍',
     iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%232932E1"/%3E%3Ctext x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold"%3E百度%3C/text%3E%3C/svg%3E',
     placeholder: '百度搜索...',
-    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
-    iconError: false
+    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
   {
     name: 'bing',
@@ -640,8 +638,7 @@ const defaultEngines = [
     icon: '🅱️',
     iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%2300809D"/%3E%3Ctext x="12" y="16" text-anchor="middle" fill="white" font-size="11" font-weight="bold"%3EBing%3C/text%3E%3C/svg%3E',
     placeholder: 'Bing 搜索...',
-    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
-    iconError: false
+    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'github',
@@ -649,8 +646,7 @@ const defaultEngines = [
     icon: '💻',
     iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%23181717"/%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.71-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.11-1.46-1.11-1.46-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85 0 1.33-.01 2.41-.01 2.73 0 .27.18.58.69.48A10 10 0 0 0 22 12c0-5.52-4.48-10-10-10z" fill="white"/%3E%3C/svg%3E',
     placeholder: 'GitHub 搜索...',
-    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`,
-    iconError: false
+    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
   }
 ];
 
