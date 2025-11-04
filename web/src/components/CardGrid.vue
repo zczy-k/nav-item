@@ -5,7 +5,7 @@
          :class="{ 'draggable': editMode }"
          :data-card-id="card.id"
          :style="getCardStyle(index)">
-      <a :href="editMode ? 'javascript:void(0)' : card.url" :target="editMode ? '' : '_blank'" :title="getTooltip(card)" @click="editMode ? $event.preventDefault() : null">
+      <a :href="editMode ? 'javascript:void(0)' : card.url" :target="editMode ? '' : '_blank'" :title="getTooltip(card)" @click="editMode ? $event.preventDefault() : null" :class="{'drag-handle': editMode}">
         <img class="link-icon" :src="getLogo(card)" alt="" @error="onImgError($event, card)" loading="lazy">
         <span class="link-text">{{ truncate(card.title) }}</span>
       </a>
@@ -60,7 +60,9 @@ function initSortable() {
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
     dragClass: 'sortable-drag',
-    handle: '.link-item',
+    handle: '.drag-handle', // 改为特定的拖拽手柄
+    filter: '.card-btn, .card-checkbox', // 过滤掉按钮和复选框
+    preventOnFilter: false, // 允许过滤元素的默认事件
     onEnd: (evt) => {
       // 拖拽结束后，通知父组件更新顺序
       const targetContainer = evt.to;
