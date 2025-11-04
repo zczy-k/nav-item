@@ -15,7 +15,11 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <img v-if="selectedEngine.iconUrl" :src="selectedEngine.iconUrl" class="engine-icon-img" @error="handleEngineIconError" alt="" />
+              <img v-if="!selectedEngine.iconError && selectedEngine.iconUrl" 
+                   :src="selectedEngine.iconUrl" 
+                   class="engine-icon-img" 
+                   @error="e => selectedEngine.iconError = true" 
+                   alt="" />
               <span v-else class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -35,7 +39,11 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <img v-if="engine.iconUrl" :src="engine.iconUrl" class="engine-icon-img" @error="handleEngineIconError" alt="" />
+                    <img v-if="!engine.iconError && engine.iconUrl" 
+                         :src="engine.iconUrl" 
+                         class="engine-icon-img" 
+                         @error="e => engine.iconError = true" 
+                         alt="" />
                     <span v-else class="engine-icon">{{ engine.icon || '🔍' }}</span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
@@ -620,33 +628,37 @@ const defaultEngines = [
     name: 'google',
     label: 'Google',
     icon: '🌐',
-    iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%234285F4"/%3E%3Cpath d="M16 12h-4v4h-1v-4H7v-1h4V7h1v4h4v1z" fill="white"/%3E%3C/svg%3E',
+    iconUrl: 'https://www.google.com/favicon.ico',
     placeholder: 'Google 搜索...',
-    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
+    url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    iconError: false
   },
   {
     name: 'baidu',
     label: '百度',
     icon: '🔍',
-    iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%232932E1"/%3E%3Ctext x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold"%3E百度%3C/text%3E%3C/svg%3E',
+    iconUrl: 'https://www.baidu.com/favicon.ico',
     placeholder: '百度搜索...',
-    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
+    url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
+    iconError: false
   },
   {
     name: 'bing',
     label: 'Bing',
     icon: '🅱️',
-    iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%2300809D"/%3E%3Ctext x="12" y="16" text-anchor="middle" fill="white" font-size="11" font-weight="bold"%3EBing%3C/text%3E%3C/svg%3E',
+    iconUrl: 'https://www.bing.com/favicon.ico',
     placeholder: 'Bing 搜索...',
-    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
+    url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+    iconError: false
   },
   {
     name: 'github',
     label: 'GitHub',
     icon: '💻',
-    iconUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Ccircle cx="12" cy="12" r="10" fill="%23181717"/%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.49.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.71-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.11-1.46-1.11-1.46-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85 0 1.33-.01 2.41-.01 2.73 0 .27.18.58.69.48A10 10 0 0 0 22 12c0-5.52-4.48-10-10-10z" fill="white"/%3E%3C/svg%3E',
+    iconUrl: 'https://github.com/favicon.ico',
     placeholder: 'GitHub 搜索...',
-    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
+    url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`,
+    iconError: false
   }
 ];
 
@@ -808,12 +820,13 @@ async function addCustomEngine() {
       name: 'custom_' + res.data.id,
       label: res.data.name,
       icon: '🔎',
-      iconUrl: res.data.icon_url, // 先尝试使用后端解析的图标
+      iconUrl: res.data.icon_url,
       placeholder: `${res.data.name} 搜索...`,
       url: q => res.data.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
       id: res.data.id,
-      keyword: res.data.keyword
+      keyword: res.data.keyword,
+      iconError: false
     };
     searchEngines.value.push(customEngine);
     
