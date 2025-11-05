@@ -1417,6 +1417,7 @@ async function moveCardToCategory(menuId, subMenuId) {
   if (selectedCards.value.length === 0) return;
   
   try {
+    const movedCardIds = selectedCards.value.map(c => c.id);
     const updates = selectedCards.value.map(card => ({
       id: card.id,
       menu_id: menuId,
@@ -1434,14 +1435,56 @@ async function moveCardToCategory(menuId, subMenuId) {
     }
     
     const count = selectedCards.value.length;
+    
+    // 判断是否移动到当前分类
+    const isMovingToCurrentCategory = 
+      menuId === activeMenu.value?.id && 
+      subMenuId === activeSubMenu.value?.id;
+    
+    if (isMovingToCurrentCategory) {
+      // 移动到当前分类，更新卡片的分类信息
+      movedCardIds.forEach(cardId => {
+        const index = cards.value.findIndex(c => c.id === cardId);
+        if (index > -1) {
+          cards.value[index] = {
+            ...cards.value[index],
+            menu_id: menuId,
+            sub_menu_id: subMenuId
+          };
+        }
+        
+        // 更新全局搜索列表
+        const allIndex = allCards.value.findIndex(c => c.id === cardId);
+        if (allIndex > -1) {
+          allCards.value[allIndex] = {
+            ...allCards.value[allIndex],
+            menu_id: menuId,
+            sub_menu_id: subMenuId
+          };
+        }
+      });
+    } else {
+      // 移动到其他分类，从当前列表中移除
+      cards.value = cards.value.filter(c => !movedCardIds.includes(c.id));
+      
+      // 更新全局搜索列表中的分类信息
+      movedCardIds.forEach(cardId => {
+        const allIndex = allCards.value.findIndex(c => c.id === cardId);
+        if (allIndex > -1) {
+          allCards.value[allIndex] = {
+            ...allCards.value[allIndex],
+            menu_id: menuId,
+            sub_menu_id: subMenuId
+          };
+        }
+      });
+    }
+    
     showToastMessage(`已移动 ${count} 个卡片！`);
     
     // 清空选中列表
     selectedCards.value = [];
     showMovePanel.value = false;
-    
-    // 重新加载
-    await loadCards();
   } catch (error) {
     showToastMessage(`移动失败：${error.response?.data?.error || error.message}`);
   }
