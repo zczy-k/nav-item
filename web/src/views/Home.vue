@@ -15,7 +15,15 @@
           <!-- 搜索引擎下拉选择器 -->
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
-              <span class="engine-icon">{{ selectedEngine.icon || '🔍' }}</span>
+              <span class="engine-icon">
+                <img v-if="selectedEngine.iconUrl && !selectedEngine.iconError" 
+                  :src="selectedEngine.iconUrl" 
+                  :alt="selectedEngine.label"
+                  @error="selectedEngine.iconError = true"
+                  class="engine-icon-img"
+                />
+                <span v-else>{{ selectedEngine.iconFallback || selectedEngine.icon || '🔍' }}</span>
+              </span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -34,7 +42,15 @@
                     :class="['engine-menu-item', {active: selectedEngine.name === engine.name}]"
                     @click="selectEngineFromDropdown(engine)"
                   >
-                    <span class="engine-icon">{{ engine.icon || '🔍' }}</span>
+                    <span class="engine-icon">
+                      <img v-if="engine.iconUrl && !engine.iconError" 
+                        :src="engine.iconUrl" 
+                        :alt="engine.label"
+                        @error="engine.iconError = true"
+                        class="engine-icon-img"
+                      />
+                      <span v-else>{{ engine.iconFallback || engine.icon || '🔍' }}</span>
+                    </span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
                       ×
@@ -604,30 +620,58 @@ const defaultEngines = [
   {
     name: 'google',
     label: 'Google',
-    icon: '🌐',
+    iconUrl: '/icons/google.svg',
+    iconFallback: '🌐',
     placeholder: 'Google 搜索...',
     url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'baidu',
     label: '百度',
-    icon: '🔍',
+    iconUrl: '/icons/baidu.svg',
+    iconFallback: '🔍',
     placeholder: '百度搜索...',
     url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
   {
     name: 'bing',
     label: 'Bing',
-    icon: '🅱️',
+    iconUrl: '/icons/bing.svg',
+    iconFallback: '🅱️',
     placeholder: 'Bing 搜索...',
     url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'github',
     label: 'GitHub',
-    icon: '💻',
+    iconUrl: '/icons/github.svg',
+    iconFallback: '💻',
     placeholder: 'GitHub 搜索...',
     url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
+  },
+  {
+    name: 'duckduckgo',
+    label: 'DuckDuckGo',
+    iconUrl: '/icons/duckduckgo.svg',
+    iconFallback: '🦆',
+    placeholder: 'DuckDuckGo 搜索...',
+    url: q => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
+  },
+  {
+    name: 'yahoo',
+    label: 'Yahoo',
+    iconUrl: '/icons/yahoo.svg',
+    iconFallback: '🔴',
+    placeholder: 'Yahoo 搜索...',
+    url: q => `https://search.yahoo.com/search?p=${encodeURIComponent(q)}`
+  },
+  {
+    name: 'yandex',
+    label: 'Yandex',
+    iconUrl: '/icons/yandex.svg',
+    iconFallback: '🔴',
+    placeholder: 'Yandex 搜索...',
+    url: q => `https://yandex.com/search/?text=${encodeURIComponent(q)}`
   }
 ];
 
@@ -883,7 +927,8 @@ onMounted(async () => {
     const customEngines = enginesRes.data.map(engine => ({
       name: 'custom_' + engine.id,
       label: engine.name,
-      icon: '🔎',
+      iconUrl: null, // 自定义搜索引擎暂时不支持图标
+      iconFallback: '🔎',
       placeholder: `${engine.name} 搜索...`,
       url: q => engine.search_url.replace('{searchTerms}', encodeURIComponent(q)),
       custom: true,
@@ -1681,6 +1726,15 @@ async function saveCardEdit() {
 
 .engine-selector .engine-icon {
   font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.engine-icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 
@@ -1759,6 +1813,10 @@ async function saveCardEdit() {
 
 .engine-menu-item .engine-icon {
   font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
 }
 
 
