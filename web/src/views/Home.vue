@@ -1482,12 +1482,26 @@ async function handleDeleteCard(card) {
   if (!confirm(`确定要删除「${card.title}」吗？`)) return;
   try {
     await deleteCard(card.id);
-    alert('删除成功');
-    if (editMode.value) {
-      await loadAllCards();
-    } else {
-      await loadCards();
+    
+    // 立即从当前显示的卡片列表中移除
+    const index = cards.value.findIndex(c => c.id === card.id);
+    if (index > -1) {
+      cards.value.splice(index, 1);
     }
+    
+    // 同时更新搜索用的所有卡片列表
+    const allIndex = allCards.value.findIndex(c => c.id === card.id);
+    if (allIndex > -1) {
+      allCards.value.splice(allIndex, 1);
+    }
+    
+    // 如果有选中的卡片，也要移除
+    const selectedIndex = selectedCards.value.findIndex(c => c.id === card.id);
+    if (selectedIndex > -1) {
+      selectedCards.value.splice(selectedIndex, 1);
+    }
+    
+    showToastMessage('删除成功');
   } catch (error) {
     alert('删除失败：' + (error.response?.data?.error || error.message));
   }
