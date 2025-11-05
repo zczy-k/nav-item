@@ -634,6 +634,22 @@ const defaultEngines = [
     url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
   {
+    name: '360',
+    label: '360搜索',
+    iconUrl: '/icons/360.svg',
+    iconFallback: '🟢',
+    placeholder: '360搜索...',
+    url: q => `https://www.so.com/s?q=${encodeURIComponent(q)}`
+  },
+  {
+    name: 'sogou',
+    label: '搜狗',
+    iconUrl: '/icons/sogou.svg',
+    iconFallback: '🐶',
+    placeholder: '搜狗搜索...',
+    url: q => `https://www.sogou.com/web?query=${encodeURIComponent(q)}`
+  },
+  {
     name: 'bing',
     label: 'Bing',
     iconUrl: '/icons/bing.svg',
