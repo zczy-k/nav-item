@@ -358,6 +358,16 @@ const gradients = [
   z-index: 1;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
+
+/* 在编辑模式下，拖拽手柄不应该阻止按钮点击 */
+.edit-mode .link-item a.drag-handle {
+  pointer-events: none;
+}
+
+.edit-mode .link-item .link-icon,
+.edit-mode .link-item .link-text {
+  pointer-events: auto;
+}
 .link-icon {
   width: 28px;
   height: 28px;
@@ -653,6 +663,8 @@ const gradients = [
   display: flex;
   gap: 4px;
   align-items: center;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .card-checkbox {
@@ -660,6 +672,8 @@ const gradients = [
   height: 18px;
   cursor: pointer;
   accent-color: #667eea;
+  z-index: 11;
+  pointer-events: auto;
 }
 
 .card-btn {
@@ -675,6 +689,8 @@ const gradients = [
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 11;
+  pointer-events: auto;
 }
 
 .card-btn:hover {
