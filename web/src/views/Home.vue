@@ -1555,13 +1555,45 @@ async function saveCardEdit() {
       logo_url: cardEditForm.value.logo_url,
       desc: cardEditForm.value.desc
     });
-    alert('修改成功');
-    closeEditCardModal();
-    if (editMode.value) {
-      await loadAllCards();
-    } else {
-      await loadCards();
+    
+    // 立即更新当前显示的卡片列表
+    const index = cards.value.findIndex(c => c.id === editingCard.value.id);
+    if (index > -1) {
+      cards.value[index] = {
+        ...cards.value[index],
+        title: cardEditForm.value.title,
+        url: cardEditForm.value.url,
+        logo_url: cardEditForm.value.logo_url,
+        desc: cardEditForm.value.desc
+      };
     }
+    
+    // 同时更新搜索用的所有卡片列表
+    const allIndex = allCards.value.findIndex(c => c.id === editingCard.value.id);
+    if (allIndex > -1) {
+      allCards.value[allIndex] = {
+        ...allCards.value[allIndex],
+        title: cardEditForm.value.title,
+        url: cardEditForm.value.url,
+        logo_url: cardEditForm.value.logo_url,
+        desc: cardEditForm.value.desc
+      };
+    }
+    
+    // 如果卡片在选中列表中，也要更新
+    const selectedIndex = selectedCards.value.findIndex(c => c.id === editingCard.value.id);
+    if (selectedIndex > -1) {
+      selectedCards.value[selectedIndex] = {
+        ...selectedCards.value[selectedIndex],
+        title: cardEditForm.value.title,
+        url: cardEditForm.value.url,
+        logo_url: cardEditForm.value.logo_url,
+        desc: cardEditForm.value.desc
+      };
+    }
+    
+    showToastMessage('修改成功');
+    closeEditCardModal();
   } catch (error) {
     editError.value = '修改失败：' + (error.response?.data?.error || error.message);
   } finally {
