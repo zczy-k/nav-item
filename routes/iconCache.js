@@ -44,36 +44,64 @@ async function downloadIcon(iconUrl) {
   }
 }
 
-// 清理过期缓存
+// 清理未使用的缓存（不在数据库中的图标）
 async function cleanExpiredCache() {
   try {
     await ensureCacheDir();
+    
+    // 获取所有缓存文件
     const files = await fs.readdir(ICON_CACHE_DIR);
-    const now = Date.now();
-    const expiryMs = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    if (files.length === 0) return;
     
-    let cleaned = 0;
-    for (const file of files) {
-      const filePath = path.join(ICON_CACHE_DIR, file);
-      const stats = await fs.stat(filePath);
-      
-      // 如果文件超过15天未修改，删除它
-      if (now - stats.mtimeMs > expiryMs) {
-        await fs.unlink(filePath);
-        cleaned++;
-      }
-    }
+    // 获取数据库中所有正在使用的logo_url
+    const sqlite3 = require('sqlite3').verbose();
+    const dbPath = path.join(__dirname, '..', 'database.db');
+    const db = new sqlite3.Database(dbPath);
     
-    if (cleaned > 0) {
-      console.log(`清理了 ${cleaned} 个过期图标缓存`);
-    }
+    return new Promise((resolve, reject) => {
+      db.all('SELECT DISTINCT logo_url FROM cards WHERE logo_url IS NOT NULL AND logo_url != ""', async (err, rows) => {
+        if (err) {
+          db.close();
+          return reject(err);
+        }
+        
+        // 生成所有正在使用的文件名集合
+        const usedFileNames = new Set(
+          rows
+            .filter(row => row.logo_url && !row.logo_url.startsWith('/'))
+            .map(row => getIconFileName(row.logo_url))
+        );
+        
+        // 删除不在数据库中的缓存文件
+        let cleaned = 0;
+        for (const file of files) {
+          if (!usedFileNames.has(file)) {
+            const filePath = path.join(ICON_CACHE_DIR, file);
+            try {
+              await fs.unlink(filePath);
+              cleaned++;
+              console.log(`删除未使用的缓存: ${file}`);
+            } catch (error) {
+              console.error(`删除文件失败 ${file}:`, error.message);
+            }
+          }
+        }
+        
+        if (cleaned > 0) {
+          console.log(`清理完成，共删除 ${cleaned} 个未使用的图标缓存`);
+        }
+        
+        db.close();
+        resolve();
+      });
+    });
   } catch (error) {
     console.error('清理缓存失败:', error.message);
   }
 }
 
-// 每天1小时执行一次清理
-setInterval(cleanExpiredCache, 60 * 60 * 1000);
+// 每天执行一次清理（24小时）
+setInterval(cleanExpiredCache, 24 * 60 * 60 * 1000);
 // 启动时立即执行一次
 cleanExpiredCache();
 

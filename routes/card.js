@@ -38,7 +38,10 @@ async function cacheIconAsync(iconUrl) {
     // 检查是否已缓存
     try {
       await fs.access(filePath);
-      return; // 已存在，不重复下载
+      // 已存在，更新修改时间（touch）以防止被清理
+      const now = new Date();
+      await fs.utimes(filePath, now, now);
+      return;
     } catch {}
     
     // 下载图标
@@ -57,6 +60,20 @@ async function cacheIconAsync(iconUrl) {
   } catch (error) {
     // 静默失败，不影响主流程
     console.error(`缓存图标失败: ${iconUrl}`, error.message);
+  }
+}
+
+// 删除旧图标缓存
+async function deleteOldIconCache(oldIconUrl) {
+  if (!oldIconUrl || oldIconUrl.startsWith('/')) return;
+  
+  try {
+    const fileName = getIconFileName(oldIconUrl);
+    const filePath = path.join(ICON_CACHE_DIR, fileName);
+    await fs.unlink(filePath);
+    console.log(`删除旧图标缓存: ${oldIconUrl}`);
+  } catch (error) {
+    // 忽略错误（文件可能不存在）
   }
 }
 
@@ -180,9 +197,16 @@ router.put('/:id', auth, (req, res) => {
       [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0, req.params.id], function(err) {
       if (err) return res.status(500).json({error: err.message});
       
-      // 如果logo_url变化了，缓存新图标
-      if (logo_url && logo_url !== oldCard?.logo_url) {
-        cacheIconAsync(logo_url).catch(e => console.error('缓存图标失败:', e.message));
+      // 如果logo_url变化了
+      if (logo_url !== oldCard?.logo_url) {
+        // 删除旧图标缓存
+        if (oldCard?.logo_url) {
+          deleteOldIconCache(oldCard.logo_url).catch(e => console.error('删除旧图标失败:', e.message));
+        }
+        // 缓存新图标
+        if (logo_url) {
+          cacheIconAsync(logo_url).catch(e => console.error('缓存新图标失败:', e.message));
+        }
       }
       
       res.json({ changed: this.changes });
