@@ -1,7 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- 搜狗搜索官方logo：橙色圆角矩形+狗狗图案 -->
   <rect width="24" height="24" fill="#FF6C00" rx="4"/>
-  <path fill="#FFF" d="M8 8c-1.1 0-2 .9-2 2v1c0 .6.4 1 1 1s1-.4 1-1v-1h2v1c0 .6.4 1 1 1s1-.4 1-1v-1c0-1.1-.9-2-2-2H8z"/>
-  <ellipse cx="9" cy="15" rx="2.5" ry="3" fill="#FFF"/>
-  <ellipse cx="15" cy="15" rx="2.5" ry="3" fill="#FFF"/>
-  <path fill="#FF6C00" d="M8 14c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1s-1-.4-1-1v-2c0-.6.4-1 1-1zm6 0c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1s-1-.4-1-1v-2c0-.6.4-1 1-1z"/>
+  <!-- 狗头 -->
+  <ellipse cx="12" cy="10" rx="5" ry="4" fill="#FFF"/>
+  <!-- 眼睛 -->
+  <circle cx="10" cy="9.5" r="0.8" fill="#FF6C00"/>
+  <circle cx="14" cy="9.5" r="0.8" fill="#FF6C00"/>
+  <!-- 耳朵 -->
+  <ellipse cx="8" cy="8" rx="1.5" ry="2.5" fill="#FFF"/>
+  <ellipse cx="16" cy="8" rx="1.5" ry="2.5" fill="#FFF"/>
+  <!-- 身体 -->
+  <ellipse cx="12" cy="17" rx="4" ry="4" fill="#FFF"/>
+  <!-- 爪子 -->
+  <circle cx="9" cy="19" r="0.8" fill="#FF6C00"/>
+  <circle cx="15" cy="19" r="0.8" fill="#FF6C00"/>
 </svg>
