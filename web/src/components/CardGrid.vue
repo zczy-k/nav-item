@@ -199,8 +199,13 @@ function getCardStyle(index) {
 }
 
 function getLogo(card) {
+  // 优先使用后端返回的 display_logo（包含缓存逻辑）
+  if (card.display_logo) return card.display_logo;
+  
+  // 备用方案
   if (card.custom_logo_path) return 'http://localhost:3000/uploads/' + card.custom_logo_path;
   if (card.logo_url) return card.logo_url;
+  
   // 默认 favicon
   try {
     const url = new URL(card.url);
@@ -211,6 +216,30 @@ function getLogo(card) {
 }
 
 function onImgError(e, card) {
+  const currentSrc = e.target.src;
+  
+  // 降级策略：
+  // 1. 如果当前是 display_logo 失败，尝试 logo_url
+  if (card.display_logo && currentSrc.includes(card.display_logo)) {
+    if (card.logo_url && card.logo_url !== card.display_logo) {
+      e.target.src = card.logo_url;
+      return;
+    }
+  }
+  
+  // 2. 如果当前是 logo_url 失败，尝试 favicon.ico
+  if (card.logo_url && currentSrc.includes(card.logo_url)) {
+    try {
+      const url = new URL(card.url);
+      const faviconUrl = url.origin + '/favicon.ico';
+      if (currentSrc !== faviconUrl) {
+        e.target.src = faviconUrl;
+        return;
+      }
+    } catch {}
+  }
+  
+  // 3. 最后降级到默认图标
   e.target.src = '/default-favicon.png';
 }
 
