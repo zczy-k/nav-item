@@ -7,6 +7,7 @@ const path = require('path');
 
 // 图标缓存目录
 const ICON_CACHE_DIR = path.join(__dirname, '../public/icons/cache');
+const CACHE_EXPIRY_DAYS = 15; // 缓存过15天
 
 // 确保缓存目录存在
 async function ensureCacheDir() {
@@ -20,8 +21,61 @@ async function ensureCacheDir() {
 // 生成图标文件名（使用URL的MD5哈希）
 function getIconFileName(url) {
   const hash = crypto.createHash('md5').update(url).digest('hex');
-  return `${hash}.png`;
+  // 根据URL后缀确定文件类型
+  const ext = url.match(/\.(png|jpg|jpeg|gif|svg|ico|webp)$/i)?.[1] || 'png';
+  return `${hash}.${ext.toLowerCase()}`;
 }
+
+// 下载图标
+async function downloadIcon(iconUrl) {
+  try {
+    const response = await axios.get(iconUrl, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`下载图标失败: ${iconUrl}`, error.message);
+    throw error;
+  }
+}
+
+// 清理过期缓存
+async function cleanExpiredCache() {
+  try {
+    await ensureCacheDir();
+    const files = await fs.readdir(ICON_CACHE_DIR);
+    const now = Date.now();
+    const expiryMs = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    
+    let cleaned = 0;
+    for (const file of files) {
+      const filePath = path.join(ICON_CACHE_DIR, file);
+      const stats = await fs.stat(filePath);
+      
+      // 如果文件超过15天未修改，删除它
+      if (now - stats.mtimeMs > expiryMs) {
+        await fs.unlink(filePath);
+        cleaned++;
+      }
+    }
+    
+    if (cleaned > 0) {
+      console.log(`清理了 ${cleaned} 个过期图标缓存`);
+    }
+  } catch (error) {
+    console.error('清理缓存失败:', error.message);
+  }
+}
+
+// 每天1小时执行一次清理
+setInterval(cleanExpiredCache, 60 * 60 * 1000);
+// 启动时立即执行一次
+cleanExpiredCache();
 
 // 下载并缓存图标
 router.post('/download', async (req, res) => {
@@ -51,16 +105,10 @@ router.post('/download', async (req, res) => {
     }
     
     // 下载图标
-    const response = await axios.get(iconUrl, {
-      responseType: 'arraybuffer',
-      timeout: 10000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
+    const imageData = await downloadIcon(iconUrl);
     
     // 保存到本地
-    await fs.writeFile(filePath, response.data);
+    await fs.writeFile(filePath, imageData);
     
     res.json({ 
       success: true, 

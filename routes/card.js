@@ -1,7 +1,71 @@
-﻿const express = require('express');
+const express = require('express');
 const db = require('../db');
 const auth = require('./authMiddleware');
+const axios = require('axios');
+const crypto = require('crypto');
+const fs = require('fs').promises;
+const path = require('path');
 const router = express.Router();
+
+// 图标缓存目录
+const ICON_CACHE_DIR = path.join(__dirname, '../public/icons/cache');
+
+// 确保缓存目录存在
+async function ensureCacheDir() {
+  try {
+    await fs.access(ICON_CACHE_DIR);
+  } catch {
+    await fs.mkdir(ICON_CACHE_DIR, { recursive: true });
+  }
+}
+
+// 生成图标文件名
+function getIconFileName(url) {
+  const hash = crypto.createHash('md5').update(url).digest('hex');
+  const ext = url.match(/\.(png|jpg|jpeg|gif|svg|ico|webp)$/i)?.[1] || 'png';
+  return `${hash}.${ext.toLowerCase()}`;
+}
+
+// 异步缓存图标（不阻塞主流程）
+async function cacheIconAsync(iconUrl) {
+  if (!iconUrl || iconUrl.startsWith('/')) return; // 跳过相对路径
+  
+  try {
+    await ensureCacheDir();
+    const fileName = getIconFileName(iconUrl);
+    const filePath = path.join(ICON_CACHE_DIR, fileName);
+    
+    // 检查是否已缓存
+    try {
+      await fs.access(filePath);
+      return; // 已存在，不重复下载
+    } catch {}
+    
+    // 下载图标
+    const response = await axios.get(iconUrl, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    // 保存到本地
+    await fs.writeFile(filePath, response.data);
+    console.log(`缓存图标: ${iconUrl} -> ${fileName}`);
+  } catch (error) {
+    // 静默失败，不影响主流程
+    console.error(`缓存图标失败: ${iconUrl}`, error.message);
+  }
+}
+
+// 获取缓存后的图标URL
+function getCachedIconUrl(iconUrl) {
+  if (!iconUrl || iconUrl.startsWith('/')) return iconUrl;
+  const fileName = getIconFileName(iconUrl);
+  return `/icons/cache/${fileName}`;
+}
 
 // 获取指定菜单的卡片
 router.get('/:menuId', (req, res) => {
@@ -22,7 +86,8 @@ router.get('/:menuId', (req, res) => {
     if (err) return res.status(500).json({error: err.message});
     rows.forEach(card => {
       if (!card.custom_logo_path) {
-        card.display_logo = card.logo_url || (card.url.replace(/\/+$/, '') + '/favicon.ico');
+        // 优先使用缓存后的图标URL
+        card.display_logo = card.logo_url ? getCachedIconUrl(card.logo_url) : (card.url.replace(/\/+$/, '') + '/favicon.ico');
       } else {
         card.display_logo = '/uploads/' + card.custom_logo_path;
       }
@@ -94,16 +159,34 @@ router.post('/', auth, (req, res) => {
   db.run('INSERT INTO cards (menu_id, sub_menu_id, title, url, logo_url, custom_logo_path, desc, "order") VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
     [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    
+    // 异步缓存图标（不阻塞响应）
+    if (logo_url) {
+      cacheIconAsync(logo_url).catch(e => console.error('缓存图标失败:', e.message));
+    }
+    
     res.json({ id: this.lastID });
   });
 });
 
 router.put('/:id', auth, (req, res) => {
   const { menu_id, sub_menu_id, title, url, logo_url, custom_logo_path, desc, order } = req.body;
-  db.run('UPDATE cards SET menu_id=?, sub_menu_id=?, title=?, url=?, logo_url=?, custom_logo_path=?, desc=?, "order"=? WHERE id=?', 
-    [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0, req.params.id], function(err) {
+  
+  // 先查询旧的logo_url
+  db.get('SELECT logo_url FROM cards WHERE id=?', [req.params.id], (err, oldCard) => {
     if (err) return res.status(500).json({error: err.message});
-    res.json({ changed: this.changes });
+    
+    db.run('UPDATE cards SET menu_id=?, sub_menu_id=?, title=?, url=?, logo_url=?, custom_logo_path=?, desc=?, "order"=? WHERE id=?', 
+      [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0, req.params.id], function(err) {
+      if (err) return res.status(500).json({error: err.message});
+      
+      // 如果logo_url变化了，缓存新图标
+      if (logo_url && logo_url !== oldCard?.logo_url) {
+        cacheIconAsync(logo_url).catch(e => console.error('缓存图标失败:', e.message));
+      }
+      
+      res.json({ changed: this.changes });
+    });
   });
 });
 
