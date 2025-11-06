@@ -12,7 +12,6 @@ const userRoutes = require('./routes/user');
 const batchRoutes = require('./routes/batch');
 const wallpaperRoutes = require('./routes/wallpaper');
 const searchEngineRoutes = require('./routes/searchEngine');
-const iconCacheRoutes = require('./routes/iconCache');
 const compression = require('compression');
 const app = express();
 
@@ -82,7 +81,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/batch', batchRoutes);
 app.use('/api/wallpaper', wallpaperRoutes);
 app.use('/api/search-engines', searchEngineRoutes);
-app.use('/api/icon-cache', iconCacheRoutes);
 
 // 定期清理过期缓存
 setInterval(() => {

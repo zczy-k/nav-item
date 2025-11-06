@@ -198,59 +198,98 @@ function getCardStyle(index) {
   return style;
 }
 
-function getLogo(card) {
-  // 优先使用后端返回的 display_logo（包含缓存逻辑）
-  if (card.display_logo) return card.display_logo;
-  
-  // 备用方案
-  if (card.custom_logo_path) return 'http://localhost:3000/uploads/' + card.custom_logo_path;
-  if (card.logo_url) return card.logo_url;
-  
-  // 默认 favicon
+// 常用网站本地图标映射
+const COMMON_ICONS = {
+  'github.com': '/icons/common/github.png',
+  'www.github.com': '/icons/common/github.png',
+  'nodeseek.com': '/icons/common/nodeseek.png',
+  'www.nodeseek.com': '/icons/common/nodeseek.png',
+};
+
+// 提取域名
+function getDomain(url) {
   try {
-    const url = new URL(card.url);
-    return url.origin + '/favicon.ico';
+    return new URL(url).hostname.toLowerCase();
   } catch {
-    return '/default-favicon.png';
+    return null;
   }
 }
 
-function onImgError(e, card) {
-  const currentSrc = e.target.src;
-  
-  // 降级策略：
-  // 1. 如果当前是 display_logo 失败，尝试 CDN 代理
-  if (card.display_logo && currentSrc.includes(card.display_logo)) {
-    try {
-      const url = new URL(card.url);
-      const domain = url.hostname;
-      const cdnUrl = `https://icon.horse/icon/${domain}`;
-      if (currentSrc !== cdnUrl) {
-        e.target.src = cdnUrl;
-        return;
-      }
-    } catch {}
+function getLogo(card) {
+  // 1. 检查自定义上传图标
+  if (card.custom_logo_path) {
+    return '/uploads/' + card.custom_logo_path;
   }
   
-  // 2. 如果 CDN 代理失败，尝试 logo_url
-  if (currentSrc.includes('icon.horse')) {
-    if (card.logo_url && !currentSrc.includes(card.logo_url)) {
-      e.target.src = card.logo_url;
-      return;
+  // 2. 检查常用网站本地图标
+  const domain = getDomain(card.url);
+  if (domain && COMMON_ICONS[domain]) {
+    return COMMON_ICONS[domain];
+  }
+  
+  // 3. 使用用户指定的 logo_url
+  if (card.logo_url) {
+    return card.logo_url;
+  }
+  
+  // 4. 使用 CDN 代理（首选：icon.horse）
+  if (domain) {
+    return `https://icon.horse/icon/${domain}`;
+  }
+  
+  // 5. 默认图标
+  return '/default-favicon.png';
+}
+
+// CDN 备用源列表
+const CDN_PROVIDERS = [
+  (domain) => `https://icon.horse/icon/${domain}`,           // CDN 1
+  (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`, // CDN 2: Google
+  (domain) => `https://favicon.im/${domain}?larger=true`,   // CDN 3
+];
+
+function onImgError(e, card) {
+  const currentSrc = e.target.src;
+  const domain = getDomain(card.url);
+  
+  if (!domain) {
+    e.target.src = '/default-favicon.png';
+    return;
+  }
+  
+  // 记录已尝试的 CDN
+  if (!e.target._cdnIndex) e.target._cdnIndex = 0;
+  
+  // 降级策略：
+  // 1. 如果是 logo_url失败，尝试 CDN1
+  if (card.logo_url && currentSrc.includes(card.logo_url)) {
+    e.target._cdnIndex = 0;
+    e.target.src = CDN_PROVIDERS[0](domain);
+    return;
+  }
+  
+  // 2. 如果是 CDN 失败，尝试下一个 CDN
+  for (let i = 0; i < CDN_PROVIDERS.length; i++) {
+    const cdnUrl = CDN_PROVIDERS[i](domain);
+    if (currentSrc.includes(cdnUrl.split('?')[0].split('/').pop())) {
+      // 当前 CDN 失败，尝试下一个
+      if (i + 1 < CDN_PROVIDERS.length) {
+        e.target._cdnIndex = i + 1;
+        e.target.src = CDN_PROVIDERS[i + 1](domain);
+        return;
+      }
+      break; // 所有 CDN 都失败，继续到 favicon
     }
   }
   
-  // 3. 如果当前是 logo_url 失败，尝试 favicon.ico
-  if (card.logo_url && currentSrc.includes(card.logo_url)) {
-    try {
-      const url = new URL(card.url);
-      const faviconUrl = url.origin + '/favicon.ico';
-      if (currentSrc !== faviconUrl) {
-        e.target.src = faviconUrl;
-        return;
-      }
-    } catch {}
-  }
+  // 3. 尝试网站自带的 favicon.ico
+  try {
+    const faviconUrl = new URL(card.url).origin + '/favicon.ico';
+    if (currentSrc !== faviconUrl) {
+      e.target.src = faviconUrl;
+      return;
+    }
+  } catch {}
   
   // 4. 最后降级到默认图标
   e.target.src = '/default-favicon.png';

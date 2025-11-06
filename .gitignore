@@ -22,10 +22,6 @@ uploads/*
 !uploads/.gitkeep
 !uploads/default-favicon.png
 
-# Icon cache (runtime generated)
-public/icons/cache/
-!public/icons/cache/.gitkeep
-
 # Temporary files
 tmp/
 *.tmp
