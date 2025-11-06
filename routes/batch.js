@@ -63,6 +63,22 @@ async function cacheIconAsync(iconUrl) {
   }
 }
 
+// 批量缓存图标（带并发控制）
+async function batchCacheIcons(logoUrls) {
+  const CONCURRENT_LIMIT = 3; // 最大并发数
+  const results = [];
+  
+  for (let i = 0; i < logoUrls.length; i += CONCURRENT_LIMIT) {
+    const batch = logoUrls.slice(i, i + CONCURRENT_LIMIT);
+    const batchResults = await Promise.allSettled(
+      batch.map(url => cacheIconAsync(url))
+    );
+    results.push(...batchResults);
+  }
+  
+  return results;
+}
+
 // 批量解析网址信息
 router.post('/parse', auth, async (req, res) => {
   const { urls } = req.body;
@@ -204,18 +220,25 @@ router.post('/add', auth, (req, res) => {
           if (!hasError) {
             insertedIds.push(this.lastID);
             completed++;
-            
-            // 异步缓存图标（不阻塞响应）
-            if (logo) {
-              cacheIconAsync(logo).catch(e => console.error('批量添加-图标缓存失败:', e.message));
-            }
 
             if (completed === cards.length) {
+              // 所有卡片插入完成，立即响应
               res.json({ 
                 success: true, 
                 count: insertedIds.length,
                 ids: insertedIds 
               });
+              
+              // 响应后异步批量缓存图标（并发控制）
+              const logoUrls = cards.map(c => c.logo).filter(Boolean);
+              if (logoUrls.length > 0) {
+                // 使用 setImmediate 让响应先返回
+                setImmediate(() => {
+                  batchCacheIcons(logoUrls)
+                    .then(() => console.log(`批量缓存完成: ${logoUrls.length} 个图标`))
+                    .catch(e => console.error('批量缓存失败:', e.message));
+                });
+              }
             }
           }
         }
