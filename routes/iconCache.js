@@ -55,7 +55,7 @@ async function cleanExpiredCache() {
     
     // 获取数据库中所有正在使用的logo_url
     const sqlite3 = require('sqlite3').verbose();
-    const dbPath = path.join(__dirname, '..', 'database.db');
+    const dbPath = path.join(__dirname, '..', 'database', 'nav.db');
     const db = new sqlite3.Database(dbPath);
     
     return new Promise((resolve, reject) => {
