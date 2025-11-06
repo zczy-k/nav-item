@@ -102,8 +102,13 @@ async function cleanExpiredCache() {
 
 // 每天执行一次清理（24小时）
 setInterval(cleanExpiredCache, 24 * 60 * 60 * 1000);
-// 启动时立即执行一次
-cleanExpiredCache();
+// 启动后延迟 30 秒执行第一次清理，避免阻塞启动
+setTimeout(() => {
+  console.log('开始执行图标缓存清理...');
+  cleanExpiredCache()
+    .then(() => console.log('图标缓存清理完成'))
+    .catch(err => console.error('图标缓存清理失败:', err.message));
+}, 30000);
 
 // 下载并缓存图标
 router.post('/download', async (req, res) => {

@@ -6,17 +6,37 @@ const router = express.Router();
 // 获取所有菜单（包含子菜单）
 router.get('/', (req, res) => {
   const { page, pageSize } = req.query;
+  
+  // 设置 20 秒超时保护
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error('GET /api/menus 超时');
+      res.status(504).json({ error: '请求超时' });
+    }
+  }, 20000);
+  
   if (!page && !pageSize) {
     // 获取主菜单
     db.all('SELECT * FROM menus ORDER BY "order"', [], (err, menus) => {
-      if (err) return res.status(500).json({error: err.message});
+      if (err) {
+        clearTimeout(timeout);
+        return res.status(500).json({error: err.message});
+      }
+      
+      if (!menus || menus.length === 0) {
+        clearTimeout(timeout);
+        return res.json([]);
+      }
       
       // 为每个主菜单获取子菜单
       const getSubMenus = (menu) => {
         return new Promise((resolve, reject) => {
+          const subTimeout = setTimeout(() => reject(new Error('Submenu query timeout')), 5000);
+          
           db.all('SELECT * FROM sub_menus WHERE parent_id = ? ORDER BY "order"', [menu.id], (err, subMenus) => {
+            clearTimeout(subTimeout);
             if (err) reject(err);
-            else resolve(subMenus);
+            else resolve(subMenus || []);
           });
         });
       };
@@ -26,13 +46,20 @@ router.get('/', (req, res) => {
           const subMenus = await getSubMenus(menu);
           return { ...menu, subMenus };
         } catch (err) {
-          console.error('获取子菜单失败:', err);
+          console.error(`获取菜单 ${menu.id} 的子菜单失败:`, err.message);
           return { ...menu, subMenus: [] };
         }
       })).then(menusWithSubMenus => {
-        res.json(menusWithSubMenus);
+        clearTimeout(timeout);
+        if (!res.headersSent) {
+          res.json(menusWithSubMenus);
+        }
       }).catch(err => {
-        res.status(500).json({error: err.message});
+        clearTimeout(timeout);
+        if (!res.headersSent) {
+          console.error('Promise.all 失败:', err.message);
+          res.status(500).json({error: err.message});
+        }
       });
     });
   } else {
