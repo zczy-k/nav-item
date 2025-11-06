@@ -77,11 +77,22 @@ async function deleteOldIconCache(oldIconUrl) {
   }
 }
 
-// 获取缓存后的图标URL
-function getCachedIconUrl(iconUrl) {
+// 获取缓存后的图标URL（异步检查文件是否存在）
+async function getCachedIconUrl(iconUrl) {
   if (!iconUrl || iconUrl.startsWith('/')) return iconUrl;
+  
   const fileName = getIconFileName(iconUrl);
-  return `/icons/cache/${fileName}`;
+  const filePath = path.join(ICON_CACHE_DIR, fileName);
+  
+  try {
+    await fs.access(filePath);
+    // 文件存在，返回缓存路径
+    return `/icons/cache/${fileName}`;
+  } catch {
+    // 文件不存在，触发异步缓存，返回原始URL
+    cacheIconAsync(iconUrl).catch(e => console.error('触发图标缓存失败:', e.message));
+    return iconUrl;
+  }
 }
 
 // 获取指定菜单的卡片
@@ -99,16 +110,23 @@ router.get('/:menuId', (req, res) => {
     params = [req.params.menuId];
   }
   
-  db.all(query, params, (err, rows) => {
+  db.all(query, params, async (err, rows) => {
     if (err) return res.status(500).json({error: err.message});
-    rows.forEach(card => {
+    
+    // 异步处理每个卡片的图标
+    await Promise.all(rows.map(async (card) => {
       if (!card.custom_logo_path) {
-        // 优先使用缓存后的图标URL
-        card.display_logo = card.logo_url ? getCachedIconUrl(card.logo_url) : (card.url.replace(/\/+$/, '') + '/favicon.ico');
+        // 检查缓存，不存在则使用原始URL
+        if (card.logo_url) {
+          card.display_logo = await getCachedIconUrl(card.logo_url);
+        } else {
+          card.display_logo = card.url.replace(/\/+$/, '') + '/favicon.ico';
+        }
       } else {
         card.display_logo = '/uploads/' + card.custom_logo_path;
       }
-    });
+    }));
+    
     res.json(rows);
   });
 });
