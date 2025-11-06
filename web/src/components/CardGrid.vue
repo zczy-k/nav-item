@@ -204,6 +204,8 @@ const COMMON_ICONS = {
   'www.github.com': '/icons/common/github.png',
   'nodeseek.com': '/icons/common/nodeseek.png',
   'www.nodeseek.com': '/icons/common/nodeseek.png',
+  'huggingface.co': '/icons/common/huggingface.svg',
+  'www.huggingface.co': '/icons/common/huggingface.svg',
 };
 
 // 提取域名
@@ -243,9 +245,11 @@ function getLogo(card) {
 
 // CDN 备用源列表
 const CDN_PROVIDERS = [
-  (domain) => `https://icon.horse/icon/${domain}`,           // CDN 1
-  (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`, // CDN 2: Google
-  (domain) => `https://favicon.im/${domain}?larger=true`,   // CDN 3
+  (domain) => `https://icon.horse/icon/${domain}`,           // CDN 1: icon.horse
+  (domain) => `https://api.afmax.cn/so/ico/index.php?r=${domain}`, // CDN 2: afmax (国内)
+  (domain) => `https://api.xinac.net/icon/?url=${domain}`,  // CDN 3: xinac (国内)
+  (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`, // CDN 4: Google
+  (domain) => `https://favicon.im/${domain}?larger=true`,   // CDN 5: favicon.im
 ];
 
 function onImgError(e, card) {
