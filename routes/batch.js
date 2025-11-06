@@ -1,9 +1,67 @@
-﻿const express = require('express');
+const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const crypto = require('crypto');
+const fs = require('fs').promises;
+const path = require('path');
 const db = require('../db');
 const auth = require('./authMiddleware');
 const router = express.Router();
+
+// 图标缓存目录
+const ICON_CACHE_DIR = path.join(__dirname, '../public/icons/cache');
+
+// 确保缓存目录存在
+async function ensureCacheDir() {
+  try {
+    await fs.access(ICON_CACHE_DIR);
+  } catch {
+    await fs.mkdir(ICON_CACHE_DIR, { recursive: true });
+  }
+}
+
+// 生成图标文件名
+function getIconFileName(url) {
+  const hash = crypto.createHash('md5').update(url).digest('hex');
+  const ext = url.match(/\.(png|jpg|jpeg|gif|svg|ico|webp)$/i)?.[1] || 'png';
+  return `${hash}.${ext.toLowerCase()}`;
+}
+
+// 异步缓存图标（不阻塞主流程）
+async function cacheIconAsync(iconUrl) {
+  if (!iconUrl || iconUrl.startsWith('/')) return;
+  
+  try {
+    await ensureCacheDir();
+    const fileName = getIconFileName(iconUrl);
+    const filePath = path.join(ICON_CACHE_DIR, fileName);
+    
+    // 检查是否已缓存
+    try {
+      await fs.access(filePath);
+      // 已存在，更新修改时间
+      const now = new Date();
+      await fs.utimes(filePath, now, now);
+      return;
+    } catch {}
+    
+    // 下载图标
+    const response = await axios.get(iconUrl, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    // 保存到本地
+    await fs.writeFile(filePath, response.data);
+    console.log(`批量添加-缓存图标: ${iconUrl} -> ${fileName}`);
+  } catch (error) {
+    console.error(`批量添加-缓存图标失败: ${iconUrl}`, error.message);
+  }
+}
 
 // 批量解析网址信息
 router.post('/parse', auth, async (req, res) => {
@@ -146,6 +204,11 @@ router.post('/add', auth, (req, res) => {
           if (!hasError) {
             insertedIds.push(this.lastID);
             completed++;
+            
+            // 异步缓存图标（不阻塞响应）
+            if (logo) {
+              cacheIconAsync(logo).catch(e => console.error('批量添加-图标缓存失败:', e.message));
+            }
 
             if (completed === cards.length) {
               res.json({ 
