@@ -5,6 +5,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
+const { getCommonIcon, extractDomain } = require('../config/commonIcons');
 const router = express.Router();
 
 // 图标缓存目录
@@ -78,19 +79,35 @@ async function deleteOldIconCache(oldIconUrl) {
 }
 
 // 获取缓存后的图标URL（异步检查文件是否存在）
-async function getCachedIconUrl(iconUrl) {
+// 降级策略：常用本地图标 → 服务器缓存 → CDN代理 → 原始URL
+async function getCachedIconUrl(iconUrl, cardUrl) {
   if (!iconUrl || iconUrl.startsWith('/')) return iconUrl;
   
+  // 1. 优先检查是否有常用网站的本地图标
+  const commonIcon = getCommonIcon(cardUrl || iconUrl);
+  if (commonIcon) {
+    return commonIcon;
+  }
+  
+  // 2. 检查服务器缓存
   const fileName = getIconFileName(iconUrl);
   const filePath = path.join(ICON_CACHE_DIR, fileName);
   
   try {
     await fs.access(filePath);
-    // 文件存在，返回缓存路径
+    // 缓存存在，返回缓存路径
     return `/icons/cache/${fileName}`;
   } catch {
-    // 文件不存在，触发异步缓存，返回原始URL
+    // 3. 缓存不存在，触发异步下载
     cacheIconAsync(iconUrl).catch(e => console.error('触发图标缓存失败:', e.message));
+    
+    // 4. 使用 CDN 代理作为备用方案
+    const domain = extractDomain(cardUrl || iconUrl);
+    if (domain) {
+      return `https://icon.horse/icon/${domain}`;
+    }
+    
+    // 5. 最后返回原始URL
     return iconUrl;
   }
 }
@@ -118,7 +135,7 @@ router.get('/:menuId', (req, res) => {
       if (!card.custom_logo_path) {
         // 检查缓存，不存在则使用原始URL
         if (card.logo_url) {
-          card.display_logo = await getCachedIconUrl(card.logo_url);
+          card.display_logo = await getCachedIconUrl(card.logo_url, card.url);
         } else {
           card.display_logo = card.url.replace(/\/+$/, '') + '/favicon.ico';
         }

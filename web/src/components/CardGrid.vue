@@ -219,15 +219,28 @@ function onImgError(e, card) {
   const currentSrc = e.target.src;
   
   // 降级策略：
-  // 1. 如果当前是 display_logo 失败，尝试 logo_url
+  // 1. 如果当前是 display_logo 失败，尝试 CDN 代理
   if (card.display_logo && currentSrc.includes(card.display_logo)) {
-    if (card.logo_url && card.logo_url !== card.display_logo) {
+    try {
+      const url = new URL(card.url);
+      const domain = url.hostname;
+      const cdnUrl = `https://icon.horse/icon/${domain}`;
+      if (currentSrc !== cdnUrl) {
+        e.target.src = cdnUrl;
+        return;
+      }
+    } catch {}
+  }
+  
+  // 2. 如果 CDN 代理失败，尝试 logo_url
+  if (currentSrc.includes('icon.horse')) {
+    if (card.logo_url && !currentSrc.includes(card.logo_url)) {
       e.target.src = card.logo_url;
       return;
     }
   }
   
-  // 2. 如果当前是 logo_url 失败，尝试 favicon.ico
+  // 3. 如果当前是 logo_url 失败，尝试 favicon.ico
   if (card.logo_url && currentSrc.includes(card.logo_url)) {
     try {
       const url = new URL(card.url);
@@ -239,7 +252,7 @@ function onImgError(e, card) {
     } catch {}
   }
   
-  // 3. 最后降级到默认图标
+  // 4. 最后降级到默认图标
   e.target.src = '/default-favicon.png';
 }
 
