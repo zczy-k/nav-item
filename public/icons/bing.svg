@@ -1,16 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="24" height="24">
   <defs>
-    <linearGradient id="bingGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0078D4;stop-opacity:1" />
+    <linearGradient id="bingBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#008373;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#00BCF2;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="bingGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#00BCF2;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0078D4;stop-opacity:1" />
-    </linearGradient>
   </defs>
-  <circle cx="12" cy="12" r="10" fill="url(#bingGrad1)"/>
-  <path fill="#FFF" d="M7 9c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2h-4l-3 2v-2c-.6 0-1-.4-1-1V9z"/>
-  <circle cx="10" cy="11" r="0.8" fill="url(#bingGrad2)"/>
-  <circle cx="14" cy="11" r="0.8" fill="url(#bingGrad2)"/>
+  <!-- Background -->
+  <circle cx="60" cy="60" r="58" fill="#FFF"/>
+  <!-- Main shape inspired by Bing logo -->
+  <path fill="url(#bingBlue)" d="M30 20 L30 90 L48 80 L70 95 L70 50 L90 60 L55 35 Z"/>
+  <path fill="#FFB900" d="M48 60 L48 80 L70 95 L70 75 Z" opacity="0.9"/>
 </svg>
