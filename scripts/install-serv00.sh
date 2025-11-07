@@ -201,10 +201,12 @@ install_application() {
     # 更新数据库中的 logo_url 为 CDN 格式
     yellow "正在更新数据库图标链接...\n"
     
-    # 创建更新脚本
-    cat > "${WORKDIR}/update_logos_temp.js" << 'EOFSCRIPT'
+    # 创建更新脚本（使用绝对路径）
+    cat > "${WORKDIR}/update_logos_temp.js" << EOFSCRIPT
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./database/nav.db');
+const path = require('path');
+const dbPath = path.resolve(__dirname, 'database', 'nav.db');
+const db = new sqlite3.Database(dbPath);
 
 db.all('SELECT id, url, logo_url FROM cards', (err, rows) => {
   if (err) {
