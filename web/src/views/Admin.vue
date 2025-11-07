@@ -42,6 +42,7 @@
         <li :class="{active: page==='ad'}" @click="page='ad'; closeSider()">广告管理</li>
         <li :class="{active: page==='friend'}" @click="page='friend'; closeSider()">友链管理</li>
         <li :class="{active: page==='user'}" @click="page='user'; closeSider()">用户管理</li>
+        <li :class="{active: page==='backup'}" @click="page='backup'; closeSider()">备份管理</li>
       </ul>
     </aside>
     <main class="admin-main">
@@ -82,6 +83,7 @@
         <AdManage v-if="page==='ad'" />
         <FriendLinkManage v-if="page==='friend'" />
         <UserManage v-if="page==='user'" />
+        <BackupManage v-if="page==='backup'" />
       </div>
       <footer class="admin-footer">
         <p class="admin-copyright">Copyright © 2025 Con-Nav-Item | <a href="https://github.com/zczy-k/Con-Nav-Item" target="_blank" class="footer-link">Powered by zczy-k</a></p>
@@ -98,6 +100,7 @@ import CardManage from './admin/CardManage.vue';
 import AdManage from './admin/AdManage.vue';
 import FriendLinkManage from './admin/FriendLinkManage.vue';
 import UserManage from './admin/UserManage.vue';
+import BackupManage from './admin/BackupManage.vue';
 
 const page = ref('welcome');
 const lastLoginTime = ref('');
@@ -117,6 +120,7 @@ const pageTitle = computed(() => {
     case 'ad': return '广告管理';
     case 'friend': return '友链管理';
     case 'user': return '用户管理';
+    case 'backup': return '备份管理';
     default: return '';
   }
 });
