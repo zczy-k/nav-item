@@ -63,8 +63,8 @@ router.post('/parse', auth, async (req, res) => {
                  $('link[rel="apple-touch-icon"]').attr('href') ||
                  $('meta[property="og:image"]').attr('content');
 
-      // 统一使用Google的favicon服务，避免CORS问题
-      logo = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+      // 统一使用xinac.net CDN，确保国内外都能访问
+      logo = `https://api.xinac.net/icon/?url=${urlObj.origin}&sz=128`;
 
       results.push({
         url: url,
@@ -83,7 +83,7 @@ router.post('/parse', auth, async (req, res) => {
         results.push({
           url: url,
           title: urlObj.hostname,
-          logo: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`,
+          logo: `https://api.xinac.net/icon/?url=${urlObj.origin}&sz=128`,
           description: '',
           success: false,
           error: error.message
