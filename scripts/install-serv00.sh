@@ -90,37 +90,51 @@ install_application() {
     
     # 移动文件到当前目录
     if [ -d "${WORKDIR}/Con-Nav-Item-main" ]; then
-        # 备份当前的 database 目录、data 目录和 .env 文件（如果存在）
+        # 备份 database, data, .env
+        yellow "-> Backing up existing data...\n"
         if [ -d "${WORKDIR}/database" ]; then
             mv "${WORKDIR}/database" "${WORKDIR}/database.backup"
-            yellow "已备份数据库\n"
+            green "  ✔ Database backed up to database.backup" 
         fi
         if [ -d "${WORKDIR}/data" ]; then
             mv "${WORKDIR}/data" "${WORKDIR}/data.backup"
+            green "  ✔ Data directory backed up to data.backup"
         fi
         if [ -f "${WORKDIR}/.env" ]; then
             mv "${WORKDIR}/.env" "${WORKDIR}/.env.backup"
+            green "  ✔ .env file backed up to .env.backup"
         fi
-        
-        # 清理旧文件（保留 database、data、.env 和 node_modules）
+        echo ""
+
+        # 清理旧文件
+        yellow "-> Cleaning old application files...\n"
         find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'database.backup' ! -name 'data.backup' ! -name '.env.backup' ! -name 'node_modules' ! -name 'Con-Nav-Item-main' ! -name 'Con-Nav-Item.zip' -exec rm -rf {} + 2>/dev/null || true
-        
+        green "  ✔ Old files cleaned."
+        echo ""
+
         # 复制新文件
+        yellow "-> Copying new application files...\n"
         cp -r ${WORKDIR}/Con-Nav-Item-main/* ${WORKDIR}/
         rm -rf ${WORKDIR}/Con-Nav-Item-main
+        green "  ✔ New files copied."
+        echo ""
         
-        # 恢复备份的数据
+        # 恢复备份
+        yellow "-> Restoring data from backup...\n"
         if [ -d "${WORKDIR}/database.backup" ]; then
             rm -rf "${WORKDIR}/database"
             mv "${WORKDIR}/database.backup" "${WORKDIR}/database"
-            green "已恢复数据库\n"
+            green "  ✔ Database restored."
         fi
         if [ -d "${WORKDIR}/data.backup" ]; then
             mv "${WORKDIR}/data.backup" "${WORKDIR}/data"
+            green "  ✔ Data directory restored."
         fi
         if [ -f "${WORKDIR}/.env.backup" ]; then
             mv "${WORKDIR}/.env.backup" "${WORKDIR}/.env"
+            green "  ✔ .env file restored."
         fi
+        echo ""
     fi
     
     rm -f "${WORKDIR}/Con-Nav-Item.zip"
@@ -239,11 +253,14 @@ db.all('SELECT id, url, logo_url FROM cards', (err, rows) => {
 });
 EOFSCRIPT
     
-    # 运行更新脚本
-    if node "${WORKDIR}/update_logos_temp.js" 2>/dev/null; then
-        green "图标链接已更新为 CDN 格式\n"
+    # 运行数据库更新脚本并显示输出
+    yellow "-> Running database update script...\n"
+    if node "${WORKDIR}/update_logos_temp.js"; then
+        green "  ✔ Database update script finished.
+"
     else
-        yellow "图标链接更新跳过（数据库可能为空）\n"
+        red "  ✖ Database update script may have failed. Please check logs.
+"
     fi
     
     # 清理临时脚本
