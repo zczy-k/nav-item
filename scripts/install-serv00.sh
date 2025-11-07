@@ -172,6 +172,74 @@ install_application() {
         fi
     fi
     
+    # 更新数据库中的 logo_url 为 CDN 格式
+    yellow "正在更新数据库图标链接...\n"
+    
+    # 创建更新脚本
+    cat > "${WORKDIR}/update_logos_temp.js" << 'EOFSCRIPT'
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('./database/nav.db');
+
+db.all('SELECT id, url, logo_url FROM cards', (err, rows) => {
+  if (err) {
+    console.error('Error:', err);
+    db.close();
+    process.exit(1);
+  }
+  
+  if (rows.length === 0) {
+    console.log('No cards found, database might be new');
+    db.close();
+    return;
+  }
+  
+  let processed = 0;
+  let updated = 0;
+  
+  rows.forEach(card => {
+    // 检查是否已经是 CDN 格式
+    if (card.logo_url && card.logo_url.includes('api.xinac.net') && card.logo_url.includes('&sz=128')) {
+      processed++;
+      if (processed === rows.length) {
+        console.log(`Updated ${updated} logos to CDN format`);
+        db.close();
+      }
+      return;
+    }
+    
+    try {
+      const urlObj = new URL(card.url);
+      const newLogo = `https://api.xinac.net/icon/?url=${urlObj.origin}&sz=128`;
+      
+      db.run('UPDATE cards SET logo_url = ? WHERE id = ?', [newLogo, card.id], (error) => {
+        if (!error) updated++;
+        processed++;
+        if (processed === rows.length) {
+          console.log(`Updated ${updated} logos to CDN format`);
+          db.close();
+        }
+      });
+    } catch (e) {
+      processed++;
+      if (processed === rows.length) {
+        console.log(`Updated ${updated} logos to CDN format`);
+        db.close();
+      }
+    }
+  });
+});
+EOFSCRIPT
+    
+    # 运行更新脚本
+    if node "${WORKDIR}/update_logos_temp.js" 2>/dev/null; then
+        green "图标链接已更新为 CDN 格式\n"
+    else
+        yellow "图标链接更新跳过（数据库可能为空）\n"
+    fi
+    
+    # 清理临时脚本
+    rm -f "${WORKDIR}/update_logos_temp.js"
+    
     # 重启应用
     devil www restart "${CURRENT_DOMAIN}" > /dev/null 2>&1
     green "应用已启动\n"
