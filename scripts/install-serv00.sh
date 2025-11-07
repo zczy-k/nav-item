@@ -90,7 +90,11 @@ install_application() {
     
     # 移动文件到当前目录
     if [ -d "${WORKDIR}/Con-Nav-Item-main" ]; then
-        # 备份当前的 data 目录和 .env 文件（如果存在）
+        # 备份当前的 database 目录、data 目录和 .env 文件（如果存在）
+        if [ -d "${WORKDIR}/database" ]; then
+            mv "${WORKDIR}/database" "${WORKDIR}/database.backup"
+            yellow "已备份数据库\n"
+        fi
         if [ -d "${WORKDIR}/data" ]; then
             mv "${WORKDIR}/data" "${WORKDIR}/data.backup"
         fi
@@ -98,14 +102,19 @@ install_application() {
             mv "${WORKDIR}/.env" "${WORKDIR}/.env.backup"
         fi
         
-        # 清理旧文件（保留 data、.env 和 node_modules）
-        find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'data.backup' ! -name '.env.backup' ! -name 'node_modules' ! -name 'Con-Nav-Item-main' ! -name 'Con-Nav-Item.zip' -exec rm -rf {} + 2>/dev/null || true
+        # 清理旧文件（保留 database、data、.env 和 node_modules）
+        find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'database.backup' ! -name 'data.backup' ! -name '.env.backup' ! -name 'node_modules' ! -name 'Con-Nav-Item-main' ! -name 'Con-Nav-Item.zip' -exec rm -rf {} + 2>/dev/null || true
         
         # 复制新文件
         cp -r ${WORKDIR}/Con-Nav-Item-main/* ${WORKDIR}/
         rm -rf ${WORKDIR}/Con-Nav-Item-main
         
         # 恢复备份的数据
+        if [ -d "${WORKDIR}/database.backup" ]; then
+            rm -rf "${WORKDIR}/database"
+            mv "${WORKDIR}/database.backup" "${WORKDIR}/database"
+            green "已恢复数据库\n"
+        fi
         if [ -d "${WORKDIR}/data.backup" ]; then
             mv "${WORKDIR}/data.backup" "${WORKDIR}/data"
         fi
