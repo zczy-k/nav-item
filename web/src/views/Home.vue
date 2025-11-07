@@ -16,13 +16,12 @@
           <div class="search-engine-dropdown" @click.stop>
             <button @click="toggleEngineDropdown" class="engine-selector" title="选择搜索引擎">
               <span class="engine-icon">
-                <img v-if="selectedEngine.iconUrl && !selectedEngine.iconError" 
-                  :src="selectedEngine.iconUrl" 
+                <img 
+                  :src="getEngineIcon(selectedEngine)" 
                   :alt="selectedEngine.label"
-                  @error="selectedEngine.iconError = true"
+                  @error="handleEngineIconError"
                   class="engine-icon-img"
                 />
-                <span v-else>{{ selectedEngine.iconFallback || selectedEngine.icon || '🔍' }}</span>
               </span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -43,13 +42,12 @@
                     @click="selectEngineFromDropdown(engine)"
                   >
                     <span class="engine-icon">
-                      <img v-if="engine.iconUrl && !engine.iconError" 
-                        :src="engine.iconUrl" 
+                      <img
+                        :src="getEngineIcon(engine)" 
                         :alt="engine.label"
-                        @error="engine.iconError = true"
+                        @error="handleEngineIconError"
                         class="engine-icon-img"
                       />
-                      <span v-else>{{ engine.iconFallback || engine.icon || '🔍' }}</span>
                     </span>
                     <span class="engine-label">{{ engine.label }}</span>
                     <button v-if="engine.custom" @click.stop="deleteCustomEngine(engine)" class="delete-engine-btn-small" title="删除">
@@ -620,73 +618,46 @@ const defaultEngines = [
   {
     name: 'google',
     label: 'Google',
-    iconUrl: '/icons/google.svg',
-    iconFallback: '🌐',
-    placeholder: 'Google 搜索...',
     url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'baidu',
     label: '百度',
-    iconUrl: '/icons/baidu.svg',
-    iconFallback: '🔍',
-    placeholder: '百度搜索...',
     url: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`
   },
   {
     name: '360',
     label: '360搜索',
-    iconUrl: '/icons/360.svg',
-    iconFallback: '🟢',
-    placeholder: '360搜索...',
     url: q => `https://www.so.com/s?q=${encodeURIComponent(q)}`
   },
   {
     name: 'sogou',
     label: '搜狗',
-    iconUrl: '/icons/sogou.svg',
-    iconFallback: '🐶',
-    placeholder: '搜狗搜索...',
     url: q => `https://www.sogou.com/web?query=${encodeURIComponent(q)}`
   },
   {
     name: 'bing',
     label: 'Bing',
-    iconUrl: '/icons/bing.svg',
-    iconFallback: '🅱️',
-    placeholder: 'Bing 搜索...',
     url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`
   },
   {
     name: 'github',
     label: 'GitHub',
-    iconUrl: '/icons/github.svg',
-    iconFallback: '💻',
-    placeholder: 'GitHub 搜索...',
     url: q => `https://github.com/search?q=${encodeURIComponent(q)}&type=repositories`
   },
   {
     name: 'duckduckgo',
     label: 'DuckDuckGo',
-    iconUrl: '/icons/duckduckgo.svg',
-    iconFallback: '🦆',
-    placeholder: 'DuckDuckGo 搜索...',
     url: q => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`
   },
   {
     name: 'yahoo',
     label: 'Yahoo',
-    iconUrl: '/icons/yahoo.svg',
-    iconFallback: '🔴',
-    placeholder: 'Yahoo 搜索...',
     url: q => `https://search.yahoo.com/search?p=${encodeURIComponent(q)}`
   },
   {
     name: 'yandex',
     label: 'Yandex',
-    iconUrl: '/icons/yandex.svg',
-    iconFallback: '🔴',
-    placeholder: 'Yandex 搜索...',
     url: q => `https://yandex.com/search/?text=${encodeURIComponent(q)}`
   }
 ];
@@ -1119,9 +1090,16 @@ async function handleSearch() {
   }
 }
 
-function handleLogoError(event) {
-  event.target.style.display = 'none';
-  event.target.nextElementSibling.style.display = 'flex';
+// 获取搜索引擎图标
+function getEngineIcon(engine) {
+  if (engine.iconUrl) return engine.iconUrl;
+  const origin = new URL(engine.url('')).origin;
+  return `https://api.xinac.net/icon/?url=${origin}&sz=128`;
+}
+
+// 处理搜索引擎图标错误
+function handleEngineIconError(event) {
+  event.target.src = '/default-favicon.png';
 }
 
 // 批量添加相关函数
