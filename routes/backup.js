@@ -3,10 +3,10 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
-const { verifyToken } = require('./authMiddleware');
+const authMiddleware = require('./authMiddleware');
 
 // 创建备份
-router.post('/create', verifyToken, async (req, res) => {
+router.post('/create', authMiddleware, async (req, res) => {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const backupName = `backup-${timestamp}`;
@@ -84,7 +84,7 @@ router.post('/create', verifyToken, async (req, res) => {
 });
 
 // 获取备份列表
-router.get('/list', verifyToken, (req, res) => {
+router.get('/list', authMiddleware, (req, res) => {
   try {
     const backupDir = path.join(__dirname, '..', 'backups');
     
@@ -125,7 +125,7 @@ router.get('/list', verifyToken, (req, res) => {
 });
 
 // 下载备份
-router.get('/download/:filename', verifyToken, (req, res) => {
+router.get('/download/:filename', authMiddleware, (req, res) => {
   try {
     const { filename } = req.params;
     const backupDir = path.join(__dirname, '..', 'backups');
@@ -151,7 +151,7 @@ router.get('/download/:filename', verifyToken, (req, res) => {
 });
 
 // 删除备份
-router.delete('/delete/:filename', verifyToken, (req, res) => {
+router.delete('/delete/:filename', authMiddleware, (req, res) => {
   try {
     const { filename } = req.params;
     const backupDir = path.join(__dirname, '..', 'backups');
