@@ -198,16 +198,6 @@ function getCardStyle(index) {
   return style;
 }
 
-// 常用网站本地图标映射
-const COMMON_ICONS = {
-  'github.com': '/icons/common/github.png',
-  'www.github.com': '/icons/common/github.png',
-  'nodeseek.com': '/icons/common/nodeseek.png',
-  'www.nodeseek.com': '/icons/common/nodeseek.png',
-  'huggingface.co': '/icons/common/huggingface.svg',
-  'www.huggingface.co': '/icons/common/huggingface.svg',
-};
-
 // 提取域名
 function getDomain(url) {
   try {
@@ -218,38 +208,24 @@ function getDomain(url) {
 }
 
 function getLogo(card) {
-  // 1. 检查自定义上传图标
-  if (card.custom_logo_path) {
-    return '/uploads/' + card.custom_logo_path;
-  }
-  
-  // 2. 检查常用网站本地图标
   const domain = getDomain(card.url);
-  if (domain && COMMON_ICONS[domain]) {
-    return COMMON_ICONS[domain];
-  }
   
-  // 3. 使用用户指定的 logo_url
-  if (card.logo_url) {
-    return card.logo_url;
-  }
-  
-  // 4. 使用 CDN 代理（首选：icon.horse）
+  // 1. 优先使用 CDN1 (xinac.net)
   if (domain) {
-    return `https://icon.horse/icon/${domain}`;
+    return `https://api.xinac.net/icon/?url=${domain}`;
   }
   
-  // 5. 默认图标
+  // 2. 默认图标（也使用 CDN1）
   return '/default-favicon.png';
 }
 
-// CDN 备用源列表
+// CDN 备用源列表（用于降级）
 const CDN_PROVIDERS = [
-  (domain) => `https://icon.horse/icon/${domain}`,           // CDN 1: icon.horse
-  (domain) => `https://api.afmax.cn/so/ico/index.php?r=${domain}`, // CDN 2: afmax (国内)
-  (domain) => `https://api.xinac.net/icon/?url=${domain}`,  // CDN 3: xinac (国内)
+  (domain) => `https://api.xinac.net/icon/?url=${domain}`,           // CDN 1: xinac (国内)
+  (domain) => `https://api.afmax.cn/so/ico/index.php?r=${domain}`,  // CDN 2: afmax (国内)
+  (domain) => `https://icon.horse/icon/${domain}`,                   // CDN 3: icon.horse
   (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`, // CDN 4: Google
-  (domain) => `https://favicon.im/${domain}?larger=true`,   // CDN 5: favicon.im
+  (domain) => `https://favicon.im/${domain}?larger=true`,            // CDN 5: favicon.im
 ];
 
 function onImgError(e, card) {
@@ -261,41 +237,41 @@ function onImgError(e, card) {
     return;
   }
   
-  // 记录已尝试的 CDN
-  if (!e.target._cdnIndex) e.target._cdnIndex = 0;
+  // 记录已尝试的 CDN 索引
+  if (e.target._cdnIndex === undefined) e.target._cdnIndex = 0;
   
-  // 降级策略：
-  // 1. 如果是 logo_url失败，尝试 CDN1
-  if (card.logo_url && currentSrc.includes(card.logo_url)) {
-    e.target._cdnIndex = 0;
-    e.target.src = CDN_PROVIDERS[0](domain);
-    return;
-  }
+  // 降级策略：CDN1 → CDN2 → CDN3 → CDN4 → CDN5 → logo_url → 默认
   
-  // 2. 如果是 CDN 失败，尝试下一个 CDN
+  // 1. 尝试下一个 CDN
   for (let i = 0; i < CDN_PROVIDERS.length; i++) {
     const cdnUrl = CDN_PROVIDERS[i](domain);
-    if (currentSrc.includes(cdnUrl.split('?')[0].split('/').pop())) {
+    if (currentSrc.includes(cdnUrl.split('?')[0].split('/').pop()) || 
+        currentSrc.includes('api.xinac.net') && i === 0 ||
+        currentSrc.includes('api.afmax.cn') && i === 1 ||
+        currentSrc.includes('icon.horse') && i === 2) {
       // 当前 CDN 失败，尝试下一个
       if (i + 1 < CDN_PROVIDERS.length) {
         e.target._cdnIndex = i + 1;
         e.target.src = CDN_PROVIDERS[i + 1](domain);
         return;
       }
-      break; // 所有 CDN 都失败，继续到 favicon
+      // 所有 CDN 都失败，尝试原生 logo_url
+      if (card.logo_url && !e.target._triedOriginal) {
+        e.target._triedOriginal = true;
+        e.target.src = card.logo_url;
+        return;
+      }
+      break;
     }
   }
   
-  // 3. 尝试网站自带的 favicon.ico
-  try {
-    const faviconUrl = new URL(card.url).origin + '/favicon.ico';
-    if (currentSrc !== faviconUrl) {
-      e.target.src = faviconUrl;
-      return;
-    }
-  } catch {}
+  // 2. 如果是原生 logo_url 失败，使用默认图标
+  if (card.logo_url && currentSrc.includes(card.logo_url)) {
+    e.target.src = '/default-favicon.png';
+    return;
+  }
   
-  // 4. 最后降级到默认图标
+  // 3. 最后降级到默认图标
   e.target.src = '/default-favicon.png';
 }
 
