@@ -1,6 +1,9 @@
 ﻿#!/bin/bash
 
 # Con-Nav-Item Serv00 一键安装脚本
+
+# Enable xtrace for detailed logging
+set -x
 # 作者: zczy-k
 # GitHub: https://github.com/zczy-k/Con-Nav-Item
 
@@ -255,6 +258,11 @@ EOFSCRIPT
     
     # 运行数据库更新脚本并显示输出
     yellow "-> Running database update script...\n"
+    echo "[DEBUG] Current directory: $(pwd)"
+    echo "[DEBUG] Listing files in database directory:"
+    ls -la "${WORKDIR}/database"
+    echo "[DEBUG] Contents of update script:"
+    cat "${WORKDIR}/update_logos_temp.js"
     if node "${WORKDIR}/update_logos_temp.js"; then
         green "  ✔ Database update script finished.
 "
