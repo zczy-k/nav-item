@@ -202,7 +202,7 @@ install_application() {
     yellow "正在更新数据库图标链接...\n"
     
     # 创建更新脚本（使用绝对路径）
-    cat > "${WORKDIR}/update_logos_temp.js" << EOFSCRIPT
+    cat > "${WORKDIR}/update_logos_temp.js" << 'EOFSCRIPT'
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const dbPath = path.resolve(__dirname, 'database', 'nav.db');
