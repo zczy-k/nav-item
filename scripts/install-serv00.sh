@@ -109,8 +109,10 @@ install_application() {
         fi
         echo ""
 
-        # 清理旧文件
+        # 清理旧文件（特别注意清理 public 目录）
         yellow "-> Cleaning old application files...\n"
+        # 先单独删除 public 目录以确保前端文件完全更新
+        rm -rf "${WORKDIR}/public"
         find "${WORKDIR}" -mindepth 1 -maxdepth 1 ! -name 'database.backup' ! -name 'data.backup' ! -name '.env.backup' ! -name 'node_modules' ! -name 'Con-Nav-Item-main' ! -name 'Con-Nav-Item.zip' -exec rm -rf {} + 2>/dev/null || true
         green "  ✔ Old files cleaned."
         echo ""
