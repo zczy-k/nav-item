@@ -208,7 +208,7 @@
     </div>
     
     <!-- 批量添加弹窗 -->
-    <div v-if="showBatchAddModal" class="modal-overlay" @click="closeBatchAdd">
+    <div v-if="showBatchAddModal" class="modal-overlay">
       <div class="modal-content batch-modal" @click.stop>
         <div class="modal-header">
           <h3>{{ batchStep === 1 ? '验证密码' : batchStep === 2 ? '输入网址' : '预览并选择' }}</h3>
@@ -394,7 +394,7 @@
     </div>
     
     <!-- 卡片编辑弹窗 -->
-    <div v-if="showEditCardModal" class="modal-overlay" @click="closeEditCardModal">
+    <div v-if="showEditCardModal" class="modal-overlay">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>编辑卡片</h3>
@@ -455,7 +455,7 @@
     </div>
     
     <!-- 添加搜索引擎弹窗 -->
-    <div v-if="showAddEngineModal" class="modal-overlay" @click="showAddEngineModal = false">
+    <div v-if="showAddEngineModal" class="modal-overlay">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>{{ engineStep === 1 ? '添加搜索引擎 - 输入URL' : '添加搜索引擎 - 编辑信息' }}</h3>
