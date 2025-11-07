@@ -208,14 +208,18 @@ function getDomain(url) {
 }
 
 function getLogo(card) {
-  const domain = getDomain(card.url);
+  // 1. 优先使用数据库中的 logo_url（现在都是 CDN 格式）
+  if (card.logo_url) {
+    return card.logo_url;
+  }
   
-  // 1. 优先使用 CDN1 (xinac.net)
+  // 2. 如果没有 logo_url，使用 CDN 自动生成
+  const domain = getDomain(card.url);
   if (domain) {
     return `https://api.xinac.net/icon/?url=${domain}`;
   }
   
-  // 2. 默认图标（也使用 CDN1）
+  // 3. 默认图标
   return '/default-favicon.png';
 }
 
