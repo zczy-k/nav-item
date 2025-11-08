@@ -4,6 +4,26 @@
     </div>
     
     <div class="user-card">
+      <div class="username-section">
+        <h3 class="section-title">修改用户名</h3>
+        <div class="username-form">
+          <div class="current-username">
+            <label>当前用户名：</label>
+            <span class="username-display">{{ userInfo.username || 'admin' }}</span>
+          </div>
+          <div class="form-group">
+            <label>新用户名：</label>
+            <input v-model="newUsername" type="text" placeholder="请输入新用户名（3-20位）" class="input" />
+          </div>
+          <div class="form-actions">
+            <button @click="handleChangeUsername" class="btn" :disabled="loadingUsername">
+              {{ loadingUsername ? '修改中...' : '修改用户名' }}
+            </button>
+          </div>
+          <p v-if="messageUsername" :class="['message', messageTypeUsername]">{{ messageUsername }}</p>
+        </div>
+      </div>
+
       <div class="password-section">
         <h3 class="section-title">修改密码</h3>
         <div class="password-form">
@@ -33,7 +53,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getUserProfile, changePassword } from '../../api';
+import { getUserProfile, changeUsername, changePassword } from '../../api';
 
 const oldPassword = ref('');
 const newPassword = ref('');
@@ -43,14 +63,62 @@ const message = ref('');
 const messageType = ref('success');
 const userInfo = ref({});
 
+const newUsername = ref('');
+const loadingUsername = ref(false);
+const messageUsername = ref('');
+const messageTypeUsername = ref('success');
+
 onMounted(async () => {
+  await loadUserProfile();
+});
+
+async function loadUserProfile() {
   try {
     const response = await getUserProfile();
     userInfo.value = response.data;
   } catch (error) {
     console.error('获取用户信息失败:', error);
   }
-});
+}
+
+async function handleChangeUsername() {
+  if (!newUsername.value) {
+    showUsernameMessage('请输入新用户名', 'error');
+    return;
+  }
+  
+  if (newUsername.value.length < 3 || newUsername.value.length > 20) {
+    showUsernameMessage('用户名长度应为3-20位', 'error');
+    return;
+  }
+  
+  if (newUsername.value === userInfo.value.username) {
+    showUsernameMessage('新用户名不能与当前用户名相同', 'error');
+    return;
+  }
+  
+  loadingUsername.value = true;
+  messageUsername.value = '';
+  
+  try {
+    await changeUsername(newUsername.value);
+    showUsernameMessage('用户名修改成功！', 'success');
+    newUsername.value = '';
+    await loadUserProfile();
+  } catch (error) {
+    showUsernameMessage(error.response?.data?.message || '用户名修改失败', 'error');
+  } finally {
+    loadingUsername.value = false;
+  }
+}
+
+function showUsernameMessage(text, type) {
+  messageUsername.value = text;
+  messageTypeUsername.value = type;
+  setTimeout(() => {
+    messageUsername.value = '';
+  }, 3000);
+}
 
 async function handleChangePassword() {
   if (!oldPassword.value || !newPassword.value || !confirmPassword.value) {
@@ -138,8 +206,39 @@ function showMessage(text, type) {
   padding-bottom: 8px;
 }
 
+.username-section {
+  margin-bottom: 40px;
+  padding-bottom: 40px;
+  border-bottom: 2px solid #e3e6ef;
+}
+
 .password-section {
   margin-bottom: 40px;
+}
+
+.current-username {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.current-username label {
+  font-weight: 500;
+  color: #666;
+}
+
+.username-display {
+  font-weight: 600;
+  color: #2566d8;
+  font-size: 1.1rem;
+}
+
+.username-form {
+  max-width: 500px;
 }
 
 .password-form {

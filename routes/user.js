@@ -34,6 +34,37 @@ router.get('/me', authMiddleware, (req, res) => {
   });
 });
 
+// 修改用户名
+router.put('/username', authMiddleware, (req, res) => {
+  const { newUsername } = req.body;
+  
+  if (!newUsername) {
+    return res.status(400).json({ message: '请提供新用户名' });
+  }
+  
+  if (newUsername.length < 3 || newUsername.length > 20) {
+    return res.status(400).json({ message: '用户名长度3-20位' });
+  }
+  
+  // 检查用户名是否已存在
+  db.get('SELECT id FROM users WHERE username = ? AND id != ?', [newUsername, req.user.id], (err, existingUser) => {
+    if (err) {
+      return res.status(500).json({ message: '服务器错误' });
+    }
+    if (existingUser) {
+      return res.status(400).json({ message: '用户名已存在' });
+    }
+    
+    // 更新用户名
+    db.run('UPDATE users SET username = ? WHERE id = ?', [newUsername, req.user.id], (err) => {
+      if (err) {
+        return res.status(500).json({ message: '用户名更新失败' });
+      }
+      res.json({ message: '用户名修改成功' });
+    });
+  });
+});
+
 // 修改密码
 router.put('/password', authMiddleware, (req, res) => {
   const { oldPassword, newPassword } = req.body;
