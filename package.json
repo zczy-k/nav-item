@@ -8,7 +8,8 @@
   "main": "app.js",
   "scripts": {
     "dev": "node app.js",
-    "start": "node app.js"
+    "start": "node app.js",
+    "build": "cd web && npm run build:prod && cd .."
   },
   "dependencies": {
     "archiver": "^7.0.1",
