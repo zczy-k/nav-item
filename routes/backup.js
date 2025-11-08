@@ -9,6 +9,46 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const { createClient } = require('webdav');
 const { encryptWebDAVConfig, decryptWebDAVConfig } = require('../utils/crypto');
+const multer = require('multer');
+
+// 配置multer用于文件上传
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const backupDir = path.join(__dirname, '..', 'backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    cb(null, backupDir);
+  },
+  filename: (req, file, cb) => {
+    // 保持原文件名，但确保是.zip文件
+    const originalName = file.originalname;
+    if (!originalName.endsWith('.zip')) {
+      return cb(new Error('只支持.zip格式的备份文件'));
+    }
+    // 如果文件名已存在，添加时间戳
+    const backupDir = path.join(__dirname, '..', 'backups');
+    let filename = originalName;
+    if (fs.existsSync(path.join(backupDir, filename))) {
+      const timestamp = Date.now();
+      filename = originalName.replace('.zip', `-${timestamp}.zip`);
+    }
+    cb(null, filename);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 500 * 1024 * 1024 // 限制500MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (!file.originalname.endsWith('.zip')) {
+      return cb(new Error('只支持.zip格式的备份文件'), false);
+    }
+    cb(null, true);
+  }
+});
 
 // 创建备份
 router.post('/create', authMiddleware, async (req, res) => {
@@ -190,6 +230,38 @@ router.delete('/delete/:filename', authMiddleware, (req, res) => {
     res.status(500).json({
       success: false,
       message: '删除备份失败',
+      error: error.message
+    });
+  }
+});
+
+// 上传备份文件
+router.post('/upload', authMiddleware, upload.single('backup'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: '请选择备份文件'
+      });
+    }
+
+    const stats = fs.statSync(req.file.path);
+    const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+
+    res.json({
+      success: true,
+      message: '备份文件上传成功',
+      backup: {
+        name: req.file.filename,
+        size: `${sizeInMB} MB`,
+        path: req.file.path
+      }
+    });
+  } catch (error) {
+    console.error('上传备份失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '上传备份失败',
       error: error.message
     });
   }

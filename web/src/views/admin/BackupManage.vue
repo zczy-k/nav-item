@@ -19,6 +19,12 @@
         </svg>
         {{ loading.create ? '备份中...' : '创建备份' }}
       </button>
+      <button class="btn btn-success" @click="triggerFileUpload" :disabled="loading.upload">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 15V3"/>
+        </svg>
+        {{ loading.upload ? '上传中...' : '上传备份' }}
+      </button>
       <button class="btn btn-secondary" @click="loadBackupList" :disabled="loading.list">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M1 4v6h6M23 20v-6h-6"/>
@@ -26,6 +32,13 @@
         </svg>
         {{ loading.list ? '刷新中...' : '刷新列表' }}
       </button>
+      <input 
+        ref="fileInput" 
+        type="file" 
+        accept=".zip" 
+        @change="handleFileUpload" 
+        style="display: none;"
+      />
     </div>
 
     <div v-if="message.text" :class="['message', message.type]">
@@ -210,12 +223,14 @@ const activeTab = ref('local');
 const backups = ref([]);
 const webdavBackups = ref([]);
 const showWebdavConfig = ref(false);
+const fileInput = ref(null);
 
 const loading = reactive({
   create: false,
   list: false,
   delete: false,
   restore: false,
+  upload: false,
   webdavConfig: false,
   webdavBackup: false,
   webdavList: false,
@@ -354,6 +369,60 @@ const formatDate = (dateString) => {
   if (!dateString) return '--';
   const date = new Date(dateString);
   return date.toLocaleString('zh-CN', { hour12: false });
+};
+
+// 上传备份功能
+const triggerFileUpload = () => {
+  fileInput.value.click();
+};
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  // 验证文件类型
+  if (!file.name.endsWith('.zip')) {
+    showMessage('只支持.zip格式的备份文件', 'error');
+    event.target.value = ''; // 清空输入
+    return;
+  }
+  
+  // 验证文件大小 (500MB)
+  if (file.size > 500 * 1024 * 1024) {
+    showMessage('备份文件过大，最大支持500MB', 'error');
+    event.target.value = '';
+    return;
+  }
+  
+  loading.upload = true;
+  
+  try {
+    const formData = new FormData();
+    formData.append('backup', file);
+    
+    const response = await fetch('/api/backup/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showMessage('备份文件上传成功！');
+      await loadBackupList();
+    } else {
+      showMessage(data.message || '备份文件上传失败', 'error');
+    }
+  } catch (error) {
+    console.error('上传失败:', error);
+    showMessage('备份文件上传失败', 'error');
+  } finally {
+    loading.upload = false;
+    event.target.value = ''; // 清空输入，允许上传同名文件
+  }
 };
 
 // WebDAV functions
@@ -500,6 +569,20 @@ onMounted(async () => {
 
 .btn-restore:hover {
   background: #e9f7ef;
+}
+
+.btn-success {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.btn-success:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 .backup-manage {
