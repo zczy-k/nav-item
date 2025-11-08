@@ -1,6 +1,7 @@
 ﻿const express = require('express');
 const db = require('../db');
 const auth = require('./authMiddleware');
+const { triggerDebouncedBackup } = require('../utils/autoBackup');
 const router = express.Router();
 
 // 获取所有菜单（包含子菜单）
@@ -94,6 +95,7 @@ router.post('/', auth, (req, res) => {
   const { name, order } = req.body;
   db.run('INSERT INTO menus (name, "order") VALUES (?, ?)', [name, order || 0], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ id: this.lastID });
   });
 });
@@ -102,6 +104,7 @@ router.put('/:id', auth, (req, res) => {
   const { name, order } = req.body;
   db.run('UPDATE menus SET name=?, "order"=? WHERE id=?', [name, order || 0, req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ changed: this.changes });
   });
 });
@@ -109,6 +112,7 @@ router.put('/:id', auth, (req, res) => {
 router.delete('/:id', auth, (req, res) => {
   db.run('DELETE FROM menus WHERE id=?', [req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ deleted: this.changes });
   });
 });
@@ -119,6 +123,7 @@ router.post('/:id/submenus', auth, (req, res) => {
   db.run('INSERT INTO sub_menus (parent_id, name, "order") VALUES (?, ?, ?)', 
     [req.params.id, name, order || 0], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ id: this.lastID });
   });
 });
@@ -127,6 +132,7 @@ router.put('/submenus/:id', auth, (req, res) => {
   const { name, order } = req.body;
   db.run('UPDATE sub_menus SET name=?, "order"=? WHERE id=?', [name, order || 0, req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ changed: this.changes });
   });
 });
@@ -134,6 +140,7 @@ router.put('/submenus/:id', auth, (req, res) => {
 router.delete('/submenus/:id', auth, (req, res) => {
   db.run('DELETE FROM sub_menus WHERE id=?', [req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ deleted: this.changes });
   });
 });

@@ -84,6 +84,14 @@ app.use('/api/wallpaper', wallpaperRoutes);
 app.use('/api/search-engines', searchEngineRoutes);
 app.use('/api/backup', backupRoutes);
 
+// 启动定时备份任务
+try {
+  const { startScheduledBackup } = require('./utils/autoBackup');
+  startScheduledBackup();
+} catch (error) {
+  console.error('自动备份模块加载失败:', error.message);
+}
+
 // 定期清理过期缓存
 setInterval(() => {
   const now = Date.now();
@@ -93,7 +101,6 @@ setInterval(() => {
     }
   }
 }, 60000); // 每分钟清理一次
-
 app.listen(PORT, () => {
   console.log(`server is running at http://localhost:${PORT}`);
 }); 

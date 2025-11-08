@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const auth = require('./authMiddleware');
+const { triggerDebouncedBackup } = require('../utils/autoBackup');
 const router = express.Router();
 
 // 获取指定菜单的卡片
@@ -72,6 +73,7 @@ router.patch('/batch-update', auth, (req, res) => {
                 if (err) {
                   return res.status(500).json({ error: err.message });
                 }
+                triggerDebouncedBackup(); // 触发自动备份
                 res.json({ success: true, updated: completed });
               });
             }
@@ -88,6 +90,7 @@ router.post('/', auth, (req, res) => {
   db.run('INSERT INTO cards (menu_id, sub_menu_id, title, url, logo_url, custom_logo_path, desc, "order") VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
     [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ id: this.lastID });
   });
 });
@@ -97,6 +100,7 @@ router.put('/:id', auth, (req, res) => {
   db.run('UPDATE cards SET menu_id=?, sub_menu_id=?, title=?, url=?, logo_url=?, custom_logo_path=?, desc=?, "order"=? WHERE id=?', 
     [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0, req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ changed: this.changes });
   });
 });
@@ -104,6 +108,7 @@ router.put('/:id', auth, (req, res) => {
 router.delete('/:id', auth, (req, res) => {
   db.run('DELETE FROM cards WHERE id=?', [req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
+    triggerDebouncedBackup(); // 触发自动备份
     res.json({ deleted: this.changes });
   });
 });
