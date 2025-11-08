@@ -7,6 +7,8 @@ const unzipper = require('unzipper');
 const authMiddleware = require('./authMiddleware');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
+const { createClient } = require('webdav');
+const { encryptWebDAVConfig, decryptWebDAVConfig } = require('../utils/crypto');
 
 // 创建备份
 router.post('/create', authMiddleware, async (req, res) => {
@@ -233,6 +235,406 @@ router.post('/restore/:filename', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('恢复备份失败:', error);
     res.status(500).json({ success: false, message: '恢复备份失败', error: error.message });
+  }
+});
+
+// ==================== WebDAV备份功能 ====================
+
+// WebDAV配置文件路径
+const getWebDAVConfigPath = () => {
+  const homeDir = process.env.HOME || require('os').homedir();
+  return path.join(homeDir, '.Con-Nav-Item-webdav-config.json');
+};
+
+// 保存WebDAV配置
+router.post('/webdav/config', authMiddleware, async (req, res) => {
+  try {
+    const { url, username, password } = req.body;
+    
+    if (!url || !username || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'URL、用户名和密码不能为空' 
+      });
+    }
+    
+    // 验证URL格式
+    try {
+      new URL(url);
+    } catch (e) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'URL格式不正确' 
+      });
+    }
+    
+    // 测试WebDAV连接
+    try {
+      const client = createClient(url, { username, password });
+      await client.getDirectoryContents('/');
+    } catch (error) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'WebDAV连接失败，请检查配置: ' + error.message 
+      });
+    }
+    
+    // 加密并保存配置
+    const encryptedConfig = encryptWebDAVConfig({ url, username, password });
+    const configPath = getWebDAVConfigPath();
+    
+    fs.writeFileSync(
+      configPath, 
+      JSON.stringify(encryptedConfig, null, 2),
+      { mode: 0o600 }
+    );
+    
+    res.json({ success: true, message: 'WebDAV配置保存成功' });
+    
+  } catch (error) {
+    console.error('WebDAV配置失败:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'WebDAV配置失败', 
+      error: error.message 
+    });
+  }
+});
+
+// 获取WebDAV配置状态
+router.get('/webdav/config', authMiddleware, (req, res) => {
+  try {
+    const configPath = getWebDAVConfigPath();
+    
+    if (!fs.existsSync(configPath)) {
+      return res.json({ 
+        success: true, 
+        config: { configured: false } 
+      });
+    }
+    
+    const encryptedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    
+    // 只返回非敏感信息
+    res.json({ 
+      success: true, 
+      config: {
+        configured: true,
+        url: encryptedConfig.url,
+        username: encryptedConfig.username
+      }
+    });
+    
+  } catch (error) {
+    console.error('获取WebDAV配置失败:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: '获取WebDAV配置失败', 
+      error: error.message 
+    });
+  }
+});
+
+// 备份到WebDAV
+router.post('/webdav/backup', authMiddleware, async (req, res) => {
+  try {
+    // 1. 读取配置
+    const configPath = getWebDAVConfigPath();
+    if (!fs.existsSync(configPath)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '请先配置WebDAV' 
+      });
+    }
+    
+    const encryptedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const config = decryptWebDAVConfig(encryptedConfig);
+    
+    if (!config) {
+      return res.status(500).json({ 
+        success: false, 
+        message: '配置解密失败' 
+      });
+    }
+    
+    // 2. 创建本地备份
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const backupName = `backup-${timestamp}.zip`;
+    const backupDir = path.join(__dirname, '..', 'backups');
+    
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    const backupPath = path.join(backupDir, backupName);
+    const output = fs.createWriteStream(backupPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    
+    await new Promise((resolve, reject) => {
+      output.on('close', resolve);
+      archive.on('error', reject);
+      archive.pipe(output);
+      
+      const databaseDir = path.join(__dirname, '..', 'database');
+      if (fs.existsSync(databaseDir)) {
+        archive.directory(databaseDir, 'database');
+      }
+      
+      const uploadsDir = path.join(__dirname, '..', 'uploads');
+      if (fs.existsSync(uploadsDir)) {
+        archive.directory(uploadsDir, 'uploads');
+      }
+      
+      const envFile = path.join(__dirname, '..', '.env');
+      if (fs.existsSync(envFile)) {
+        archive.file(envFile, { name: '.env' });
+      }
+      
+      const backupInfo = {
+        timestamp: new Date().toISOString(),
+        version: require('../package.json').version || '1.0.0',
+        type: 'webdav',
+        description: '数据库、上传文件和配置文件备份'
+      };
+      archive.append(JSON.stringify(backupInfo, null, 2), { name: 'backup-info.json' });
+      
+      archive.finalize();
+    });
+    
+    // 3. 上传到WebDAV
+    const client = createClient(config.url, {
+      username: config.username,
+      password: config.password
+    });
+    
+    // 确保备份目录存在
+    const remotePath = '/Con-Nav-Item-Backups';
+    try {
+      await client.createDirectory(remotePath);
+    } catch (e) {
+      // 目录可能已存在，忽略错误
+    }
+    
+    // 上传文件
+    const fileBuffer = fs.readFileSync(backupPath);
+    const remoteFilePath = `${remotePath}/${backupName}`;
+    await client.putFileContents(remoteFilePath, fileBuffer);
+    
+    const stats = fs.statSync(backupPath);
+    const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+    
+    res.json({ 
+      success: true, 
+      message: '备份到WebDAV成功',
+      backup: {
+        name: backupName,
+        size: `${sizeInMB} MB`,
+        remotePath: remoteFilePath
+      }
+    });
+    
+  } catch (error) {
+    console.error('备份到WebDAV失败:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: '备份到WebDAV失败', 
+      error: error.message 
+    });
+  }
+});
+
+// 获取WebDAV备份列表
+router.get('/webdav/list', authMiddleware, async (req, res) => {
+  try {
+    const configPath = getWebDAVConfigPath();
+    if (!fs.existsSync(configPath)) {
+      return res.json({ success: true, backups: [] });
+    }
+    
+    const encryptedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const config = decryptWebDAVConfig(encryptedConfig);
+    
+    if (!config) {
+      return res.status(500).json({ 
+        success: false, 
+        message: '配置解密失败' 
+      });
+    }
+    
+    const client = createClient(config.url, {
+      username: config.username,
+      password: config.password
+    });
+    
+    const remotePath = '/Con-Nav-Item-Backups';
+    
+    try {
+      const contents = await client.getDirectoryContents(remotePath);
+      
+      const backups = contents
+        .filter(item => item.type === 'file' && item.filename.endsWith('.zip'))
+        .map(item => ({
+          name: path.basename(item.filename),
+          size: `${(item.size / (1024 * 1024)).toFixed(2)} MB`,
+          created: item.lastmod,
+          remotePath: item.filename
+        }))
+        .sort((a, b) => new Date(b.created) - new Date(a.created));
+      
+      res.json({ success: true, backups });
+    } catch (error) {
+      if (error.status === 404) {
+        return res.json({ success: true, backups: [] });
+      }
+      throw error;
+    }
+    
+  } catch (error) {
+    console.error('获取WebDAV备份列表失败:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: '获取WebDAV备份列表失败', 
+      error: error.message 
+    });
+  }
+});
+
+// 从WebDAV恢复备份
+router.post('/webdav/restore', authMiddleware, async (req, res) => {
+  try {
+    const { filename } = req.body;
+    
+    if (!filename) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '请指定要恢复的备份文件' 
+      });
+    }
+    
+    // 读取配置
+    const configPath = getWebDAVConfigPath();
+    if (!fs.existsSync(configPath)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '请先配置WebDAV' 
+      });
+    }
+    
+    const encryptedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const config = decryptWebDAVConfig(encryptedConfig);
+    
+    if (!config) {
+      return res.status(500).json({ 
+        success: false, 
+        message: '配置解密失败' 
+      });
+    }
+    
+    // 从WebDAV下载备份
+    const client = createClient(config.url, {
+      username: config.username,
+      password: config.password
+    });
+    
+    const remotePath = `/Con-Nav-Item-Backups/${filename}`;
+    const fileBuffer = await client.getFileContents(remotePath);
+    
+    // 保存到临时文件
+    const tempPath = path.join(__dirname, '..', `temp-webdav-${Date.now()}.zip`);
+    fs.writeFileSync(tempPath, fileBuffer);
+    
+    // 解压并恢复
+    const tempDir = path.join(__dirname, '..', `temp-restore-${Date.now()}`);
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+    
+    const stream = fs.createReadStream(tempPath);
+    await new Promise((resolve, reject) => {
+      stream.pipe(unzipper.Extract({ path: tempDir }))
+        .on('finish', resolve)
+        .on('error', reject);
+    });
+    
+    // 恢复文件
+    const projectRoot = path.join(__dirname, '..');
+    const backupContents = fs.readdirSync(tempDir);
+    
+    for (const item of backupContents) {
+      const sourcePath = path.join(tempDir, item);
+      const destPath = path.join(projectRoot, item);
+      
+      if (fs.existsSync(destPath) && fs.statSync(destPath).isDirectory()) {
+        fs.rmSync(destPath, { recursive: true, force: true });
+      }
+      
+      if (fs.statSync(sourcePath).isDirectory()) {
+        fs.cpSync(sourcePath, destPath, { recursive: true });
+      } else {
+        fs.copyFileSync(sourcePath, destPath);
+      }
+    }
+    
+    // 清理临时文件
+    fs.unlinkSync(tempPath);
+    fs.rmSync(tempDir, { recursive: true, force: true });
+    
+    res.json({ 
+      success: true, 
+      message: '从WebDAV恢复成功！应用可能需要重启以生效。' 
+    });
+    
+  } catch (error) {
+    console.error('从WebDAV恢复失败:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: '从WebDAV恢复失败', 
+      error: error.message 
+    });
+  }
+});
+
+// 从WebDAV删除备份
+router.delete('/webdav/delete/:filename', authMiddleware, async (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    const configPath = getWebDAVConfigPath();
+    if (!fs.existsSync(configPath)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '请先配置WebDAV' 
+      });
+    }
+    
+    const encryptedConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const config = decryptWebDAVConfig(encryptedConfig);
+    
+    if (!config) {
+      return res.status(500).json({ 
+        success: false, 
+        message: '配置解密失败' 
+      });
+    }
+    
+    const client = createClient(config.url, {
+      username: config.username,
+      password: config.password
+    });
+    
+    const remotePath = `/Con-Nav-Item-Backups/${filename}`;
+    await client.deleteFile(remotePath);
+    
+    res.json({ 
+      success: true, 
+      message: '备份删除成功' 
+    });
+    
+  } catch (error) {
+    console.error('删除WebDAV备份失败:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: '删除WebDAV备份失败', 
+      error: error.message 
+    });
   }
 });
 

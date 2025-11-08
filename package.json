@@ -23,7 +23,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "sqlite3": "^5.1.6",
-    "unzipper": "^0.12.3"
+    "unzipper": "^0.12.3",
+    "webdav": "^5.8.0"
   },
   "engines": {
     "node": ">=14",
