@@ -225,7 +225,7 @@
               type="password" 
               placeholder="请输入管理员密码"
               class="batch-input"
-              @keyup.enter="verifyPassword"
+              @keyup.enter="verifyBatchPassword"
             />
             <div class="remember-password-wrapper">
               <label>
@@ -236,7 +236,7 @@
             <p v-if="batchError" class="batch-error">{{ batchError }}</p>
             <div class="batch-actions">
               <button @click="closeBatchAdd" class="btn btn-cancel">取消</button>
-              <button @click="verifyPassword" class="btn btn-primary" :disabled="batchLoading">
+              <button @click="verifyBatchPassword" class="btn btn-primary" :disabled="batchLoading">
                 {{ batchLoading ? '验证中...' : '确认' }}
               </button>
             </div>
@@ -540,7 +540,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeMount, computed, defineAsyncComponent, onUnmounted } from 'vue';
-import { getMenus, getCards, getAds, getFriends, login, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards, deleteCard, updateCard, getSearchEngines, parseSearchEngine, addSearchEngine, deleteSearchEngine } from '../api';
+import { getMenus, getCards, getAds, getFriends, verifyPassword, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards, deleteCard, updateCard, getSearchEngines, parseSearchEngine, addSearchEngine, deleteSearchEngine } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
 
@@ -1167,7 +1167,7 @@ function checkSavedPassword() {
   }
 }
 
-async function verifyPassword() {
+async function verifyBatchPassword() {
   if (!batchPassword.value) {
     batchError.value = '请输入密码';
     return;
@@ -1177,15 +1177,14 @@ async function verifyPassword() {
   batchError.value = '';
   
   try {
-    // 使用默认管理员用户名 admin 进行验证，并获取响应
-    const response = await login('admin', batchPassword.value);
+    // 仅使用密码验证，不需要用户名
+    const response = await verifyPassword(batchPassword.value);
     
     // 检查并保存 token
     if (response.data && response.data.token) {
       localStorage.setItem('token', response.data.token);
     } else {
-      // 如果没有 token 返回，说明登录逻辑有问题
-      throw new Error('登录成功，但未收到 token');
+      throw new Error('验证成功，但未收到 token');
     }
     
     // 如果选择了记住密码，保存到2小时
@@ -1365,7 +1364,8 @@ async function verifyEditPassword() {
   editError.value = '';
   
   try {
-    const res = await login('admin', editPassword.value);
+    // 仅使用密码验证，不需要用户名
+    const res = await verifyPassword(editPassword.value);
     localStorage.setItem('token', res.data.token);
     
     // 如果选择了记住密码，保存到2小时

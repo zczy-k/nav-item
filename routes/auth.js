@@ -51,4 +51,29 @@ router.post('/login', (req, res) => {
   });
 });
 
+// 仅密码验证（用于首页快速操作）
+router.post('/verify-password', (req, res) => {
+  const { password } = req.body;
+  
+  if (!password) {
+    return res.status(400).json({ error: '请输入密码' });
+  }
+  
+  // 获取第一个管理员用户（默认id=1）
+  db.get('SELECT * FROM users WHERE id = 1', (err, user) => {
+    if (err || !user) {
+      return res.status(500).json({ error: '服务器错误' });
+    }
+    
+    bcrypt.compare(password, user.password, (err, result) => {
+      if (result) {
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '2h' });
+        res.json({ token });
+      } else {
+        res.status(401).json({ error: '密码错误' });
+      }
+    });
+  });
+});
+
 module.exports = router; 
