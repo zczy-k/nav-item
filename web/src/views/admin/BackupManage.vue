@@ -8,6 +8,9 @@
       <button :class="['tab', { active: activeTab === 'webdav' }]" @click="activeTab = 'webdav'">
         ☁️ WebDAV备份
       </button>
+      <button :class="['tab', { active: activeTab === 'auto' }]" @click="activeTab = 'auto'">
+        ⚙️ 自动备份配置
+      </button>
     </div>
 
     <!-- Local Backup Tab -->
@@ -175,6 +178,137 @@
       </div>
     </div>
 
+    <!-- Auto Backup Configuration Tab -->
+    <div v-show="activeTab === 'auto'" class="tab-content">
+      <div v-if="message.text" :class="['message', message.type]">
+        {{ message.text }}
+      </div>
+
+      <div class="config-section">
+        <h3>⚡ 自动备份配置</h3>
+        <p class="config-description">配置系统自动备份策略，包括增量备份和定时备份。</p>
+
+        <!-- Debounce Backup Settings -->
+        <div class="config-card">
+          <div class="config-header">
+            <h4>增量备份（防抖）</h4>
+            <label class="switch">
+              <input type="checkbox" v-model="autoBackupConfig.debounce.enabled" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="config-info">当数据变更时，延迟一段时间后自动备份。适合频繁修改的场景。</p>
+          
+          <div v-if="autoBackupConfig.debounce.enabled" class="config-fields">
+            <div class="field-row">
+              <label>延迟时间（分钟）</label>
+              <input type="number" v-model.number="autoBackupConfig.debounce.delay" 
+                     min="5" max="1440" class="form-input" />
+              <small>范围：5-1440分钟</small>
+            </div>
+            <div class="field-row">
+              <label>每天最多备份次数</label>
+              <input type="number" v-model.number="autoBackupConfig.debounce.maxPerDay" 
+                     min="1" max="10" class="form-input" />
+              <small>范围：1-10次</small>
+            </div>
+            <div class="field-row">
+              <label>保留备份数量</label>
+              <input type="number" v-model.number="autoBackupConfig.debounce.keep" 
+                     min="1" max="30" class="form-input" />
+              <small>范围：1-30个</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scheduled Backup Settings -->
+        <div class="config-card">
+          <div class="config-header">
+            <h4>定时备份（每日）</h4>
+            <label class="switch">
+              <input type="checkbox" v-model="autoBackupConfig.scheduled.enabled" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="config-info">每天在固定时间自动执行备份。</p>
+          
+          <div v-if="autoBackupConfig.scheduled.enabled" class="config-fields">
+            <div class="field-row">
+              <label>备份时间</label>
+              <div class="time-input">
+                <input type="number" v-model.number="autoBackupConfig.scheduled.hour" 
+                       min="0" max="23" class="form-input time-field" placeholder="时" />
+                <span>:</span>
+                <input type="number" v-model.number="autoBackupConfig.scheduled.minute" 
+                       min="0" max="59" class="form-input time-field" placeholder="分" />
+              </div>
+              <small>格式：24小时制，如 02:00</small>
+            </div>
+            <div class="field-row">
+              <label>保留天数</label>
+              <input type="number" v-model.number="autoBackupConfig.scheduled.keep" 
+                     min="1" max="30" class="form-input" />
+              <small>范围：1-30天</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto Clean Setting -->
+        <div class="config-card">
+          <div class="config-header">
+            <h4>自动清理</h4>
+            <label class="switch">
+              <input type="checkbox" v-model="autoBackupConfig.autoClean" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="config-info">自动删除超出保留数量/天数的旧备份文件。</p>
+        </div>
+
+        <!-- Backup Statistics -->
+        <div class="stats-card" v-if="autoBackupStats">
+          <h4>📊 备份统计</h4>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">增量备份（今日）</span>
+              <span class="stat-value">{{ autoBackupStats.debounceToday || 0 }} 次</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">最后增量备份</span>
+              <span class="stat-value">{{ formatDate(autoBackupStats.lastDebounce) || '无' }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">最后定时备份</span>
+              <span class="stat-value">{{ formatDate(autoBackupStats.lastScheduled) || '无' }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">下次定时备份</span>
+              <span class="stat-value">{{ formatNextScheduled() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="config-actions">
+          <button class="btn btn-secondary" @click="loadAutoBackupConfig">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 4v6h6M23 20v-6h-6"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            重置
+          </button>
+          <button class="btn btn-primary" @click="saveAutoBackupConfig" :disabled="loading.autoBackupConfig">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            {{ loading.autoBackupConfig ? '保存中...' : '保存配置' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- WebDAV配置对话框 -->
     <div v-if="showWebdavConfig" class="modal-overlay">
       <div class="modal-content config-modal">
@@ -235,7 +369,8 @@ const loading = reactive({
   webdavBackup: false,
   webdavList: false,
   webdavRestore: false,
-  webdavDelete: false
+  webdavDelete: false,
+  autoBackupConfig: false
 });
 
 const message = ref({ text: '', type: '' });
@@ -260,6 +395,24 @@ const webdavConfigForm = reactive({
   username: '',
   password: ''
 });
+
+const autoBackupConfig = reactive({
+  debounce: {
+    enabled: true,
+    delay: 30,
+    maxPerDay: 3,
+    keep: 5
+  },
+  scheduled: {
+    enabled: true,
+    hour: 2,
+    minute: 0,
+    keep: 7
+  },
+  autoClean: true
+});
+
+const autoBackupStats = ref(null);
 
 const token = localStorage.getItem('token');
 
@@ -507,12 +660,46 @@ const deleteWebdavBackup = async (filename) => {
   loading.webdavDelete = false;
 };
 
+// Auto-backup configuration functions
+const loadAutoBackupConfig = async () => {
+  const data = await apiRequest('/api/backup/auto/config');
+  if (data.success && data.config) {
+    Object.assign(autoBackupConfig, data.config);
+    autoBackupStats.value = data.stats || null;
+  } else {
+    showMessage('加载自动备份配置失败', 'error');
+  }
+};
+
+const saveAutoBackupConfig = async () => {
+  loading.autoBackupConfig = true;
+  const data = await apiRequest('/api/backup/auto/config', {
+    method: 'POST',
+    body: JSON.stringify(autoBackupConfig)
+  });
+  if (data.success) {
+    showMessage('自动备份配置保存成功！');
+    await loadAutoBackupConfig();
+  } else {
+    showMessage(data.message || '自动备份配置保存失败', 'error');
+  }
+  loading.autoBackupConfig = false;
+};
+
+const formatNextScheduled = () => {
+  if (!autoBackupConfig.scheduled.enabled) return '未启用';
+  const hour = String(autoBackupConfig.scheduled.hour).padStart(2, '0');
+  const minute = String(autoBackupConfig.scheduled.minute).padStart(2, '0');
+  return `每天 ${hour}:${minute}`;
+};
+
 onMounted(async () => {
   await loadBackupList();
   await loadWebdavConfig();
   if (webdavConfig.configured) {
     await loadWebdavBackupList();
   }
+  await loadAutoBackupConfig();
 });
 </script>
 
@@ -824,21 +1011,185 @@ onMounted(async () => {
 }
 
 .info-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 16px;
-  margin-bottom: 20px;
-  border-radius: 8px;
   background: #e3f2fd;
   border: 1px solid #90caf9;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
 }
 
 .info-box p {
   margin: 0;
   color: #1565c0;
   font-size: 14px;
+}
+
+.config-section {
+  max-width: 800px;
+}
+
+.config-section h3 {
+  font-size: 24px;
+  margin: 0 0 8px 0;
+  color: #222;
+}
+
+.config-description {
+  color: #666;
+  margin: 0 0 24px 0;
   line-height: 1.6;
+}
+
+.config-card {
+  background: white;
+  border: 1px solid #e3e6ef;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.config-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #222;
+}
+
+.config-info {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.config-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-row label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.field-row small {
+  font-size: 12px;
+  color: #999;
+}
+
+.time-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-field {
+  width: 80px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2566d8;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.stats-card {
+  background: #f8f9fa;
+  border: 1px solid #e3e6ef;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.stats-card h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #222;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2566d8;
+}
+
+.config-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {

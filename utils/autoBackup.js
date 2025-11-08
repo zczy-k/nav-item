@@ -3,27 +3,72 @@ const path = require('path');
 const archiver = require('archiver');
 const schedule = require('node-schedule');
 
-// 配置
-const config = {
+// 配置文件路径
+const CONFIG_PATH = path.join(__dirname, '..', 'config', 'autoBackup.json');
+
+// 默认配置
+const DEFAULT_CONFIG = {
   debounce: {
     enabled: true,
-    delay: 30 * 60 * 1000,        // 30分钟防抖延迟
+    delay: 30,                     // 30分钟防抖延迟
     maxPerDay: 3,                  // 每天最多触发3次
     keep: 5                        // 保留5个增量备份
   },
   scheduled: {
     enabled: true,
-    cron: '0 2 * * *',             // 每天凌晨2点
+    hour: 2,                       // 每天凌晨2点
+    minute: 0,
     keep: 7                        // 保留7天
   },
   autoClean: true                  // 自动清理过期备份
 };
+
+// 加载配置
+function loadConfig() {
+  try {
+    const configDir = path.dirname(CONFIG_PATH);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    
+    if (fs.existsSync(CONFIG_PATH)) {
+      const data = fs.readFileSync(CONFIG_PATH, 'utf-8');
+      return { ...DEFAULT_CONFIG, ...JSON.parse(data) };
+    }
+    
+    // 首次运行，保存默认配置
+    saveConfig(DEFAULT_CONFIG);
+    return DEFAULT_CONFIG;
+  } catch (error) {
+    console.error('[\u81ea\u52a8\u5907\u4efd] \u914d\u7f6e\u52a0\u8f7d\u5931\u8d25:', error.message);
+    return DEFAULT_CONFIG;
+  }
+}
+
+// 保存配置
+function saveConfig(newConfig) {
+  try {
+    const configDir = path.dirname(CONFIG_PATH);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(newConfig, null, 2));
+    return true;
+  } catch (error) {
+    console.error('[\u81ea\u52a8\u5907\u4efd] \u914d\u7f6e\u4fdd\u5b58\u5931\u8d25:', error.message);
+    return false;
+  }
+}
+
+// 当前配置
+let config = loadConfig();
 
 // 状态管理
 let debounceTimer = null;
 let lastBackupTime = 0;
 let dailyBackupCount = 0;
 let lastBackupDate = new Date().toDateString();
+let scheduledJob = null;
 
 /**
  * 创建备份文件
@@ -158,7 +203,7 @@ function triggerDebouncedBackup() {
     clearTimeout(debounceTimer);
   }
   
-  console.log(`[自动备份] 数据修改，将在 ${config.debounce.delay / 60000} 分钟后自动备份`);
+  console.log(`[自动备份] 数据修改，将在 ${config.debounce.delay} 分钟后自动备份`);
   
   // 设置新的定时器
   debounceTimer = setTimeout(async () => {
@@ -177,7 +222,7 @@ function triggerDebouncedBackup() {
     } catch (error) {
       console.error('[自动备份] 防抖备份失败:', error);
     }
-  }, config.debounce.delay);
+  }, config.debounce.delay * 60 * 1000); // 转换为毫秒
 }
 
 /**
@@ -189,9 +234,15 @@ function startScheduledBackup() {
     return;
   }
   
-  console.log(`[自动备份] 定时备份已启动，计划: ${config.scheduled.cron}`);
+  // 取消之前的任务
+  if (scheduledJob) {
+    scheduledJob.cancel();
+  }
   
-  const job = schedule.scheduleJob(config.scheduled.cron, async () => {
+  const cronExpr = `${config.scheduled.minute} ${config.scheduled.hour} * * *`;
+  console.log(`[自动备份] 定时备份已启动，计划: 每天 ${String(config.scheduled.hour).padStart(2, '0')}:${String(config.scheduled.minute).padStart(2, '0')}`);
+  
+  scheduledJob = schedule.scheduleJob(cronExpr, async () => {
     try {
       console.log('[自动备份] 开始执行定时备份...');
       const result = await createBackupFile('daily');
@@ -208,12 +259,12 @@ function startScheduledBackup() {
   });
   
   // 计算下次执行时间
-  const nextRun = job.nextInvocation();
+  const nextRun = scheduledJob.nextInvocation();
   if (nextRun) {
     console.log(`[自动备份] 下次定时备份: ${nextRun.toLocaleString('zh-CN')}`);
   }
   
-  return job;
+  return scheduledJob;
 }
 
 /**
@@ -267,9 +318,46 @@ function getBackupStats() {
   }
 }
 
+/**
+ * 更新配置并重启定时任务
+ */
+function updateConfig(newConfig) {
+  try {
+    // 合并配置
+    config = { ...config, ...newConfig };
+    
+    // 保存到文件
+    if (!saveConfig(config)) {
+      return { success: false, message: '配置保存失败' };
+    }
+    
+    // 重启定时任务
+    if (config.scheduled.enabled) {
+      startScheduledBackup();
+    } else if (scheduledJob) {
+      scheduledJob.cancel();
+      scheduledJob = null;
+      console.log('[自动备份] 定时备份已停止');
+    }
+    
+    return { success: true, message: '配置更新成功' };
+  } catch (error) {
+    console.error('[自动备份] 配置更新失败:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * 获取当前配置
+ */
+function getConfig() {
+  return config;
+}
+
 module.exports = {
   triggerDebouncedBackup,
   startScheduledBackup,
   getBackupStats,
-  config
+  getConfig,
+  updateConfig
 };

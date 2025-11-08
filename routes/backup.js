@@ -664,7 +664,92 @@ router.post('/webdav/restore', authMiddleware, async (req, res) => {
   }
 });
 
-// 从WebDAV删除备份
+// ==================== 自动备份配置 ====================
+
+// 获取自动备份配置
+router.get('/auto/config', authMiddleware, (req, res) => {
+  try {
+    const { getConfig, getBackupStats } = require('../utils/autoBackup');
+    const config = getConfig();
+    const stats = getBackupStats();
+    
+    res.json({
+      success: true,
+      config,
+      stats
+    });
+  } catch (error) {
+    console.error('获取自动备份配置失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取配置失败',
+      error: error.message
+    });
+  }
+});
+
+// 更新自动备份配置
+router.post('/auto/config', authMiddleware, (req, res) => {
+  try {
+    const { updateConfig } = require('../utils/autoBackup');
+    const newConfig = req.body;
+    
+    // 验证配置
+    if (newConfig.debounce) {
+      if (newConfig.debounce.delay < 5 || newConfig.debounce.delay > 1440) {
+        return res.status(400).json({
+          success: false,
+          message: '防抖延迟必须在5-1440分钟之间'
+        });
+      }
+      if (newConfig.debounce.maxPerDay < 1 || newConfig.debounce.maxPerDay > 10) {
+        return res.status(400).json({
+          success: false,
+          message: '每日最大次数必须在1-10之间'
+        });
+      }
+      if (newConfig.debounce.keep < 1 || newConfig.debounce.keep > 30) {
+        return res.status(400).json({
+          success: false,
+          message: '增量备份保留数量必须在1-30之间'
+        });
+      }
+    }
+    
+    if (newConfig.scheduled) {
+      if (newConfig.scheduled.hour < 0 || newConfig.scheduled.hour > 23) {
+        return res.status(400).json({
+          success: false,
+          message: '小时必须在0-23之间'
+        });
+      }
+      if (newConfig.scheduled.minute < 0 || newConfig.scheduled.minute > 59) {
+        return res.status(400).json({
+          success: false,
+          message: '分钟必须在0-59之间'
+        });
+      }
+      if (newConfig.scheduled.keep < 1 || newConfig.scheduled.keep > 30) {
+        return res.status(400).json({
+          success: false,
+          message: '每日备份保留数量必须在1-30之间'
+        });
+      }
+    }
+    
+    const result = updateConfig(newConfig);
+    res.json(result);
+  } catch (error) {
+    console.error('更新自动备份配置失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '配置更新失败',
+      error: error.message
+    });
+  }
+});
+
+// 从 WebDAV删除备份
 router.delete('/webdav/delete/:filename', authMiddleware, async (req, res) => {
   try {
     const { filename } = req.params;

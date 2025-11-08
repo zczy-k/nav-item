@@ -1,0 +1,15 @@
+{
+  "debounce": {
+    "enabled": true,
+    "delay": 30,
+    "maxPerDay": 3,
+    "keep": 5
+  },
+  "scheduled": {
+    "enabled": true,
+    "hour": 2,
+    "minute": 0,
+    "keep": 7
+  },
+  "autoClean": true
+}
