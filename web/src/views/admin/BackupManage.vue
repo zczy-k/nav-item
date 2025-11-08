@@ -1,18 +1,18 @@
 <template>
   <div class="backup-manage">
     <div class="toolbar">
-      <button class="btn btn-primary" @click="createBackup" :disabled="loading">
+      <button class="btn btn-primary" @click="createBackup" :disabled="loading.create">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
         </svg>
-        {{ loading ? '备份中...' : '创建备份' }}
+        {{ loading.create ? '备份中...' : '创建备份' }}
       </button>
-      <button class="btn btn-secondary" @click="loadBackupList">
+      <button class="btn btn-secondary" @click="loadBackupList" :disabled="loading.list">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M1 4v6h6M23 20v-6h-6"/>
           <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
         </svg>
-        刷新列表
+        {{ loading.list ? '刷新中...' : '刷新列表' }}
       </button>
     </div>
 
@@ -21,7 +21,7 @@
     </div>
 
     <div class="backup-list">
-      <div v-if="backups.length === 0 && !loading" class="empty-state">
+      <div v-if="backups.length === 0 && !loading.list" class="empty-state">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
@@ -45,12 +45,18 @@
             </div>
           </div>
           <div class="backup-actions">
+             <button class="btn-icon btn-restore" @click="confirmAction('restore', backup.name)" title="恢复备份">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 4v6h6M23 20v-6h-6"/>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+              </svg>
+            </button>
             <button class="btn-icon" @click="downloadBackup(backup.name)" title="下载备份">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
               </svg>
             </button>
-            <button class="btn-icon btn-danger" @click="confirmDelete(backup.name)" title="删除备份">
+            <button class="btn-icon btn-danger" @click="confirmAction('delete', backup.name)" title="删除备份">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -61,14 +67,14 @@
       </div>
     </div>
 
-    <!-- 删除确认对话框 -->
-    <div v-if="deleteDialog.show" class="modal-overlay">
+    <!-- 确认对话框 -->
+    <div v-if="dialog.show" class="modal-overlay">
       <div class="modal-content">
-        <h3>确认删除</h3>
-        <p>确定要删除备份文件 <strong>{{ deleteDialog.filename }}</strong> 吗？</p>
+        <h3>确认{{ dialog.title }}</h3>
+        <p>确定要{{ dialog.title }}备份文件 <strong>{{ dialog.filename }}</strong> 吗？</p>
         <div class="modal-actions">
-          <button class="btn btn-secondary" @click="deleteDialog.show = false">取消</button>
-          <button class="btn btn-danger" @click="deleteBackup">确认删除</button>
+          <button class="btn btn-secondary" @click="dialog.show = false">取消</button>
+          <button :class="['btn', dialog.confirmClass]" @click="executeAction">确认</button>
         </div>
       </div>
     </div>
@@ -76,17 +82,38 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 
 const backups = ref([]);
-const loading = ref(false);
+const loading = reactive({
+  create: false,
+  list: false,
+  delete: false,
+  restore: false
+});
 const message = ref({ text: '', type: '' });
-const deleteDialog = ref({
+const dialog = reactive({
   show: false,
-  filename: ''
+  filename: '',
+  action: null,
+  title: '',
+  confirmClass: ''
 });
 
 const token = localStorage.getItem('token');
+
+// 统一API请求
+async function apiRequest(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  });
+  return response.json();
+}
 
 const showMessage = (text, type = 'success') => {
   message.value = { text, type };
@@ -96,105 +123,65 @@ const showMessage = (text, type = 'success') => {
 };
 
 const createBackup = async () => {
-  loading.value = true;
-  message.value = { text: '', type: '' };
-  
-  try {
-    const response = await fetch('/api/backup/create', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      showMessage('备份创建成功！', 'success');
-      await loadBackupList();
-    } else {
-      showMessage(data.message || '备份创建失败', 'error');
-    }
-  } catch (error) {
-    console.error('创建备份失败:', error);
-    showMessage('备份创建失败：' + error.message, 'error');
-  } finally {
-    loading.value = false;
+  loading.create = true;
+  const data = await apiRequest('/api/backup/create', { method: 'POST' });
+  if (data.success) {
+    showMessage('备份创建成功！');
+    await loadBackupList();
+  } else {
+    showMessage(data.message || '备份创建失败', 'error');
   }
+  loading.create = false;
 };
 
 const loadBackupList = async () => {
-  loading.value = true;
-  
-  try {
-    const response = await fetch('/api/backup/list', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      backups.value = data.backups;
-    } else {
-      showMessage('获取备份列表失败', 'error');
-    }
-  } catch (error) {
-    console.error('获取备份列表失败:', error);
-    showMessage('获取备份列表失败：' + error.message, 'error');
-  } finally {
-    loading.value = false;
+  loading.list = true;
+  const data = await apiRequest('/api/backup/list');
+  if (data.success) {
+    backups.value = data.backups;
+  } else {
+    showMessage('获取备份列表失败', 'error');
   }
+  loading.list = false;
 };
 
 const downloadBackup = (filename) => {
   window.open(`/api/backup/download/${filename}?token=${token}`, '_blank');
 };
 
-const confirmDelete = (filename) => {
-  deleteDialog.value = {
-    show: true,
-    filename
-  };
+const confirmAction = (action, filename) => {
+  dialog.show = true;
+  dialog.filename = filename;
+  dialog.action = action;
+  dialog.title = action === 'delete' ? '删除' : '恢复';
+  dialog.confirmClass = action === 'delete' ? 'btn-danger' : 'btn-restore';
 };
 
-const deleteBackup = async () => {
-  const filename = deleteDialog.value.filename;
-  deleteDialog.value.show = false;
-  
-  try {
-    const response = await fetch(`/api/backup/delete/${filename}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      showMessage('备份删除成功', 'success');
-      await loadBackupList();
-    } else {
-      showMessage(data.message || '备份删除失败', 'error');
-    }
-  } catch (error) {
-    console.error('删除备份失败:', error);
-    showMessage('删除备份失败：' + error.message, 'error');
+const executeAction = async () => {
+  const { action, filename } = dialog;
+  dialog.show = false;
+  loading[action] = true;
+
+  let data;
+  if (action === 'delete') {
+    data = await apiRequest(`/api/backup/delete/${filename}`, { method: 'DELETE' });
+  } else if (action === 'restore') {
+    data = await apiRequest(`/api/backup/restore/${filename}`, { method: 'POST' });
   }
+
+  if (data.success) {
+    showMessage(`${dialog.title}成功！`);
+    await loadBackupList();
+  } else {
+    showMessage(data.message || `${dialog.title}失败`, 'error');
+  }
+  loading[action] = false;
 };
 
 const formatDate = (dateString) => {
+  if (!dateString) return '--';
   const date = new Date(dateString);
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return date.toLocaleString('zh-CN', { hour12: false });
 };
 
 onMounted(() => {
@@ -203,6 +190,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ... (styles are mostly the same, with added .btn-restore) */
+.btn-restore {
+  color: #27ae60;
+}
+
+.btn-restore:hover {
+  background: #e9f7ef;
+}
+
 .backup-manage {
   width: 100%;
   max-width: 1200px;
