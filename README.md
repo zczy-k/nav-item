@@ -180,6 +180,40 @@ eooce/Con-Nav-Item
 ghcr.io/eooce/Con-Nav-Item:latest
 ```
 
+## 🖥️ Linux 服务器一键部署
+
+支持 Ubuntu, Debian, CentOS, RHEL, Fedora 等常见 Linux 发行版。
+
+### 自动安装脚本
+
+**一键安装（自动安装 Node.js + PM2）：**
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
+```
+
+**自定义安装目录：**
+```bash
+INSTALL_DIR=/opt/Con-Nav-Item bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
+```
+
+### 功能特点
+
+- ✅ **自动检测操作系统** - 支持主流 Linux 发行版
+- ✅ **自动安装依赖** - Node.js 20 + PM2
+- ✅ **交互式配置** - 设置端口、用户名、密码
+- ✅ **PM2 进程管理** - 开机自启 + 自动重启
+- ✅ **防火墙配置** - 自动配置 UFW/FirewallD
+
+### PM2 常用命令
+
+```bash
+pm2 status              # 查看应用状态
+pm2 logs Con-Nav-Item   # 查看实时日志
+pm2 restart Con-Nav-Item # 重启应用
+pm2 stop Con-Nav-Item   # 停止应用
+pm2 delete Con-Nav-Item # 删除应用
+```
+
 ## Serv00 / CT8 / Hostuno 一键部署
 
 ### 安装脚本
