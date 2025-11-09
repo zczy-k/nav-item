@@ -1,160 +1,93 @@
-﻿# Con-Nav-Item(增强版) - 个人导航站
+# Con-Nav-Item - 现代化个人导航站
 
-> 🔗 **仓库地址**: [github.com/zczy-k/Con-Nav-Item](https://github.com/zczy-k/Con-Nav-Item)  
-> 👤 **Fork 自**: [github.com/eooce/nav-item](https://github.com/eooce/nav-item)并进行功能的改进与增强
-> 
-> ## 增强功能:
-- Serv00 一键部署脚本、完善部署文档
-- 添加首页添加卡片的功能，方便快捷添加
-- 添加背景切换功能
-- 添加本地/github配置数据备份功能，方便服务器迁移，防止数据丢失
+<div align="center">
 
-## 项目简介
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
+[![Vue](https://img.shields.io/badge/Vue.js-3-brightgreen.svg)](https://vuejs.org/)
 
-一个现代化的导航网站项目，提供简洁美观的导航界面和强大的后台管理系统,快速访问常用网站和工具。
+[在线演示](https://nav.166889.xyz) · [部署文档](DEPLOY_SERV00.md) · [备份文档](BACKUP.md) · [问题反馈](https://github.com/zczy-k/Con-Nav-Item/issues)
 
-## 🛠️ 技术栈
-- Vue 3 + Node.js + SQLite 前后端分离架构
+</div>
 
-## ✨ 主要功能
+> Fork 自 [eooce/nav-item](https://github.com/eooce/nav-item) 并进行了大量增强和优化
 
-### 前端功能
-- 🏠 **首页导航**：美观的卡片式导航界面
-- 🔍 **聚合搜索**：支持 Google、百度、Bing、GitHub、站内搜索
-- 📱 **响应式设计**：完美适配桌面端和移动端
-- 🎨 **现代化UI**：采用渐变背景和毛玻璃效果
-- 🔗 **友情链接**：支持友情链接展示
-- 📢 **广告位**：支持左右两侧广告位展示
-- 🧩 **浏览器扩展**：支持将导航站设为新标签页
+## ✨ 特色功能
 
-### 后台管理功能
-- 👤 **用户管理**：管理员登录、用户信息管理
-- 📋 **栏目管理**：主菜单和子菜单的增删改查
-- 🃏 **卡片管理**：导航卡片的增删改查
-- 📢 **广告管理**：广告位的增删改查
-- 🔗 **友链管理**：友情链接的增删改查
-- 📊 **数据统计**：登录时间、IP等统计信息
+### 前端特性
+- 🏠 **卡片式导航** - 美观现代的导航界面
+- 🔍 **聚合搜索** - 支持 Google、百度、Bing、GitHub 等多引擎搜索
+- 🎨 **自定义主题** - 渐变背景、毛玻璃效果、一键切换壁纸
+- 📱 **响应式设计** - 完美适配桌面端和移动端
+- 🔗 **友情链接** - 展示和管理友情链接
+- 📢 **广告位** - 可选的左右两侧广告展示
+
+### 后台管理
+- 👤 **用户管理** - 支持修改用户名和密码
+- 📋 **栏目管理** - 主菜单和子菜单的增删改查
+- 🃏 **卡片管理** - 导航卡片批量管理，拖拽排序
+- 🔍 **搜索引擎** - 自定义搜索引擎配置
+- 💾 **自动备份** - 智能增量备份 + 定时备份
+- ☁️ **WebDAV备份** - 支持坚果云、Nextcloud 等云备份
 
 ### 技术特性
-- 🔐 **JWT认证**：安全的用户认证机制
-- 🗄️ **SQLite数据库**：轻量级数据库，无需额外配置
-- 📤 **文件上传**：支持图片上传功能
-- 🔍 **搜索功能**：支持站内搜索和外部搜索
-- 📱 **移动端适配**：完美的移动端体验
+- 🔐 **JWT认证** - 安全的用户认证机制
+- 🗄️ **SQLite数据库** - 轻量级，无需额外配置
+- 📤 **文件上传** - 支持Logo和图片上传
+- 🎯 **PM2部署** - 进程守护，开机自启
+- 🐳 **Docker支持** - 容器化部署
+- 🔧 **一键部署** - 多平台自动化部署脚本
 
+## 📸 界面预览
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/91c687a4-0beb-4445-9528-4501d26ddc10" width="800" alt="首页预览" />
+  <p><i>首页导航界面</i></p>
   
-### 界面预览
-<img width="1891" height="902" alt="image" src="https://github.com/user-attachments/assets/91c687a4-0beb-4445-9528-4501d26ddc10" />
-<img width="1909" height="895" alt="image" src="https://github.com/user-attachments/assets/c810c79c-568f-4c19-a059-54ce88ea29d3" />
+  <img src="https://github.com/user-attachments/assets/c810c79c-568f-4c19-a059-54ce88ea29d3" width="800" alt="后台管理" />
+  <p><i>后台管理界面</i></p>
+</div>
 
+## 🚀 快速开始
 
+### 方式一：Linux 服务器一键部署（推荐）
 
-## 🏗️ 项目结构
+支持 Ubuntu、Debian、CentOS、RHEL、Fedora 等主流发行版。
 
-```
-Con-Nav-Item/
-├── app.js                 # 后端主入口文件
-├── config.js             # 配置文件
-├── db.js                 # 数据库初始化
-├── package.json          # 后端依赖配置
-├── database/             # 数据库文件目录
-│   └── nav.db           # SQLite数据库文件
-├── routes/               # 后端路由
-│   ├── auth.js          # 认证相关路由
-│   ├── menu.js          # 菜单管理路由
-│   ├── card.js          # 卡片管理路由
-│   ├── ad.js            # 广告管理路由
-│   ├── friend.js        # 友链管理路由
-│   ├── user.js          # 用户管理路由
-│   └── upload.js        # 文件上传路由
-├── uploads/              # 上传文件目录
-│   └── default-favicon.png
-├── web/                  # 前端项目目录
-│    ├── package.json      # 前端依赖配置
-│    ├── vite.config.mjs   # Vite配置文件
-│    ├── index.html        # HTML入口文件
-│    ├── public/           # 静态资源
-│    │   ├── background.webp
-│    │   ├── default-favicon.png
-│    │   └── robots.txt
-│    └── src/              # 前端源码
-│        ├── main.js       # Vue应用入口
-│        ├── router.js     # 路由配置
-│        ├── api.js        # API接口封装
-│        ├── App.vue       # 根组件
-│        ├── components/   # 公共组件
-│        │   ├── MenuBar.vue
-│        │   └── CardGrid.vue
-│        └── views/        # 页面组件
-│            ├── Home.vue  # 首页
-│            ├── Admin.vue # 后台管理
-│            └── admin/    # 后台管理子页面
-│                ├── MenuManage.vue
-│                ├── CardManage.vue
-│               ├── AdManage.vue
-│               ├── FriendLinkManage.vue
-│               └── UserManage.vue
-├── Dockerfile # Docker构建文件
-```
-
-## ⚙️ 环境变量及配置说明
-
-### 环境变量
-- `PORT`: 服务器端口号（默认: 3000）
-- `ADMIN_USERNAME`: 管理员用户名（默认: admin）
-- `ADMIN_PASSWORD`: 管理员密码（默认: 123456）
-
-### 数据库配置
-系统使用 SQLite 数据库，数据库文件会自动创建在项目/database/目录下，使用docker部署请挂载/app/database目录实现数据持久化
-```
-
-## 🚀 部署指南
-
-### 源代码部署
-
-#### 1. 克隆项目
 ```bash
-git clone https://github.com/zczy-k/Con-Nav-Item.git
-cd Con-Nav-Item
+# 一键安装（自动安装 Node.js 20 + PM2）
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
 ```
 
-#### 2. 安装后端依赖
+**自定义安装目录：**
 ```bash
-npm install
+INSTALL_DIR=/opt/Con-Nav-Item bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
 ```
 
-#### 3. 构建前端
+**安装后管理命令：**
 ```bash
-cd web && npm install && npm run build
+pm2 status                # 查看运行状态
+pm2 logs Con-Nav-Item     # 查看日志
+pm2 restart Con-Nav-Item  # 重启应用
+pm2 stop Con-Nav-Item     # 停止应用
 ```
 
-#### 4. 启动后端服务
+### 方式二：Docker 部署
+
+#### Docker Run
 ```bash
-# 在项目根目录
-cd .. && npm start
+docker run -d \
+  --name Con-Nav-Item \
+  -p 3000:3000 \
+  -v $(pwd)/database:/app/database \
+  -v $(pwd)/uploads:/app/uploads \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=your_password \
+  eooce/Con-Nav-Item
 ```
 
-#### 6. 访问应用
-- 前端地址：http://localhost:3000
-- 后台管理：http://localhost:3000/admin
-- 默认管理员账号：admin / 123456
-
-### Docker 部署
-
-#### 1：docker快速部署
-   ```bash
-   docker run -d \
-     --name Con-Nav-Item \
-     -p 3000:3000 \
-     -v $(pwd)/database:/app/database \
-     -v $(pwd)/uploads:/app/uploads \
-     -e NODE_ENV=production \
-     -e ADMIN_USERNAME=admin \
-     -e ADMIN_PASSWORD=123456 \
-     eooce/Con-Nav-Item
-   ```
-### 2: docker-compose.yaml 部署
-```bash
+#### Docker Compose
+```yaml
 version: '3'
 
 services:
@@ -164,186 +97,200 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - PORT=3000             # 监听端口
-      - ADMIN_USERNAME=admin  # 后台用户名
-      - ADMIN_PASSWORD=123456 # 后台密码
+      - PORT=3000
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=your_password
     volumes:
-      - ./database:/app/database  # 持久化数据库
+      - ./database:/app/database
+      - ./uploads:/app/uploads
     restart: unless-stopped
 ```
-### 3: docker容器等使用docker image配合环境变量部署
+
+运行：
 ```bash
-eooce/Con-Nav-Item
-```
-或
-```bash
-ghcr.io/eooce/Con-Nav-Item:latest
+docker-compose up -d
 ```
 
-## 🖥️ Linux 服务器一键部署
+### 方式三：Serv00 / CT8 / Hostuno 部署
 
-支持 Ubuntu, Debian, CentOS, RHEL, Fedora 等常见 Linux 发行版。
-
-### 自动安装脚本
-
-**一键安装（自动安装 Node.js + PM2）：**
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
-```
-
-**自定义安装目录：**
-```bash
-INSTALL_DIR=/opt/Con-Nav-Item bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
-```
-
-### 功能特点
-
-- ✅ **自动检测操作系统** - 支持主流 Linux 发行版
-- ✅ **自动安装依赖** - Node.js 20 + PM2
-- ✅ **交互式配置** - 设置端口、用户名、密码
-- ✅ **PM2 进程管理** - 开机自启 + 自动重启
-- ✅ **防火墙配置** - 自动配置 UFW/FirewallD
-
-### PM2 常用命令
-
-```bash
-pm2 status              # 查看应用状态
-pm2 logs Con-Nav-Item   # 查看实时日志
-pm2 restart Con-Nav-Item # 重启应用
-pm2 stop Con-Nav-Item   # 停止应用
-pm2 delete Con-Nav-Item # 删除应用
-```
-
-## Serv00 / CT8 / Hostuno 一键部署
-
-### 安装脚本
-
-**使用默认域名（username.serv00.net）：**
+**默认域名安装：**
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
-**使用自定义域名：**
+**自定义域名：**
 ```bash
 DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-serv00.sh)
 ```
 
-### 重置脚本
-
-如果需要重新安装或清理旧数据，可以使用重置脚本：
-
-**重置默认域名站点：**
+**重置脚本：**
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/reset-serv00.sh)
 ```
 
-**重置自定义域名站点：**
+### 方式四：源码部署
+
 ```bash
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/reset-serv00.sh)
+# 1. 克隆项目
+git clone https://github.com/zczy-k/Con-Nav-Item.git
+cd Con-Nav-Item
+
+# 2. 安装后端依赖
+npm install
+
+# 3. 构建前端
+cd web
+npm install
+npm run build:prod
+cd ..
+
+# 4. 启动应用
+npm start
 ```
 
-> ⚠️ **注意**：重置脚本将删除所有应用数据、数据库和配置，请谨慎操作！
+## 🎯 访问应用
 
-### 默认账号
-- 管理员用户名：`admin`
-- 管理员密码：`123456`
-- 后台地址：`https://your-domain.com/admin`
+部署完成后，访问以下地址：
 
-> ⚠️ **安全提示**：请在首次登录后立即修改默认密码！
+- **首页导航**: `http://your-server:3000`
+- **后台管理**: `http://your-server:3000/admin`
+- **默认账号**: admin / 123456
 
-## 💾 数据备份与恢复
+> ⚠️ **重要**: 首次登录后请立即修改密码！
 
-### 快速开始
+## ⚙️ 配置说明
 
-使用统一的备份管理工具，通过交互式菜单完成所有备份和恢复操作：
+### 环境变量
 
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `PORT` | 服务器端口 | 3000 |
+| `ADMIN_USERNAME` | 管理员用户名 | admin |
+| `ADMIN_PASSWORD` | 管理员密码 | 123456 |
+| `NODE_ENV` | 运行环境 | production |
+
+### 数据存储
+
+- **数据库**: `database/nav.db` (SQLite)
+- **上传文件**: `uploads/` 目录
+- **备份文件**: `backups/` 目录（本地备份）
+- **配置文件**: `config/autoBackup.json` (自动备份配置)
+
+## 💾 备份与恢复
+
+项目内置完善的备份系统，支持本地备份、WebDAV云备份和GitHub备份。
+
+### 快速备份
 ```bash
-# 默认域名
+# Serv00 用户使用备份管理工具
 bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh)
-
-# 自定义域名
-DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/backup-manager.sh)
 ```
 
-### 主要功能
+### 后台备份
+登录后台管理 → 备份管理：
+- **本地备份**: 创建、恢复、下载、删除本地备份
+- **WebDAV备份**: 配置并备份到云端（坚果云、Nextcloud等）
+- **自动备份**: 配置定时备份和增量备份策略
 
-- 📦 **本地备份** - 快速创建本地备份，保存在 `~/Con-Nav-Item-backups/`
-- 💙 **GitHub 云端备份** - 自动推送到私有 GitHub 仓库
-- 🔄 **备份恢复** - 从本地或 GitHub 恢复数据
-- 📋 **备份管理** - 查看和管理所有备份
-- ⚙️ **配置管理** - GitHub Token 和仓库配置
-
-### 备份内容
-
-- ✅ **database/** - 所有菜单、卡片、用户数据
-- ✅ **uploads/** - Logo 和其他上传的图片
-- ✅ **.env** - 环境配置（管理员密码等）
-
-### 详细文档
-
-更多使用说明和高级功能，请查看 [BACKUP.md](BACKUP.md)
+详细说明: [BACKUP.md](BACKUP.md) | [自动备份策略](BACKUP_STRATEGY.md)
 
 ## 🧩 浏览器扩展
 
-将导航站设为浏览器新标签页，每次打开新标签页自动跳转到你的导航站！
-
-### 功能特点
-
-- ✅ **自动跳转** - 打开新标签页自动跳转到你的导航站
-- ✅ **自定义地址** - 支持任意导航站地址
-- ✅ **轻量快速** - 仅 50KB，不影响浏览器性能
-- ✅ **隐私友好** - 只存储导航站地址，无其他数据收集
-- ✅ **跨设备同步** - 通过 Chrome 账号同步设置
+将导航站设为浏览器新标签页，打开新标签自动跳转到你的导航站。
 
 ### 安装方法
-
-#### 方法1：开发者模式安装（推荐）
-
 1. 打开 Chrome/Edge 浏览器
-2. 访问 `chrome://extensions/`（Edge 用户访问 `edge://extensions/`）
-3. 开启右上角的“开发者模式”
-4. 点击“加载已解压的扩展程序”
-5. 选择项目中的 `browser-extension` 文件夹
-6. 完成安装！
+2. 访问 `chrome://extensions/` (Edge: `edge://extensions/`)
+3. 开启"开发者模式"
+4. 点击"加载已解压的扩展程序"
+5. 选择 `browser-extension` 文件夹
+6. 打开新标签页，输入导航站地址并保存
 
-#### 方法2：从 GitHub 下载
+支持: Chrome 88+, Edge 88+, Brave 及其他 Chromium 浏览器
 
-```bash
-# 克隆项目
-git clone https://github.com/zczy-k/Con-Nav-Item.git
-cd Con-Nav-Item/browser-extension
+## 📦 项目结构
+
+```
+Con-Nav-Item/
+├── app.js                  # 后端入口
+├── config.js               # 配置文件
+├── db.js                   # 数据库初始化
+├── routes/                 # API路由
+│   ├── auth.js            # 用户认证
+│   ├── card.js            # 卡片管理
+│   ├── menu.js            # 菜单管理
+│   ├── backup.js          # 备份管理
+│   └── ...                # 其他路由
+├── utils/                  # 工具函数
+│   ├── autoBackup.js      # 自动备份
+│   └── crypto.js          # 加密工具
+├── web/                    # 前端源码
+│   ├── src/               # Vue组件
+│   └── dist/              # 构建输出
+├── public/                 # 静态文件（生产）
+├── database/               # SQLite数据库
+├── uploads/                # 上传文件
+├── config/                 # 配置目录
+├── scripts/                # 部署脚本
+│   ├── install-linux.sh   # Linux一键部署
+│   ├── install-serv00.sh  # Serv00部署
+│   └── backup-manager.sh  # 备份管理
+├── browser-extension/      # 浏览器扩展
+├── Dockerfile              # Docker构建
+└── docker-compose.yml      # Docker Compose配置
 ```
 
-然后按照方法1的步骤加载扩展。
+## 🛠️ 开发指南
 
-### 使用说明
+### 前端开发
+```bash
+cd web
+npm install
+npm run dev          # 开发服务器
+npm run build        # 生产构建
+npm run build:prod   # 构建并复制到public目录
+```
 
-**首次使用：**
+### 构建工作流
+```bash
+# 使用自动化脚本（Windows）
+./build.ps1
 
-1. 安装扩展后，打开新标签页（`Ctrl+T` 或 `Cmd+T`）
-2. 输入你的导航站地址（例如：`https://your-domain.com`）
-3. 点击“保存并开始使用”
-4. 完成！之后每次打开新标签页都会自动跳转
+# 手动构建
+cd web && npm run build:prod && cd ..
+```
 
-**修改设置：**
+详细说明: [DEV_WORKFLOW.md](DEV_WORKFLOW.md)
 
-1. 右键点击扩展图标
-2. 选择“选项”或“设置”
-3. 修改导航站地址
-4. 点击“保存设置”
+## 🔧 工具脚本
 
-### 支持的浏览器
+### 管理员账号管理
+```bash
+# 查看当前管理员信息
+node check-admin.js
 
-- ✅ Google Chrome 88+
-- ✅ Microsoft Edge 88+
-- ✅ Brave Browser
-- ✅ 其他基于 Chromium 的浏览器
+# 重置管理员账号
+node reset-admin.js [username] [password]
 
-### 详细文档
+# 示例：重置为 admin/123456
+node reset-admin.js admin 123456
+```
 
-更多使用说明和常见问题，请查看 [browser-extension/README.md](browser-extension/README.md)
+## 📚 文档
 
-## 🤝 贡献指南
+- [Serv00 部署文档](DEPLOY_SERV00.md)
+- [备份与恢复指南](BACKUP.md)
+- [自动备份策略](BACKUP_STRATEGY.md)
+- [开发工作流程](DEV_WORKFLOW.md)
+- [浏览器扩展说明](browser-extension/README.md)
+
+## 🐛 问题反馈
+
+遇到问题？请在 [Issues](https://github.com/zczy-k/Con-Nav-Item/issues) 中反馈。
+
+## 🤝 贡献
+
+欢迎提交 Pull Request！
 
 1. Fork 本仓库
 2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
@@ -353,13 +300,12 @@ cd Con-Nav-Item/browser-extension
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 了解详情
 
 ## 👨‍💻 作者
 
-**zczy-k** - [GitHub](https://github.com/zczy-k)
-
-原项目作者：**eooce** - [GitHub](https://github.com/eooce)
+- **zczy-k** - [GitHub](https://github.com/zczy-k)
+- **eooce** (原项目) - [GitHub](https://github.com/eooce)
 
 ## 🙏 致谢
 
@@ -367,23 +313,4 @@ cd Con-Nav-Item/browser-extension
 
 ---
 
-⭐ 如果这个项目对你有帮助，请给它一个星标！ 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+⭐ 如果这个项目对你有帮助，请给它一个星标！
