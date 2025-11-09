@@ -19,7 +19,7 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-RUN mkdir -p uploads database web/dist
+RUN mkdir -p uploads database web/dist config
 
 COPY package*.json ./
 
@@ -27,6 +27,8 @@ RUN npm install
 
 COPY app.js config.js db.js ./
 COPY routes/ ./routes/
+COPY utils/ ./utils/
+COPY config/ ./config/
 
 COPY --from=frontend-builder /app/dist ./web/dist
 
