@@ -1,15 +1,18 @@
-﻿version: '3'
+version: '3'
 
 services:
   Con-Nav-Item:
-    image: eooce/Con-Nav-Item
+    image: zczyk/con-nav-item:latest
     container_name: Con-Nav-Item
     ports:
       - "3000:3000"
     environment:
-      - PORT=3000             # 监听端口
-      - ADMIN_USERNAME=admin  # 后台用户名
-      - ADMIN_PASSWORD=123456 # 后台密码
+      - PORT=3000                      # 监听端口
+      - NODE_ENV=production            # 运行环境
+      - ADMIN_USERNAME=admin           # 后台用户名
+      - ADMIN_PASSWORD=123456          # 后台密码
+      - JWT_SECRET=change-this-secret  # JWT密钥（必须修改！）
     volumes:
-      - ./database:/app/database  # 持久化数据库文件
+      - ./database:/app/database       # 持久化数据库文件
+      - ./uploads:/app/uploads         # 持久化上传文件
     restart: unless-stopped

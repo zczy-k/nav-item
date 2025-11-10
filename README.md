@@ -79,14 +79,15 @@ pm2 stop Con-Nav-Item     # 停止应用
 
 #### Docker Run
 ```bash
-docker run -d \
-  --name Con-Nav-Item \
-  -p 3000:3000 \
-  -v $(pwd)/database:/app/database \
-  -v $(pwd)/uploads:/app/uploads \
-  -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=your_password \
-  eooce/Con-Nav-Item
+docker run -d \\
+  --name Con-Nav-Item \\
+  -p 3000:3000 \\
+  -v $(pwd)/database:/app/database \\
+  -v $(pwd)/uploads:/app/uploads \\
+  -e ADMIN_USERNAME=admin \\
+  -e ADMIN_PASSWORD=your_password \\
+  -e JWT_SECRET=your_jwt_secret \\
+  zczyk/con-nav-item:latest
 ```
 
 #### Docker Compose
@@ -95,14 +96,16 @@ version: '3'
 
 services:
   Con-Nav-Item:
-    image: eooce/Con-Nav-Item
+    image: zczyk/con-nav-item:latest
     container_name: Con-Nav-Item
     ports:
       - "3000:3000"
     environment:
       - PORT=3000
+      - NODE_ENV=production
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=your_password
+      - JWT_SECRET=your_jwt_secret
     volumes:
       - ./database:/app/database
       - ./uploads:/app/uploads
