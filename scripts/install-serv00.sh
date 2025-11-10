@@ -278,6 +278,28 @@ EOFSCRIPT
     # 清理临时脚本
     rm -f "${WORKDIR}/update_logos_temp.js"
     
+    # 生成安全的 .env 文件
+    if [ ! -f "${WORKDIR}/.env" ]; then
+        yellow "生成安全配置文件...\n"
+        
+        # 生成随机JWT密钥
+        JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('base64'))")
+        
+        cat > "${WORKDIR}/.env" <<EOF
+PORT=3000
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=123456
+NODE_ENV=production
+JWT_SECRET=${JWT_SECRET}
+EOF
+        
+        chmod 600 "${WORKDIR}/.env"
+        green "✓ 安全配置文件已创建\n"
+        yellow "⚠️  默认密码为 123456，请登录后立即修改！\n"
+    else
+        green "✓ 配置文件已存在，跳过生成\n"
+    fi
+    
     # 重启应用
     devil www restart "${CURRENT_DOMAIN}" > /dev/null 2>&1
     green "应用已启动\n"

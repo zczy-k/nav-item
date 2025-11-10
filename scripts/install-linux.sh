@@ -126,17 +126,68 @@ install_app() {
 # 配置环境变量
 configure_env() {
     yellow "配置环境变量..."
+    echo ""
     
     # 读取用户输入
     read -p "设置管理员用户名 [admin]: " ADMIN_USER
     ADMIN_USER=${ADMIN_USER:-admin}
     
-    read -sp "设置管理员密码 [123456]: " ADMIN_PASS
-    echo
-    ADMIN_PASS=${ADMIN_PASS:-123456}
+    # 验证用户名格式
+    if ! [[ "$ADMIN_USER" =~ ^[a-zA-Z0-9_]{3,20}$ ]]; then
+        yellow "用户名不符合要求，使用默认用户名: admin"
+        ADMIN_USER="admin"
+    fi
+    
+    # 密码输入和验证
+    while true; do
+        read -sp "设置管理员密码（至少8位，包含字母+数字+特殊字符）: " ADMIN_PASS
+        echo
+        
+        if [ -z "$ADMIN_PASS" ]; then
+            yellow "密码不能为空，请重新输入"
+            continue
+        fi
+        
+        # 验证密码强度
+        if [ ${#ADMIN_PASS} -lt 8 ]; then
+            yellow "密码至少8位，请重新输入"
+            continue
+        fi
+        
+        # 检查是否包含字母、数字、特殊字符
+        has_letter=0
+        has_number=0
+        has_special=0
+        
+        [[ "$ADMIN_PASS" =~ [a-zA-Z] ]] && has_letter=1
+        [[ "$ADMIN_PASS" =~ [0-9] ]] && has_number=1
+        [[ "$ADMIN_PASS" =~ [^a-zA-Z0-9] ]] && has_special=1
+        
+        strength=$((has_letter + has_number + has_special))
+        
+        if [ $strength -lt 2 ]; then
+            yellow "密码强度不足，请包含字母、数字、特殊字符中至少2种"
+            continue
+        fi
+        
+        # 确认密码
+        read -sp "再次输入密码确认: " ADMIN_PASS_CONFIRM
+        echo
+        
+        if [ "$ADMIN_PASS" != "$ADMIN_PASS_CONFIRM" ]; then
+            red "两次密码输入不一致，请重新输入"
+            continue
+        fi
+        
+        break
+    done
     
     read -p "设置运行端口 [3000]: " PORT
     PORT=${PORT:-3000}
+    
+    # 生成随机JWT密钥
+    yellow "生成JWT安全密钥..."
+    JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('base64'))")
     
     # 创建 .env 文件
     cat > "$INSTALL_DIR/.env" <<EOF
@@ -144,10 +195,12 @@ PORT=${PORT}
 ADMIN_USERNAME=${ADMIN_USER}
 ADMIN_PASSWORD=${ADMIN_PASS}
 NODE_ENV=production
+JWT_SECRET=${JWT_SECRET}
 EOF
     
     chmod 600 "$INSTALL_DIR/.env"
-    green "环境配置完成"
+    green "✓ 安全配置文件已生成"
+    echo ""
 }
 
 # 使用 PM2 启动应用
