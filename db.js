@@ -321,10 +321,8 @@ async function seedDefaultData() {
   }
 }
 
-// 执行初始化
-initializeDatabase().catch(err => {
-  console.error('数据库初始化失败:', err);
-  process.exit(1);
-});
+// 执行初始化并导出 Promise
+const dbInitPromise = initializeDatabase();
 
 module.exports = db;
+module.exports.initPromise = dbInitPromise;

@@ -1,7 +1,8 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const db = require('./db');
 const menuRoutes = require('./routes/menu');
 const cardRoutes = require('./routes/card');
 const uploadRoutes = require('./routes/upload');
@@ -122,7 +123,15 @@ app.use(notFoundHandler);
 // 全局错误处理（必须是最后一个中间件）
 app.use(globalErrorHandler);
 
-app.listen(PORT, () => {
-  console.log(`⚡ Server is running at http://localhost:${PORT}`);
-  console.log(`🔒 Security features enabled: Helmet, Rate Limiting, Input Sanitization`);
-});
+// 等待数据库初始化完成后再启动服务器
+db.initPromise
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`⚡ Server is running at http://localhost:${PORT}`);
+      console.log(`🔒 Security features enabled: Helmet, Rate Limiting, Input Sanitization`);
+    });
+  })
+  .catch(err => {
+    console.error('✗ Failed to start server due to database initialization error:', err);
+    process.exit(1);
+  });
