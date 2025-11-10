@@ -79,14 +79,15 @@ pm2 stop Con-Nav-Item     # 停止应用
 
 #### Docker Run
 ```bash
-docker run -d \\
-  --name Con-Nav-Item \\
-  -p 3000:3000 \\
-  -v $(pwd)/database:/app/database \\
-  -v $(pwd)/uploads:/app/uploads \\
-  -e ADMIN_USERNAME=admin \\
-  -e ADMIN_PASSWORD=your_password \\
-  -e JWT_SECRET=your_jwt_secret \\
+docker run -d \
+  --name Con-Nav-Item \
+  -p 3000:3000 \
+  -v $(pwd)/database:/app/database \
+  -v $(pwd)/uploads:/app/uploads \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=your_password \
+  -e JWT_SECRET=your_jwt_secret \
+  --restart unless-stopped \
   ghcr.io/zczy-k/con-nav-item:latest
 ```
 
@@ -320,3 +321,4 @@ node reset-admin.js admin 123456
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！
+
