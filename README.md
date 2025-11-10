@@ -54,6 +54,7 @@
 
 支持 Ubuntu、Debian、CentOS、RHEL、Fedora 等主流发行版。
 
+**默认安装：**
 ```bash
 # 一键安装（自动安装 Node.js 20 + PM2）
 bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
@@ -63,6 +64,8 @@ bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scrip
 ```bash
 INSTALL_DIR=/opt/Con-Nav-Item bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/install-linux.sh)
 ```
+
+> 💡 **安装过程**：脚本会自动安装依赖、构建前端，并引导你设置管理员账号和强密码
 
 **安装后管理命令：**
 ```bash
