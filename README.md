@@ -87,7 +87,7 @@ docker run -d \\
   -e ADMIN_USERNAME=admin \\
   -e ADMIN_PASSWORD=your_password \\
   -e JWT_SECRET=your_jwt_secret \\
-  zczy-k/con-nav-item:latest
+  ghcr.io/zczy-k/con-nav-item:latest
 ```
 
 #### Docker Compose
@@ -96,7 +96,7 @@ version: '3'
 
 services:
   Con-Nav-Item:
-    image: zczy-k/con-nav-item:latest
+    image: ghcr.io/zczy-k/con-nav-item:latest
     container_name: Con-Nav-Item
     ports:
       - "3000:3000"

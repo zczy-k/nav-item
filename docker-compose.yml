@@ -2,7 +2,7 @@ version: '3'
 
 services:
   Con-Nav-Item:
-    image: zczy-k/con-nav-item:latest
+    image: ghcr.io/zczy-k/con-nav-item:latest
     container_name: Con-Nav-Item
     ports:
       - "3000:3000"

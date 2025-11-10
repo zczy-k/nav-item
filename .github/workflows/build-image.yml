@@ -41,10 +41,11 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/nav-item:latest
+            ghcr.io/${{ github.repository_owner }}/con-nav-item:latest
+            ghcr.io/${{ github.repository_owner }}/con-nav-item:${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.description=nav-item
+            org.opencontainers.image.description=Con-Nav-Item - Modern Personal Navigation Site
             org.opencontainers.image.licenses=MIT
           cache-from: type=gha
           cache-to: type=gha,mode=max
