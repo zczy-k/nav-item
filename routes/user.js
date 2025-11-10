@@ -1,7 +1,8 @@
-﻿const express = require('express');
+const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 const authMiddleware = require('./authMiddleware');
+const { validatePasswordStrength, validateUsername } = require('../middleware/security');
 
 const router = express.Router();
 
@@ -42,8 +43,10 @@ router.put('/username', authMiddleware, (req, res) => {
     return res.status(400).json({ message: '请提供新用户名' });
   }
   
-  if (newUsername.length < 3 || newUsername.length > 20) {
-    return res.status(400).json({ message: '用户名长度3-20位' });
+  // 验证用户名格式
+  const usernameValidation = validateUsername(newUsername);
+  if (!usernameValidation.valid) {
+    return res.status(400).json({ message: usernameValidation.message });
   }
   
   // 检查用户名是否已存在
@@ -73,8 +76,10 @@ router.put('/password', authMiddleware, (req, res) => {
     return res.status(400).json({ message: '请提供旧密码和新密码' });
   }
   
-  if (newPassword.length < 6) {
-    return res.status(400).json({ message: '新密码长度至少6位' });
+  // 验证新密码强度
+  const passwordValidation = validatePasswordStrength(newPassword);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({ message: passwordValidation.message });
   }
   
   // 验证旧密码

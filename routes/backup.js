@@ -10,6 +10,20 @@ const exec = util.promisify(require('child_process').exec);
 const { createClient } = require('webdav');
 const { encryptWebDAVConfig, decryptWebDAVConfig } = require('../utils/crypto');
 const multer = require('multer');
+const { backupLimiter, validateUrl } = require('../middleware/security');
+
+// 安全的路径验证函数
+function isPathSafe(basePath, targetPath) {
+  const resolvedBase = path.resolve(basePath);
+  const resolvedTarget = path.resolve(targetPath);
+  return resolvedTarget.startsWith(resolvedBase);
+}
+
+// 安全的文件名验证
+function isSafeFilename(filename) {
+  // 只允许字母、数字、连字符、下划线和.zip扩展名
+  return /^[a-zA-Z0-9_-]+\.zip$/.test(filename) && !filename.includes('..');
+}
 
 // 配置multer用于文件上传
 const storage = multer.diskStorage({
@@ -51,7 +65,7 @@ const upload = multer({
 });
 
 // 创建备份
-router.post('/create', authMiddleware, async (req, res) => {
+router.post('/create', authMiddleware, backupLimiter, async (req, res) => {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const backupName = `backup-${timestamp}`;
@@ -182,10 +196,27 @@ router.get('/download/:filename', (req, res, next) => {
 }, (req, res) => {
   try {
     const { filename } = req.params;
+    
+    // 验证文件名安全性
+    if (!isSafeFilename(filename)) {
+      return res.status(400).json({
+        success: false,
+        message: '无效的文件名'
+      });
+    }
+    
     const backupDir = path.join(__dirname, '..', 'backups');
     const filePath = path.join(backupDir, filename);
     
-    if (!fs.existsSync(filePath) || !filename.endsWith('.zip')) {
+    // 验证路径安全性
+    if (!isPathSafe(backupDir, filePath)) {
+      return res.status(403).json({
+        success: false,
+        message: '禁止访问'
+      });
+    }
+    
+    if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
         message: '备份文件不存在'
@@ -208,10 +239,27 @@ router.get('/download/:filename', (req, res, next) => {
 router.delete('/delete/:filename', authMiddleware, (req, res) => {
   try {
     const { filename } = req.params;
+    
+    // 验证文件名安全性
+    if (!isSafeFilename(filename)) {
+      return res.status(400).json({
+        success: false,
+        message: '无效的文件名'
+      });
+    }
+    
     const backupDir = path.join(__dirname, '..', 'backups');
     const filePath = path.join(backupDir, filename);
     
-    if (!fs.existsSync(filePath) || !filename.endsWith('.zip')) {
+    // 验证路径安全性
+    if (!isPathSafe(backupDir, filePath)) {
+      return res.status(403).json({
+        success: false,
+        message: '禁止访问'
+      });
+    }
+    
+    if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
         message: '备份文件不存在'
@@ -236,7 +284,7 @@ router.delete('/delete/:filename', authMiddleware, (req, res) => {
 });
 
 // 上传备份文件
-router.post('/upload', authMiddleware, upload.single('backup'), (req, res) => {
+router.post('/upload', authMiddleware, backupLimiter, upload.single('backup'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -268,11 +316,22 @@ router.post('/upload', authMiddleware, upload.single('backup'), (req, res) => {
 });
 
 // 恢复备份
-router.post('/restore/:filename', authMiddleware, async (req, res) => {
+router.post('/restore/:filename', authMiddleware, backupLimiter, async (req, res) => {
   try {
     const { filename } = req.params;
+    
+    // 验证文件名安全性
+    if (!isSafeFilename(filename)) {
+      return res.status(400).json({ success: false, message: '无效的文件名' });
+    }
+    
     const backupDir = path.join(__dirname, '..', 'backups');
     const filePath = path.join(backupDir, filename);
+    
+    // 验证路径安全性
+    if (!isPathSafe(backupDir, filePath)) {
+      return res.status(403).json({ success: false, message: '禁止访问' });
+    }
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ success: false, message: '备份文件不存在' });
@@ -330,13 +389,12 @@ router.post('/webdav/config', authMiddleware, async (req, res) => {
       });
     }
     
-    // 验证URL格式
-    try {
-      new URL(url);
-    } catch (e) {
+    // 验证URL格式和协议
+    const urlValidation = validateUrl(url);
+    if (!urlValidation.valid) {
       return res.status(400).json({ 
         success: false, 
-        message: 'URL格式不正确' 
+        message: urlValidation.message 
       });
     }
     

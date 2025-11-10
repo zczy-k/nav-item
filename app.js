@@ -14,6 +14,8 @@ const wallpaperRoutes = require('./routes/wallpaper');
 const searchEngineRoutes = require('./routes/searchEngine');
 const backupRoutes = require('./routes/backup');
 const compression = require('compression');
+const { helmetConfig, sanitizeMiddleware, generalLimiter } = require('./middleware/security');
+const { globalErrorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const app = express();
 
 // 简单的内存缓存
@@ -22,9 +24,21 @@ const CACHE_TTL = 60000; // 1分钟缓存
 
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+// 安全中间件
+app.use(helmetConfig);
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true,
+  maxAge: 86400,
+}));
+app.use(express.json({ limit: '10mb' }));
 app.use(compression());
+
+// 输入清理中间件
+app.use(sanitizeMiddleware);
+
+// API请求限流（仅针对API路由）
+app.use('/api', generalLimiter);
 
 // 缓存中间件（仅对GET请求）
 app.use((req, res, next) => {
@@ -101,6 +115,14 @@ setInterval(() => {
     }
   }
 }, 60000); // 每分钟清理一次
+
+// 404错误处理（必须在所有路由之后）
+app.use(notFoundHandler);
+
+// 全局错误处理（必须是最后一个中间件）
+app.use(globalErrorHandler);
+
 app.listen(PORT, () => {
-  console.log(`server is running at http://localhost:${PORT}`);
-}); 
+  console.log(`⚡ Server is running at http://localhost:${PORT}`);
+  console.log(`🔒 Security features enabled: Helmet, Rate Limiting, Input Sanitization`);
+});

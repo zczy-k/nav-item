@@ -1,10 +1,13 @@
-﻿const express = require('express');
+const express = require('express');
 const db = require('../db');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const config = require('../config');
+const { loginLimiter } = require('../middleware/security');
+const { validatePasswordStrength, validateUsername } = require('../middleware/security');
 const router = express.Router();
 
-const JWT_SECRET = 'your_jwt_secret_key';
+const JWT_SECRET = config.server.jwtSecret;
 
 function getClientIp(req) {
   let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
@@ -29,8 +32,19 @@ function getShanghaiTime() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { username, password } = req.body;
+  
+  // 验证输入
+  if (!username || !password) {
+    return res.status(400).json({ error: '用户名和密码不能为空' });
+  }
+  
+  // 验证用户名格式
+  const usernameValidation = validateUsername(username);
+  if (!usernameValidation.valid) {
+    return res.status(400).json({ error: usernameValidation.message });
+  }
   db.get('SELECT * FROM users WHERE username=?', [username], (err, user) => {
     if (err || !user) return res.status(401).json({ error: '用户名或密码错误' });
     bcrypt.compare(password, user.password, (err, result) => {
@@ -52,11 +66,15 @@ router.post('/login', (req, res) => {
 });
 
 // 仅密码验证（用于首页快速操作）
-router.post('/verify-password', (req, res) => {
+router.post('/verify-password', loginLimiter, (req, res) => {
   const { password } = req.body;
   
   if (!password) {
     return res.status(400).json({ error: '请输入密码' });
+  }
+  
+  if (password.length > 128) {
+    return res.status(400).json({ error: '密码格式无效' });
   }
   
   // 获取第一个管理员用户（默认id=1）
