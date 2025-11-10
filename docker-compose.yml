@@ -2,7 +2,7 @@ version: '3'
 
 services:
   Con-Nav-Item:
-    image: zczyk/con-nav-item:latest
+    image: zczy-k/con-nav-item:latest
     container_name: Con-Nav-Item
     ports:
       - "3000:3000"
