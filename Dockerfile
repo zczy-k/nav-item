@@ -27,6 +27,7 @@ RUN npm install
 
 COPY app.js config.js db.js ./
 COPY routes/ ./routes/
+COPY middleware/ ./middleware/
 COPY utils/ ./utils/
 COPY config/ ./config/
 
