@@ -55,7 +55,10 @@ const helmetConfig = helmet({
     },
   },
   crossOriginEmbedderPolicy: false, // 允许跨域嵌入
+  crossOriginOpenerPolicy: false,   // 禁用COOP（需要HTTPS）
   crossOriginResourcePolicy: { policy: "cross-origin" },
+  // HSTS仅在HTTPS时启用
+  strictTransportSecurity: false,
 });
 
 // HTML清理函数
