@@ -10,6 +10,9 @@ on:
       - 'db.js'
       - 'web/**'
       - 'routes/**'
+      - 'middleware/**'
+      - 'utils/**'
+      - '.github/workflows/build-image.yml'
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -20,6 +23,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      attestations: write
+      id-token: write
 
     steps:
       - name: Checkout repository
