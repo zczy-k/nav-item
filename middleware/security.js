@@ -79,6 +79,10 @@ const helmetConfig = helmet({
   // 完全禁用 HSTS (仅保留一个配置)
   strictTransportSecurity: false,
   // 禁用 frameguard，允许所有来源嵌入（包括浏览器扩展）
+  // 对于导航站风险很小，因为：
+  // 1. 前台是公开的导航页，无敏感操作
+  // 2. 后台管理需要 JWT token 认证
+  // 3. 所有修改操作都有 CSRF 保护
   frameguard: false,
 });
 
