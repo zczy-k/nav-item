@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
+  // Force rebuild: 202511120330
   plugins: [vue()],
   build: {
     outDir: 'dist',
