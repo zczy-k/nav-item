@@ -68,6 +68,7 @@ const helmetConfig = helmet({
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
+      frameAncestors: ["'self'", "chrome-extension:", "moz-extension:"], // 允许浏览器扩展嵌入
       upgradeInsecureRequests: null, // 禁止自动升级到 HTTPS
     },
   },
