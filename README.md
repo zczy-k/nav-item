@@ -212,7 +212,7 @@ docker pull ghcr.io/zczy-k/con-nav-item:latest
 - ✅ 零代码改动，从 GitHub 直接部署
 - ✅ 支持 SQLite 持久化
 - ✅ 自动 HTTPS + 自定义域名
-- ✅ 免费额度：$5/月
+- ✅ 免费额度：首月送$5/月
 - ✅ GitHub 集成，自动部署
 
 **快速开始**：详见 [DEPLOY_RAILWAY.md](DEPLOY_RAILWAY.md)
@@ -477,4 +477,5 @@ docker exec -it Con-Nav-Item node check-password.js reset-env
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！
+
 
