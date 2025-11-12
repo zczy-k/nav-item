@@ -1,9 +1,10 @@
 ﻿const express = require('express');
 const axios = require('axios');
+const { wallpaperLimiter } = require('../middleware/security');
 const router = express.Router();
 
-// 获取随机壁纸
-router.get('/random', async (req, res) => {
+// 获取随机壁纸（每分钟最多6次）
+router.get('/random', wallpaperLimiter, async (req, res) => {
   try {
     const response = await axios.get('https://source.unsplash.com/random/1920x1080?nature,water', {
       maxRedirects: 0,
