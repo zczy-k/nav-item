@@ -8,6 +8,9 @@ RUN npm install
 
 COPY web/ ./
 
+# 确保清空旧的构建产物
+RUN rm -rf dist
+
 RUN npm run build
 
 # 生产环境

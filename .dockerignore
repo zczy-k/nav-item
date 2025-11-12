@@ -52,4 +52,6 @@ uploads/*
 
 # 构建缓存
 .cache/
-dist/
+
+# 前端构建产物（需要在容器内重新构建）
+web/dist/
