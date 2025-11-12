@@ -5,10 +5,14 @@ const sanitizeHtml = require('sanitize-html');
 // 通用限流器
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100, // 限制100个请求
+  max: 500, // 限制500个请求（放宽限制）
   message: { error: '请求过于频繁，请稍后再试' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // 跳过GET请求的限流（仅限制POST/PUT/DELETE等修改操作）
+    return req.method === 'GET';
+  },
 });
 
 // 登录限流器（更严格）
