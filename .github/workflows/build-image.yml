@@ -57,8 +57,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
+          no-cache: true
           # 添加构建参数以确保构建最新版本
           build-args: |
             BUILDTIME=${{ github.event.head_commit.timestamp }}
