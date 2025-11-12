@@ -48,18 +48,21 @@ const helmetConfig = helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Vue需要
       imgSrc: ["'self'", "data:", "https:", "http:", "blob:"],
       connectSrc: ["'self'", "https:", "http:"], // 允许所有 HTTP/HTTPS 连接
-      fontSrc: ["'self'", "data:"],
+      fontSrc: ["'self'", "data:", "https:"], // 允许加载 CDN 字体
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
+      upgradeInsecureRequests: null, // 禁止自动升级到 HTTPS
     },
   },
   crossOriginEmbedderPolicy: false, // 允许跨域嵌入
   crossOriginOpenerPolicy: false,   // 禁用COOP（需要HTTPS）
   crossOriginResourcePolicy: { policy: "cross-origin" },
   originAgentCluster: false,        // 禁用Origin-Agent-Cluster（避免HTTP警告）
-  // HSTS仅在HTTPS时启用
+  // 完全禁用 HSTS
   strictTransportSecurity: false,
+  // 禁止其他可能导致 HTTPS 升级的头
+  hsts: false,
 });
 
 // HTML清理函数
