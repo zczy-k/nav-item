@@ -59,10 +59,8 @@ const helmetConfig = helmet({
   crossOriginOpenerPolicy: false,   // 禁用COOP（需要HTTPS）
   crossOriginResourcePolicy: { policy: "cross-origin" },
   originAgentCluster: false,        // 禁用Origin-Agent-Cluster（避免HTTP警告）
-  // 完全禁用 HSTS
+  // 完全禁用 HSTS (仅保留一个配置)
   strictTransportSecurity: false,
-  // 禁止其他可能导致 HTTPS 升级的头
-  hsts: false,
 });
 
 // HTML清理函数
