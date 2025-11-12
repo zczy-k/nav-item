@@ -290,12 +290,15 @@ async function seedDefaultData() {
       console.log(`  ✓ 插入 ${cardCount} 张卡片`);
     }
 
-    // 插入默认管理员账号
+    // 插入默认管理员账号（仅首次初始化）
     const userCount = await dbGet('SELECT COUNT(*) as count FROM users');
     if (userCount && userCount.count === 0) {
       const passwordHash = bcrypt.hashSync(config.admin.password, 10);
       await dbRun('INSERT INTO users (username, password) VALUES (?, ?)', [config.admin.username, passwordHash]);
       console.log(`  ✓ 创建管理员账号: ${config.admin.username}`);
+      console.log(`  ✓ 初始密码: ${config.admin.password}`);
+    } else {
+      console.log(`  ✓ 管理员账号已存在，跳过初始化`);
     }
 
     // 插入默认友情链接

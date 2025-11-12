@@ -48,10 +48,10 @@ function checkPassword() {
     console.log('   登录IP:', user.last_login_ip || 'N/A');
     console.log('');
     console.log('💡 提示:');
-    console.log('   - 如果你设置了环境变量 ADMIN_PASSWORD，但已经创建了数据库');
-    console.log('   - 那么数据库中的密码是默认密码 123456');
-    console.log('   - 环境变量只在首次初始化数据库时生效');
-    console.log('   - 要使用新密码，需要运行: node check-password.js reset-env');
+    console.log('   - ADMIN_PASSWORD 环境变量仅在首次初始化数据库时生效');
+    console.log('   - 如果数据库已存在，环境变量不会覆盖数据库中的密码');
+    console.log('   - 要重置密码，请使用: node check-password.js reset <新密码>');
+    console.log('   - 或者在前端管理界面修改密码');
     console.log('');
     
     // 验证默认密码
