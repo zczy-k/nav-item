@@ -8,6 +8,8 @@ on:
       - 'app.js'
       - 'config.js'
       - 'db.js'
+      - 'start-with-https.js'
+      - 'check-password.js'
       - 'web/**'
       - 'routes/**'
       - 'middleware/**'
