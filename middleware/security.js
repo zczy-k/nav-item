@@ -78,6 +78,8 @@ const helmetConfig = helmet({
   originAgentCluster: false,        // 禁用Origin-Agent-Cluster（避免HTTP警告）
   // 完全禁用 HSTS (仅保留一个配置)
   strictTransportSecurity: false,
+  // 禁用 frameguard，允许所有来源嵌入（包括浏览器扩展）
+  frameguard: false,
 });
 
 // HTML清理函数
