@@ -204,56 +204,7 @@ docker pull ghcr.io/zczy-k/con-nav-item:latest
 # 然后重新运行 docker run 命令
 ```
 
-### 方式三：Railway 部署（推荐）
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/con-nav-item)
-
-**特点**：
-- ✅ 零代码改动，从 GitHub 直接部署
-- ✅ 支持 SQLite 持久化
-- ✅ 自动 HTTPS + 自定义域名
-- ✅ 免费额度：首月送$5/月
-- ✅ GitHub 集成，自动部署
-
-**快速开始**：详见 [DEPLOY_RAILWAY.md](DEPLOY_RAILWAY.md)
-
----
-
-### 方式四：Fly.io 部署（推荐）
-
-**特点**：
-- ✅ 全球边缘节点，就近访问
-- ✅ 支持 SQLite + Volume 持久化
-- ✅ 免费：3个应用 + 3GB 存储
-- ✅ 自动 HTTPS + 自定义域名
-- ✅ Docker 原生支持
-
-```bash
-# 安装 Fly CLI
-curl -L https://fly.io/install.sh | sh
-
-# 登录
-fly auth login
-
-# 初始化应用
-fly launch --no-deploy
-
-# 创建持久化存储
-fly volumes create con_nav_data --region hkg --size 1
-
-# 配置环境变量
-fly secrets set ADMIN_PASSWORD=your_password
-fly secrets set DATA_DIR=/app/data
-
-# 部署
-fly deploy
-```
-
-**详细指南**：[DEPLOY_FLY.md](DEPLOY_FLY.md)
-
----
-
-### 方式五：Serv00 / CT8 / Hostuno 部署
+### 方式三：Serv00 / CT8 / Hostuno 部署
 
 **默认域名安装：**
 ```bash
@@ -270,7 +221,7 @@ DOMAIN=your-domain.com bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/
 bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/reset-serv00.sh)
 ```
 
-### 方式六：源码部署
+### 方式四：源码部署
 
 ```bash
 # 1. 克隆项目
