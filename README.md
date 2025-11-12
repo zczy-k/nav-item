@@ -75,6 +75,17 @@ pm2 restart Con-Nav-Item  # 重启应用
 pm2 stop Con-Nav-Item     # 停止应用
 ```
 
+**卸载应用：**
+```bash
+# 一键卸载（自动备份数据）
+bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/uninstall-linux.sh)
+
+# 自定义安装目录卸载
+INSTALL_DIR=/opt/Con-Nav-Item bash <(curl -Ls https://raw.githubusercontent.com/zczy-k/Con-Nav-Item/main/scripts/uninstall-linux.sh)
+```
+
+> 💡 **提示**：卸载脚本会自动备份数据到 `~/Con-Nav-Item_uninstall_backup_*` 目录，包括数据库、上传文件和配置文件
+
 ### 方式二：Docker 部署
 
 #### 快速部署
