@@ -125,15 +125,20 @@ app.use(notFoundHandler);
 // 全局错误处理（必须是最后一个中间件）
 app.use(globalErrorHandler);
 
-// 等待数据库初始化完成后再启动服务器
-db.initPromise
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`⚡ Server is running at http://localhost:${PORT}`);
-      console.log(`🔒 Security features enabled: Helmet, Rate Limiting, Input Sanitization`);
+// 如果直接运行此文件，启动 HTTP 服务器
+if (require.main === module) {
+  db.initPromise
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`⚡ Server is running at http://localhost:${PORT}`);
+        console.log(`🔒 Security features enabled: Helmet, Rate Limiting, Input Sanitization`);
+      });
+    })
+    .catch(err => {
+      console.error('✗ Failed to start server due to database initialization error:', err);
+      process.exit(1);
     });
-  })
-  .catch(err => {
-    console.error('✗ Failed to start server due to database initialization error:', err);
-    process.exit(1);
-  });
+}
+
+// 导出 app 以供其他模块使用（如 HTTPS 启动脚本）
+module.exports = app;

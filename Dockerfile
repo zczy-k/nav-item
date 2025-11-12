@@ -18,17 +18,18 @@ FROM node:20-alpine3.20 AS production
 
 RUN apk add --no-cache \
     sqlite \
+    openssl \
     && rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
-RUN mkdir -p uploads database web/dist config
+RUN mkdir -p uploads database web/dist config certs
 
 COPY package*.json ./
 
 RUN npm install
 
-COPY app.js config.js db.js ./
+COPY app.js config.js db.js start-with-https.js ./
 COPY routes/ ./routes/
 COPY middleware/ ./middleware/
 COPY utils/ ./utils/
@@ -39,5 +40,6 @@ COPY --from=frontend-builder /app/dist ./web/dist
 ENV NODE_ENV=production
 
 EXPOSE 3000/tcp
+EXPOSE 3443/tcp
 
-CMD ["npm", "start"] 
+CMD ["node", "start-with-https.js"]

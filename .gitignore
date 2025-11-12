@@ -22,6 +22,12 @@ uploads/*
 !uploads/.gitkeep
 !uploads/default-favicon.png
 
+# SSL Certificates
+certs/
+*.key
+*.crt
+*.pem
+
 # Temporary files
 tmp/
 *.tmp
