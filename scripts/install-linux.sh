@@ -139,18 +139,23 @@ configure_env() {
     fi
     
     # 密码输入和验证
+    yellow "密码要求：至少8位，包含字母、数字、特殊字符中至少2种"
+    echo ""
+    
     while true; do
-        read -sp "设置管理员密码（至少8位，包含字母+数字+特殊字符）: " ADMIN_PASS
+        read -sp "输入管理员密码: " ADMIN_PASS
         echo
         
         if [ -z "$ADMIN_PASS" ]; then
-            yellow "密码不能为空，请重新输入"
+            red "✗ 密码不能为空"
+            echo ""
             continue
         fi
         
         # 验证密码强度
         if [ ${#ADMIN_PASS} -lt 8 ]; then
-            yellow "密码至少8位，请重新输入"
+            red "✗ 密码至少8位"
+            echo ""
             continue
         fi
         
@@ -166,7 +171,8 @@ configure_env() {
         strength=$((has_letter + has_number + has_special))
         
         if [ $strength -lt 2 ]; then
-            yellow "密码强度不足，请包含字母、数字、特殊字符中至少2种"
+            red "✗ 密码强度不足，请包含字母、数字、特殊字符中至少2种"
+            echo ""
             continue
         fi
         
@@ -175,10 +181,13 @@ configure_env() {
         echo
         
         if [ "$ADMIN_PASS" != "$ADMIN_PASS_CONFIRM" ]; then
-            red "两次密码输入不一致，请重新输入"
+            red "✗ 两次密码输入不一致，请重新输入"
+            echo ""
             continue
         fi
         
+        green "✓ 密码设置成功"
+        echo ""
         break
     done
     
