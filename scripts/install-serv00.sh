@@ -151,11 +151,8 @@ install_application() {
         red "警告: public 目录不存在，请检查代码仓库\n"
     fi
     
-    # 使用 Serv00 专用的 app.js
-    if [ -f "${WORKDIR}/app.serv00.js" ]; then
-        cp "${WORKDIR}/app.serv00.js" "${WORKDIR}/app.js"
-        green "已使用 Serv00 专用配置\n"
-    fi
+    # app.js 已统一，无需额外配置
+    green "使用统一的 app.js 配置\n"
     
     # 配置 Node 环境
     mkdir -p ~/bin
