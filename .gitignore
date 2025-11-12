@@ -3,8 +3,8 @@ node_modules/
 web/node_modules/
 .npm-global/
 
-# Build output (we commit the built files in public/)
-# web/dist/ - Now we commit dist files for deployment
+# Build output (构建产物不应提交到仓库)
+web/dist/
 
 # Logs
 logs/
