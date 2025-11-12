@@ -23,7 +23,8 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-RUN mkdir -p uploads database web/dist config certs
+# 创建必需的目录
+RUN mkdir -p uploads database backups config certs web/dist
 
 COPY package*.json ./
 
@@ -37,9 +38,15 @@ COPY config/ ./config/
 
 COPY --from=frontend-builder /app/dist ./web/dist
 
+# 复制启动脚本
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 ENV NODE_ENV=production
 
 EXPOSE 3000/tcp
 EXPOSE 3443/tcp
 
+# 使用 ENTRYPOINT 确保启动脚本总是执行
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "start-with-https.js"]
