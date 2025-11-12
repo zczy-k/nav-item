@@ -1,5 +1,5 @@
-const CACHE_NAME = 'con-nav-item-v1';
-const RUNTIME_CACHE = 'con-nav-runtime';
+const CACHE_NAME = 'con-nav-item-v2';
+const RUNTIME_CACHE = 'con-nav-runtime-v2';
 
 // 需要预缓存的核心资源
 const PRECACHE_URLS = [
@@ -53,8 +53,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API 请求：网络优先
+  // API 请求：网络优先，不缓存
   if (url.pathname.startsWith('/api/')) {
+    // 壁纸 API 绝不缓存，确保每次都是新壁纸
+    if (url.pathname.includes('/wallpaper/')) {
+      event.respondWith(
+        fetch(request, { cache: 'no-store' })
+          .then(response => response)
+          .catch(error => {
+            return new Response(JSON.stringify({ error: '获取壁纸失败，请检查网络' }), {
+              headers: { 'Content-Type': 'application/json' },
+              status: 503
+            });
+          })
+      );
+      return;
+    }
+    
+    // 其他 API 请求：网络优先
     event.respondWith(
       fetch(request)
         .then(response => {
