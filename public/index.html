@@ -7,6 +7,13 @@
     <link rel="icon" type="image/png" href="https://img.icons8.com/lollipop/100/navigation.png" />
     <meta name="description" content="个人导航页面，提供常用网站链接和工具集合，让您快速访问常用资源" />
     <meta name="keywords" content="导航,书签,常用网站,工具集合,个人导航,快速访问" />
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#4a90e2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CNI导航" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
     <!-- 资源预加载提示 -->
     <link rel="preconnect" href="https://main.ssss.nyc.mn" crossorigin>
     <link rel="dns-prefetch" href="https://img.icons8.com">
@@ -26,9 +33,38 @@
         }
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-DsbWGZXC.js"></script>
+    <script type="module" crossorigin src="/assets/index-CqUUFv_v.js"></script>
   </head>
   <body style="margin:0;padding:0;background:#222;">
     <div id="app"></div>
+    <!-- PWA Service Worker 注册 -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('✅ PWA Service Worker 注册成功:', registration.scope);
+              
+              // 检查更新
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('🔄 发现新版本，刷新页面以更新');
+                    // 可选：提示用户刷新
+                    if (confirm('发现新版本，是否立即更新？')) {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
+            })
+            .catch(err => {
+              console.log('❌ PWA Service Worker 注册失败:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

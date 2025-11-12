@@ -64,6 +64,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   etag: true,
   lastModified: true
 }));
+
+// PWA 相关文件的 MIME 类型设置
+app.get('/manifest.json', (req, res) => {
+  res.type('application/manifest+json');
+  res.sendFile(path.join(__dirname, 'web/dist', 'manifest.json'));
+});
+app.get('/sw.js', (req, res) => {
+  res.type('application/javascript');
+  res.sendFile(path.join(__dirname, 'web/dist', 'sw.js'));
+});
+
 app.use(express.static(path.join(__dirname, 'web/dist'), {
   maxAge: '1d',
   etag: true,
