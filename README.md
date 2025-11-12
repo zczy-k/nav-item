@@ -77,7 +77,14 @@ pm2 stop Con-Nav-Item     # 停止应用
 
 ### 方式二：Docker 部署
 
-#### Docker Run
+#### 快速部署
+
+**1. 拉取最新镜像**
+```bash
+docker pull ghcr.io/zczy-k/con-nav-item:latest
+```
+
+**2. 启动容器**
 ```bash
 docker run -d \
   --name Con-Nav-Item \
@@ -85,13 +92,36 @@ docker run -d \
   -v $(pwd)/database:/app/database \
   -v $(pwd)/uploads:/app/uploads \
   -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=your_password \
-  -e JWT_SECRET=your_jwt_secret \
+  -e ADMIN_PASSWORD=123456 \
+  --restart unless-stopped \
+  ghcr.io/zczy-k/con-nav-item:latest
+```
+
+> ⚠️ **重要**：
+> - `ADMIN_PASSWORD` 环境变量**仅在首次初始化时生效**
+> - 如果数据库已存在，环境变量不会覆盖数据库中的密码
+> - 要重新设置初始密码，需删除 `database/nav.db` 后重启容器
+
+**3. 首次部署（自定义初始密码）**
+```bash
+# 确保数据库不存在
+rm -rf database/nav.db
+
+# 启动容器并设置初始密码
+docker run -d \
+  --name Con-Nav-Item \
+  -p 3000:3000 \
+  -v $(pwd)/database:/app/database \
+  -v $(pwd)/uploads:/app/uploads \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=your_secure_password \
   --restart unless-stopped \
   ghcr.io/zczy-k/con-nav-item:latest
 ```
 
 #### Docker Compose
+
+创建 `docker-compose.yml`：
 ```yaml
 version: '3'
 
@@ -105,17 +135,62 @@ services:
       - PORT=3000
       - NODE_ENV=production
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=your_password
-      - JWT_SECRET=your_jwt_secret
+      - ADMIN_PASSWORD=123456  # 仅首次初始化生效
     volumes:
       - ./database:/app/database
       - ./uploads:/app/uploads
     restart: unless-stopped
 ```
 
-运行：
+启动服务：
 ```bash
 docker-compose up -d
+```
+
+#### 密码管理
+
+**检查当前密码状态**
+```bash
+docker exec -it Con-Nav-Item node check-password.js check
+```
+
+**重置密码为指定值**
+```bash
+# 重置为 123456
+docker exec -it Con-Nav-Item node check-password.js reset 123456
+
+# 重置为自定义密码
+docker exec -it Con-Nav-Item node check-password.js reset your_password
+```
+
+**或者在前端修改密码**
+1. 登录后台管理：`http://your-server:3000/admin`
+2. 点击右上角用户名 → 用户管理
+3. 在“修改密码”区域输入旧密码和新密码
+
+#### 常用管理命令
+
+```bash
+# 查看容器状态
+docker ps -a | grep Con-Nav-Item
+
+# 查看容器日志
+docker logs -f Con-Nav-Item
+
+# 重启容器
+docker restart Con-Nav-Item
+
+# 停止容器
+docker stop Con-Nav-Item
+
+# 删除容器
+docker rm -f Con-Nav-Item
+
+# 更新到最新版本
+docker stop Con-Nav-Item
+docker rm Con-Nav-Item
+docker pull ghcr.io/zczy-k/con-nav-item:latest
+# 然后重新运行 docker run 命令
 ```
 
 ### 方式三：Serv00 / CT8 / Hostuno 部署
@@ -169,12 +244,14 @@ npm start
 
 ### 环境变量
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `PORT` | 服务器端口 | 3000 |
-| `ADMIN_USERNAME` | 管理员用户名 | admin |
-| `ADMIN_PASSWORD` | 管理员密码 | 123456 |
-| `NODE_ENV` | 运行环境 | production |
+| 变量名 | 说明 | 默认值 | 备注 |
+|--------|------|--------|------|
+| `PORT` | 服务器端口 | 3000 | - |
+| `ADMIN_USERNAME` | 管理员用户名 | admin | 仅首次初始化生效 |
+| `ADMIN_PASSWORD` | 管理员密码 | 123456 | 仅首次初始化生效 |
+| `NODE_ENV` | 运行环境 | production | - |
+
+> 💡 **提示**：`ADMIN_USERNAME` 和 `ADMIN_PASSWORD` 环境变量只在数据库不存在时（首次初始化）生效。如果数据库已存在，这些环境变量不会覆盖数据库中的用户名和密码。要修改密码，请使用前端管理界面或 `check-password.js` 工具。
 
 ### 数据存储
 
@@ -271,16 +348,35 @@ cd web && npm run build:prod && cd ..
 
 ## 🔧 工具脚本
 
-### 管理员账号管理
+### 密码管理工具
+
+**查看当前密码状态**
 ```bash
-# 查看当前管理员信息
-node check-admin.js
+# 本地部署
+node check-password.js check
 
-# 重置管理员账号
-node reset-admin.js [username] [password]
+# Docker 部署
+docker exec -it Con-Nav-Item node check-password.js check
+```
 
-# 示例：重置为 admin/123456
-node reset-admin.js admin 123456
+**重置密码**
+```bash
+# 本地部署
+node check-password.js reset <新密码>
+node check-password.js reset 123456
+
+# Docker 部署
+docker exec -it Con-Nav-Item node check-password.js reset <新密码>
+docker exec -it Con-Nav-Item node check-password.js reset 123456
+```
+
+**使用环境变量重置**
+```bash
+# 本地部署（需要 .env 文件）
+node check-password.js reset-env
+
+# Docker 部署（使用容器环境变量）
+docker exec -it Con-Nav-Item node check-password.js reset-env
 ```
 
 ## 📚 文档
