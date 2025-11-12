@@ -38,7 +38,6 @@ router.post('/parse', async (req, res) => {
       const form = searchInputs.first().closest('form');
       if (form.length > 0) {
         const action = form.attr('action');
-        const method = (form.attr('method') || 'get').toLowerCase();
         const inputName = searchInputs.first().attr('name');
         
         if (action && inputName) {

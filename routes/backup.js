@@ -25,6 +25,40 @@ function isSafeFilename(filename) {
   return /^[a-zA-Z0-9_-]+\.zip$/.test(filename) && !filename.includes('..');
 }
 
+// 提取的公共函数：验证备份文件
+function validateBackupFile(filename, res) {
+  // 验证文件名安全性
+  if (!isSafeFilename(filename)) {
+    res.status(400).json({
+      success: false,
+      message: '无效的文件名'
+    });
+    return null;
+  }
+  
+  const backupDir = path.join(__dirname, '..', 'backups');
+  const filePath = path.join(backupDir, filename);
+  
+  // 验证路径安全性
+  if (!isPathSafe(backupDir, filePath)) {
+    res.status(403).json({
+      success: false,
+      message: '禁止访问'
+    });
+    return null;
+  }
+  
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({
+      success: false,
+      message: '备份文件不存在'
+    });
+    return null;
+  }
+  
+  return filePath;
+}
+
 // 配置multer用于文件上传
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -196,32 +230,8 @@ router.get('/download/:filename', (req, res, next) => {
 }, (req, res) => {
   try {
     const { filename } = req.params;
-    
-    // 验证文件名安全性
-    if (!isSafeFilename(filename)) {
-      return res.status(400).json({
-        success: false,
-        message: '无效的文件名'
-      });
-    }
-    
-    const backupDir = path.join(__dirname, '..', 'backups');
-    const filePath = path.join(backupDir, filename);
-    
-    // 验证路径安全性
-    if (!isPathSafe(backupDir, filePath)) {
-      return res.status(403).json({
-        success: false,
-        message: '禁止访问'
-      });
-    }
-    
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: '备份文件不存在'
-      });
-    }
+    const filePath = validateBackupFile(filename, res);
+    if (!filePath) return;
     
     res.download(filePath, filename);
     
@@ -239,32 +249,8 @@ router.get('/download/:filename', (req, res, next) => {
 router.delete('/delete/:filename', authMiddleware, (req, res) => {
   try {
     const { filename } = req.params;
-    
-    // 验证文件名安全性
-    if (!isSafeFilename(filename)) {
-      return res.status(400).json({
-        success: false,
-        message: '无效的文件名'
-      });
-    }
-    
-    const backupDir = path.join(__dirname, '..', 'backups');
-    const filePath = path.join(backupDir, filename);
-    
-    // 验证路径安全性
-    if (!isPathSafe(backupDir, filePath)) {
-      return res.status(403).json({
-        success: false,
-        message: '禁止访问'
-      });
-    }
-    
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: '备份文件不存在'
-      });
-    }
+    const filePath = validateBackupFile(filename, res);
+    if (!filePath) return;
     
     fs.unlinkSync(filePath);
     
@@ -319,23 +305,8 @@ router.post('/upload', authMiddleware, backupLimiter, upload.single('backup'), (
 router.post('/restore/:filename', authMiddleware, backupLimiter, async (req, res) => {
   try {
     const { filename } = req.params;
-    
-    // 验证文件名安全性
-    if (!isSafeFilename(filename)) {
-      return res.status(400).json({ success: false, message: '无效的文件名' });
-    }
-    
-    const backupDir = path.join(__dirname, '..', 'backups');
-    const filePath = path.join(backupDir, filename);
-    
-    // 验证路径安全性
-    if (!isPathSafe(backupDir, filePath)) {
-      return res.status(403).json({ success: false, message: '禁止访问' });
-    }
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, message: '备份文件不存在' });
-    }
+    const filePath = validateBackupFile(filename, res);
+    if (!filePath) return;
 
     // 1. 解压到临时目录
     const tempDir = path.join(__dirname, '..', `temp-restore-${Date.now()}`);

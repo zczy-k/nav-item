@@ -2,6 +2,7 @@
 const db = require('../db');
 const auth = require('./authMiddleware');
 const { triggerDebouncedBackup } = require('../utils/autoBackup');
+const { paginateQuery } = require('../utils/dbHelpers');
 const router = express.Router();
 
 // 获取所有菜单（包含子菜单）
@@ -64,21 +65,10 @@ router.get('/', (req, res) => {
       });
     });
   } else {
-    const pageNum = parseInt(page) || 1;
-    const size = parseInt(pageSize) || 10;
-    const offset = (pageNum - 1) * size;
-    db.get('SELECT COUNT(*) as total FROM menus', [], (err, countRow) => {
-      if (err) return res.status(500).json({error: err.message});
-      db.all('SELECT * FROM menus ORDER BY "order" LIMIT ? OFFSET ?', [size, offset], (err, rows) => {
-        if (err) return res.status(500).json({error: err.message});
-        res.json({
-          total: countRow.total,
-          page: pageNum,
-          pageSize: size,
-          data: rows
-        });
-      });
-    });
+    // 使用分页助手函数
+    paginateQuery('menus', { page, pageSize, orderBy: '"order"' })
+      .then(result => res.json(result))
+      .catch(err => res.status(500).json({ error: err.message }));
   }
 });
 

@@ -71,13 +71,16 @@ app.use(express.static(path.join(__dirname, 'web/dist'), {
   lastModified: true
 }));
 
+// SPA Fallback - 为 Vue Router 的 history 模式提供支持
 app.use((req, res, next) => {
+  // 如果是 GET 请求，且不是 API 或上传路径，且不是静态资源
   if (
     req.method === 'GET' &&
     !req.path.startsWith('/api') &&
     !req.path.startsWith('/uploads') &&
-    !fs.existsSync(path.join(__dirname, 'web/dist', req.path))
+    !req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot|json|txt)$/i)
   ) {
+    // 返回 index.html，让 Vue Router 处理路由
     res.sendFile(path.join(__dirname, 'web/dist', 'index.html'));
   } else {
     next();

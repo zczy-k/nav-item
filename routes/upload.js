@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, '../uploads'));
   },
   filename: function (req, file, cb) {
-    // 使用加密随机文件名，防止猬测
+    // 使用加密随机文件名，防止猜测
     const randomName = crypto.randomBytes(16).toString('hex');
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `${randomName}${ext}`);
@@ -60,7 +60,7 @@ router.post('/', authMiddleware, uploadLimiter, (req, res, next) => {
   upload.single('logo')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: '文件太大，最大允联5MB' });
+        return res.status(413).json({ error: '文件太大，最大允许5MB' });
       }
       return res.status(400).json({ error: '文件上传失败: ' + err.message });
     } else if (err) {

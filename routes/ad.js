@@ -1,32 +1,17 @@
 ﻿const express = require('express');
 const db = require('../db');
 const auth = require('./authMiddleware');
+const { paginateQuery } = require('../utils/dbHelpers');
 const router = express.Router();
 
 // 获取广告
-router.get('/', (req, res) => {
-  const { page, pageSize } = req.query;
-  if (!page && !pageSize) {
-    db.all('SELECT * FROM ads', [], (err, rows) => {
-      if (err) return res.status(500).json({error: err.message});
-      res.json(rows);
-    });
-  } else {
-    const pageNum = parseInt(page) || 1;
-    const size = parseInt(pageSize) || 10;
-    const offset = (pageNum - 1) * size;
-    db.get('SELECT COUNT(*) as total FROM ads', [], (err, countRow) => {
-      if (err) return res.status(500).json({error: err.message});
-      db.all('SELECT * FROM ads LIMIT ? OFFSET ?', [size, offset], (err, rows) => {
-        if (err) return res.status(500).json({error: err.message});
-        res.json({
-          total: countRow.total,
-          page: pageNum,
-          pageSize: size,
-          data: rows
-        });
-      });
-    });
+router.get('/', async (req, res) => {
+  try {
+    const { page, pageSize } = req.query;
+    const result = await paginateQuery('ads', { page, pageSize });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 // 新增广告

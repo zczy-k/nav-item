@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const authMiddleware = require('./authMiddleware');
 const { validatePasswordStrength, validateUsername } = require('../middleware/security');
+const { paginateQuery } = require('../utils/dbHelpers');
 
 const router = express.Router();
 
@@ -108,35 +109,23 @@ router.put('/password', authMiddleware, (req, res) => {
 });
 
 // 获取所有用户（管理员功能）
-router.get('/', authMiddleware, (req, res) => {
-  const { page, pageSize } = req.query;
-  if (!page && !pageSize) {
-    db.all('SELECT id, username FROM users', (err, users) => {
-      if (err) {
-        return res.status(500).json({ message: '服务器错误' });
-      }
-      res.json({ data: users });
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const { page, pageSize } = req.query;
+    const result = await paginateQuery('users', { 
+      page, 
+      pageSize,
+      select: 'id, username'
     });
-  } else {
-    const pageNum = parseInt(page) || 1;
-    const size = parseInt(pageSize) || 10;
-    const offset = (pageNum - 1) * size;
-    db.get('SELECT COUNT(*) as total FROM users', [], (err, countRow) => {
-      if (err) {
-        return res.status(500).json({ message: '服务器错误' });
-      }
-      db.all('SELECT id, username FROM users LIMIT ? OFFSET ?', [size, offset], (err, users) => {
-        if (err) {
-          return res.status(500).json({ message: '服务器错误' });
-        }
-        res.json({
-          total: countRow.total,
-          page: pageNum,
-          pageSize: size,
-          data: users
-        });
-      });
-    });
+    
+    // 保持原有的响应格式
+    if (!page && !pageSize) {
+      res.json({ data: result });
+    } else {
+      res.json(result);
+    }
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
   }
 });
 
