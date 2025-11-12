@@ -32,24 +32,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔍 Debug - Check repository state
-        run: |
-          echo "=== Git Information ==="
-          git log --oneline -5
-          echo ""
-          echo "=== Current Commit ==="
-          git show --name-status HEAD
-          echo ""
-          echo "=== web/src/main.js content ==="
-          cat web/src/main.js
-          echo ""
-          echo "=== web/dist/ directory (should not exist) ==="
-          ls -la web/dist/ || echo "web/dist/ does not exist (GOOD)"
-          echo ""
-          echo "=== .dockerignore content ==="
-          cat .dockerignore
-          echo ""
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -67,8 +49,6 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/con-nav-item
           tags: |
             type=raw,value=latest
-            type=sha,prefix={{branch}}-
-            type=ref,event=branch
 
       - name: Build and push Docker image
         id: build
@@ -79,30 +59,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           no-cache: true
-          # 添加构建参数以确保构建最新版本
-          build-args: |
-            BUILDTIME=${{ github.event.head_commit.timestamp }}
-            VERSION=${{ github.sha }}
-
-      - name: 🔍 Debug - Verify built image
-        run: |
-          echo "=== Pull and inspect the built image ==="
-          docker pull ghcr.io/${{ github.repository_owner }}/con-nav-item:latest
-          echo ""
-          echo "=== Check files in the image ==="
-          docker run --rm ghcr.io/${{ github.repository_owner }}/con-nav-item:latest sh -c '
-            echo "--- Frontend JS files ---"
-            ls -lh /app/web/dist/assets/index-*.js
-            echo ""
-            echo "--- index.html reference ---"
-            grep -o "index-[^\"]*\.js" /app/web/dist/index.html
-            echo ""
-            echo "--- Check for version log in main.js ---"
-            grep -r "App Version" /app/web/dist/assets/*.js | head -n 1 || echo "Version string not found"
-            echo ""
-            echo "--- Backend utils/dbHelpers.js ---"
-            ls -lh /app/utils/dbHelpers.js
-          '
-          echo ""
-          echo "=== Image digest ==="
-          echo "Digest: ${{ steps.build.outputs.digest }}"
