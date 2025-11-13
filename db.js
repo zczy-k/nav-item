@@ -112,6 +112,28 @@ async function initializeDatabase() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
     await dbRun(`CREATE INDEX IF NOT EXISTS idx_custom_search_engines_order ON custom_search_engines("order")`);
+    
+    // 标签表
+    await dbRun(`CREATE TABLE IF NOT EXISTS tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT DEFAULT '#2566d8',
+      "order" INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`);
+    await dbRun(`CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name)`);
+    await dbRun(`CREATE INDEX IF NOT EXISTS idx_tags_order ON tags("order")`);
+    
+    // 卡片-标签关联表（多对多）
+    await dbRun(`CREATE TABLE IF NOT EXISTS card_tags (
+      card_id INTEGER NOT NULL,
+      tag_id INTEGER NOT NULL,
+      PRIMARY KEY (card_id, tag_id),
+      FOREIGN KEY(card_id) REFERENCES cards(id) ON DELETE CASCADE,
+      FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    )`);
+    await dbRun(`CREATE INDEX IF NOT EXISTS idx_card_tags_card_id ON card_tags(card_id)`);
+    await dbRun(`CREATE INDEX IF NOT EXISTS idx_card_tags_tag_id ON card_tags(tag_id)`);
 
     // 尝试添加登录信息列（静默处理，如果列已存在会失败）
     try {

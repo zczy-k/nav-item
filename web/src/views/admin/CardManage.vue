@@ -31,6 +31,7 @@
             <th>网址</th>
             <th>Logo链接</th>
             <th>描述</th>
+            <th>标签</th>
             <th>排序</th>
             <th>操作</th>
           </tr>
@@ -41,6 +42,16 @@
             <td><input v-model="card.url" @blur="updateCard(card)" class="table-input" /></td>
             <td><input v-model="card.logo_url" @blur="updateCard(card)" class="table-input" placeholder="logo链接(可选)" /></td>
             <td><input v-model="card.desc" @blur="updateCard(card)" class="table-input" placeholder="描述（可选）" /></td>
+            <td>
+              <div class="tag-selector" @click="openTagSelector(card)">
+                <div v-if="card.tags && card.tags.length > 0" class="selected-tags">
+                  <span v-for="tag in card.tags" :key="tag.id" class="mini-tag" :style="{ backgroundColor: tag.color }">
+                    {{ tag.name }}
+                  </span>
+                </div>
+                <span v-else class="tag-placeholder">选择标签</span>
+              </div>
+            </td>
             <td><input v-model.number="card.order" type="number" @blur="updateCard(card)" class="table-input order-input" /></td>
             <td>
               <button class="btn btn-danger btn-icon" @click="deleteCard(card.id)" title="删除">
@@ -54,6 +65,37 @@
         </tbody>
       </table>
     </div>
+    
+    <!-- 标签选择弹窗 -->
+    <div v-if="showTagModal" class="modal-overlay" @click="closeTagSelector">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>选择标签</h3>
+          <button class="close-btn" @click="closeTagSelector">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="allTags.length === 0" class="empty-tags">
+            <p>暂无标签，请先在标签管理页面创建</p>
+          </div>
+          <div v-else class="tag-options">
+            <label v-for="tag in allTags" :key="tag.id" class="tag-option">
+              <input 
+                type="checkbox" 
+                :checked="selectedTagIds.includes(tag.id)"
+                @change="toggleTag(tag.id)"
+              />
+              <span class="tag-label" :style="{ backgroundColor: tag.color }">
+                {{ tag.name }}
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeTagSelector">取消</button>
+          <button class="btn btn-primary" @click="saveCardTags">确定</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -64,7 +106,8 @@ import {
   getCards, 
   addCard as apiAddCard, 
   updateCard as apiUpdateCard, 
-  deleteCard as apiDeleteCard 
+  deleteCard as apiDeleteCard,
+  getTags
 } from '../../api';
 
 const menus = ref([]);
@@ -74,6 +117,10 @@ const selectedSubMenuId = ref('');
 const newCardTitle = ref('');
 const newCardUrl = ref('');
 const newCardLogo = ref('');
+const allTags = ref([]);
+const showTagModal = ref(false);
+const currentEditCard = ref(null);
+const selectedTagIds = ref([]);
 
 const currentSubMenus = computed(() => {
   if (!selectedMenuId.value) return [];
@@ -88,6 +135,10 @@ onMounted(async () => {
     selectedMenuId.value = menus.value[0].id;
     selectedSubMenuId.value = '';
   }
+  
+  // 加载标签
+  const tagsRes = await getTags();
+  allTags.value = tagsRes.data;
 });
 
 watch(selectedMenuId, () => {
@@ -134,13 +185,53 @@ async function updateCard(card) {
     url: card.url,
     logo_url: card.logo_url,
     desc: card.desc,
-    order: card.order
+    order: card.order,
+    tagIds: card.tags ? card.tags.map(t => t.id) : []
   });
   loadCards();
 }
 
 async function deleteCard(id) {
   await apiDeleteCard(id);
+  loadCards();
+}
+
+function openTagSelector(card) {
+  currentEditCard.value = card;
+  selectedTagIds.value = card.tags ? card.tags.map(t => t.id) : [];
+  showTagModal.value = true;
+}
+
+function closeTagSelector() {
+  showTagModal.value = false;
+  currentEditCard.value = null;
+  selectedTagIds.value = [];
+}
+
+function toggleTag(tagId) {
+  const index = selectedTagIds.value.indexOf(tagId);
+  if (index > -1) {
+    selectedTagIds.value.splice(index, 1);
+  } else {
+    selectedTagIds.value.push(tagId);
+  }
+}
+
+async function saveCardTags() {
+  if (!currentEditCard.value) return;
+  
+  await apiUpdateCard(currentEditCard.value.id, {
+    menu_id: currentEditCard.value.menu_id,
+    sub_menu_id: currentEditCard.value.sub_menu_id,
+    title: currentEditCard.value.title,
+    url: currentEditCard.value.url,
+    logo_url: currentEditCard.value.logo_url,
+    desc: currentEditCard.value.desc,
+    order: currentEditCard.value.order,
+    tagIds: selectedTagIds.value
+  });
+  
+  closeTagSelector();
   loadCards();
 }
 </script>
@@ -219,32 +310,37 @@ async function deleteCard(id) {
 /* 表格列宽度设置 */
 .card-table th:nth-child(1), /* 标题列 */
 .card-table td:nth-child(1) {
-  width: 12%;
+  width: 10%;
 }
 
 .card-table th:nth-child(2), /* 网址列 */
 .card-table td:nth-child(2) {
-  width: 25%;
+  width: 22%;
 }
 
 .card-table th:nth-child(3), /* Logo链接列 */
 .card-table td:nth-child(3) {
-  width: 25%;
+  width: 22%;
 }
 
 .card-table th:nth-child(4), /* 描述列 */
 .card-table td:nth-child(4) {
-  width: 15%;
+  width: 12%;
 }
 
-.card-table th:nth-child(5), /* 排序列 */
+.card-table th:nth-child(5), /* 标签列 */
 .card-table td:nth-child(5) {
-  width: 8%;
+  width: 15%;
 }
 
-.card-table th:nth-child(6), /* 操作列 */
+.card-table th:nth-child(6), /* 排序列 */
 .card-table td:nth-child(6) {
-  width: 15%;
+  width: 7%;
+}
+
+.card-table th:nth-child(7), /* 操作列 */
+.card-table td:nth-child(7) {
+  width: 12%;
   text-align: center;
 }
 
@@ -337,6 +433,169 @@ async function deleteCard(id) {
   background: #dc2626;
 }
 
+.tag-selector {
+  cursor: pointer;
+  padding: 6px 8px;
+  border: 1px dashed #d0d7e2;
+  border-radius: 6px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.tag-selector:hover {
+  border-color: #667eea;
+  background: #f9fafb;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mini-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: white;
+  white-space: nowrap;
+}
+
+.tag-placeholder {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-body {
+  padding: 24px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.empty-tags {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.tag-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tag-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.tag-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.tag-label {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: white;
+  transition: opacity 0.2s;
+}
+
+.tag-option:hover .tag-label {
+  opacity: 0.8;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #5568d3;
+}
+
 @media (max-width: 768px) {
   .card-manage {
     width: 94%;
@@ -375,7 +634,9 @@ async function deleteCard(id) {
   .card-table th:nth-child(5),
   .card-table td:nth-child(5),
   .card-table th:nth-child(6),
-  .card-table td:nth-child(6) {
+  .card-table td:nth-child(6),
+  .card-table th:nth-child(7),
+  .card-table td:nth-child(7) {
     width: auto;
   }
 }

@@ -69,3 +69,10 @@ export const addSearchEngine = (data) => axios.post(`${BASE}/search-engines`, da
 export const updateSearchEngine = (id, data) => axios.put(`${BASE}/search-engines/${id}`, data, { headers: authHeaders() });
 export const deleteSearchEngine = (id) => axios.delete(`${BASE}/search-engines/${id}`, { headers: authHeaders() });
 export const reorderSearchEngines = (engines) => axios.post(`${BASE}/search-engines/reorder`, { engines }, { headers: authHeaders() });
+
+// 标签API
+export const getTags = () => axios.get(`${BASE}/tags`);
+export const addTag = (data) => axios.post(`${BASE}/tags`, data, { headers: authHeaders() });
+export const updateTag = (id, data) => axios.put(`${BASE}/tags/${id}`, data, { headers: authHeaders() });
+export const deleteTag = (id) => axios.delete(`${BASE}/tags/${id}`, { headers: authHeaders() });
+export const getTagCardCount = (id) => axios.get(`${BASE}/tags/${id}/cards/count`);

@@ -77,6 +77,33 @@
       </div>
     </div>
     
+    <!-- 标签筛选区 -->
+    <div v-if="allTags.length > 0" class="tag-filter-section">
+      <div class="tag-cloud">
+        <button 
+          v-for="tag in allTags" 
+          :key="tag.id" 
+          class="tag-filter-btn"
+          :class="{ active: selectedTagId === tag.id }"
+          :style="{ 
+            backgroundColor: selectedTagId === tag.id ? tag.color : 'rgba(255,255,255,0.9)',
+            color: selectedTagId === tag.id ? 'white' : tag.color,
+            borderColor: tag.color
+          }"
+          @click="toggleTagFilter(tag.id)"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+            <line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+          {{ tag.name }}
+        </button>
+        <button v-if="selectedTagId" class="tag-clear-btn" @click="clearTagFilter">
+          清除筛选
+        </button>
+      </div>
+    </div>
+    
     <!-- 左侧广告条 -->
     <div v-if="leftAds.length" class="ad-space-fixed left-ad-fixed">
       <a v-for="ad in leftAds" :key="ad.id" :href="ad.url" target="_blank">
@@ -540,7 +567,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeMount, computed, defineAsyncComponent, onUnmounted } from 'vue';
-import { getMenus, getCards, getAds, getFriends, verifyPassword, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards, deleteCard, updateCard, getSearchEngines, parseSearchEngine, addSearchEngine, deleteSearchEngine } from '../api';
+import { getMenus, getCards, getAds, getFriends, verifyPassword, batchParseUrls, batchAddCards, getRandomWallpaper, batchUpdateCards, deleteCard, updateCard, getSearchEngines, parseSearchEngine, addSearchEngine, deleteSearchEngine, getTags } from '../api';
 import MenuBar from '../components/MenuBar.vue';
 const CardGrid = defineAsyncComponent(() => import('../components/CardGrid.vue'));
 
@@ -554,6 +581,8 @@ const leftAds = ref([]);
 const rightAds = ref([]);
 const showFriendLinks = ref(false);
 const friendLinks = ref([]);
+const allTags = ref([]);
+const selectedTagId = ref(null);
 
 // 批量添加相关状态
 const showBatchAddModal = ref(false);
@@ -705,6 +734,15 @@ function selectEngineFromDropdown(engine) {
 
 function clearSearch() {
   searchQuery.value = '';
+}
+
+// 标签筛选控制
+function toggleTagFilter(tagId) {
+  selectedTagId.value = selectedTagId.value === tagId ? null : tagId;
+}
+
+function clearTagFilter() {
+  selectedTagId.value = null;
 }
 
 // 打开添加搜索引擎弹窗(需要先验证密码)
@@ -862,15 +900,27 @@ async function deleteCustomEngine(engine) {
 }
 
 const filteredCards = computed(() => {
-  if (!searchQuery.value) return cards.value;
+  let result = cards.value;
   
-  // 如果在搜索状态，搜索所有卡片
-  const searchQueryLower = searchQuery.value.toLowerCase();
-  return allCards.value.filter(card => 
-    card.title.toLowerCase().includes(searchQueryLower) ||
-    card.url.toLowerCase().includes(searchQueryLower) ||
-    (card.desc && card.desc.toLowerCase().includes(searchQueryLower))
-  );
+  // 先应用标签筛选
+  if (selectedTagId.value) {
+    result = result.filter(card => 
+      card.tags && card.tags.some(tag => tag.id === selectedTagId.value)
+    );
+  }
+  
+  // 再应用搜索筛选
+  if (searchQuery.value) {
+    const searchQueryLower = searchQuery.value.toLowerCase();
+    // 在当前结果集中搜索
+    result = result.filter(card => 
+      card.title.toLowerCase().includes(searchQueryLower) ||
+      card.url.toLowerCase().includes(searchQueryLower) ||
+      (card.desc && card.desc.toLowerCase().includes(searchQueryLower))
+    );
+  }
+  
+  return result;
 });
 
 // 在组件渲染前应用保存的背景，避免闪烁
@@ -907,6 +957,14 @@ onMounted(async () => {
   
   const friendRes = await getFriends();
   friendLinks.value = friendRes.data;
+  
+  // 加载标签
+  try {
+    const tagsRes = await getTags();
+    allTags.value = tagsRes.data;
+  } catch (error) {
+    console.error('加载标签失败:', error);
+  }
   
   // 加载自定义搜索引擎
   try {
@@ -1964,6 +2022,75 @@ async function saveCardEdit() {
   align-items: center;
   width: 100%;
   max-width: 640px;
+}
+
+/* 标签筛选区 */
+.tag-filter-section {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  position: fixed;
+  top: calc(12vh + 120px);
+  left: 0;
+  right: 0;
+  z-index: 49;
+}
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 800px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tag-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 2px solid;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tag-filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tag-filter-btn.active {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.tag-clear-btn {
+  padding: 6px 14px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: 2px solid #dc3545;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tag-clear-btn:hover {
+  background: #dc3545;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
 }
 
 .content-wrapper {

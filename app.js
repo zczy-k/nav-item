@@ -12,6 +12,7 @@ const batchRoutes = require('./routes/batch');
 const wallpaperRoutes = require('./routes/wallpaper');
 const searchEngineRoutes = require('./routes/searchEngine');
 const backupRoutes = require('./routes/backup');
+const tagRoutes = require('./routes/tag');
 const compression = require('compression');
 const { helmetConfig, sanitizeMiddleware, generalLimiter } = require('./middleware/security');
 const { globalErrorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -103,6 +104,7 @@ app.use('/api/batch', batchRoutes);
 app.use('/api/wallpaper', wallpaperRoutes);
 app.use('/api/search-engines', searchEngineRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/tags', tagRoutes);
 
 // 启动定时备份任务
 try {

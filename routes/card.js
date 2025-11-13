@@ -4,25 +4,62 @@ const auth = require('./authMiddleware');
 const { triggerDebouncedBackup } = require('../utils/autoBackup');
 const router = express.Router();
 
-// 获取指定菜单的卡片
+// 获取指定菜单的卡片（包含标签）
 router.get('/:menuId', (req, res) => {
   const { subMenuId } = req.query;
   let query, params;
   
   if (subMenuId) {
-    // 获取指定子菜单的卡片
     query = 'SELECT * FROM cards WHERE sub_menu_id = ? ORDER BY "order"';
     params = [subMenuId];
   } else {
-    // 获取主菜单的卡片（不包含子菜单的卡片）
     query = 'SELECT * FROM cards WHERE menu_id = ? AND sub_menu_id IS NULL ORDER BY "order"';
     params = [req.params.menuId];
   }
   
-  db.all(query, params, (err, rows) => {
+  db.all(query, params, (err, cards) => {
     if (err) return res.status(500).json({error: err.message});
-    // 直接返回原始数据，图标处理交给前端
-    res.json(rows);
+    
+    if (cards.length === 0) {
+      return res.json([]);
+    }
+    
+    // 为每个卡片获取标签
+    const cardIds = cards.map(c => c.id);
+    const placeholders = cardIds.map(() => '?').join(',');
+    
+    db.all(
+      `SELECT ct.card_id, t.id, t.name, t.color 
+       FROM card_tags ct 
+       JOIN tags t ON ct.tag_id = t.id 
+       WHERE ct.card_id IN (${placeholders})
+       ORDER BY t."order", t.name`,
+      cardIds,
+      (err, tagRows) => {
+        if (err) return res.status(500).json({error: err.message});
+        
+        // 将标签按 card_id 分组
+        const tagsByCard = {};
+        tagRows.forEach(tag => {
+          if (!tagsByCard[tag.card_id]) {
+            tagsByCard[tag.card_id] = [];
+          }
+          tagsByCard[tag.card_id].push({
+            id: tag.id,
+            name: tag.name,
+            color: tag.color
+          });
+        });
+        
+        // 将标签添加到卡片数据中
+        const result = cards.map(card => ({
+          ...card,
+          tags: tagsByCard[card.id] || []
+        }));
+        
+        res.json(result);
+      }
+    );
   });
 });
 
@@ -84,25 +121,66 @@ router.patch('/batch-update', auth, (req, res) => {
   });
 });
 
-// 新增、修改、删除卡片需认证
+// 新增卡片（含标签）
 router.post('/', auth, (req, res) => {
-  const { menu_id, sub_menu_id, title, url, logo_url, desc, order } = req.body;
-  db.run('INSERT INTO cards (menu_id, sub_menu_id, title, url, logo_url, desc, "order") VALUES (?, ?, ?, ?, ?, ?)', 
-    [menu_id, sub_menu_id || null, title, url, logo_url, desc, order || 0], function(err) {
-    if (err) return res.status(500).json({error: err.message});
-    triggerDebouncedBackup(); // 触发自动备份
-    res.json({ id: this.lastID });
-  });
+  const { menu_id, sub_menu_id, title, url, logo_url, desc, order, tagIds } = req.body;
+  
+  db.run(
+    'INSERT INTO cards (menu_id, sub_menu_id, title, url, logo_url, desc, "order") VALUES (?, ?, ?, ?, ?, ?, ?)', 
+    [menu_id, sub_menu_id || null, title, url, logo_url, desc, order || 0],
+    function(err) {
+      if (err) return res.status(500).json({error: err.message});
+      
+      const cardId = this.lastID;
+      
+      // 如果有标签，关联标签
+      if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+        const values = tagIds.map(tagId => `(${cardId}, ${tagId})`).join(',');
+        db.run(`INSERT INTO card_tags (card_id, tag_id) VALUES ${values}`, (err) => {
+          if (err) return res.status(500).json({error: err.message});
+          
+          triggerDebouncedBackup();
+          res.json({ id: cardId });
+        });
+      } else {
+        triggerDebouncedBackup();
+        res.json({ id: cardId });
+      }
+    }
+  );
 });
 
+// 更新卡片（含标签）
 router.put('/:id', auth, (req, res) => {
-  const { menu_id, sub_menu_id, title, url, logo_url, desc, order } = req.body;
-  db.run('UPDATE cards SET menu_id=?, sub_menu_id=?, title=?, url=?, logo_url=?, desc=?, "order"=? WHERE id=?', 
-    [menu_id, sub_menu_id || null, title, url, logo_url, desc, order || 0, req.params.id], function(err) {
-    if (err) return res.status(500).json({error: err.message});
-    triggerDebouncedBackup(); // 触发自动备份
-    res.json({ changed: this.changes });
-  });
+  const { menu_id, sub_menu_id, title, url, logo_url, desc, order, tagIds } = req.body;
+  const { id } = req.params;
+  
+  db.run(
+    'UPDATE cards SET menu_id=?, sub_menu_id=?, title=?, url=?, logo_url=?, desc=?, "order"=? WHERE id=?', 
+    [menu_id, sub_menu_id || null, title, url, logo_url, desc, order || 0, id],
+    function(err) {
+      if (err) return res.status(500).json({error: err.message});
+      
+      // 删除旧的标签关联
+      db.run('DELETE FROM card_tags WHERE card_id=?', [id], (err) => {
+        if (err) return res.status(500).json({error: err.message});
+        
+        // 如果有新标签，添加关联
+        if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+          const values = tagIds.map(tagId => `(${id}, ${tagId})`).join(',');
+          db.run(`INSERT INTO card_tags (card_id, tag_id) VALUES ${values}`, (err) => {
+            if (err) return res.status(500).json({error: err.message});
+            
+            triggerDebouncedBackup();
+            res.json({ changed: this.changes });
+          });
+        } else {
+          triggerDebouncedBackup();
+          res.json({ changed: this.changes });
+        }
+      });
+    }
+  );
 });
 
 router.delete('/:id', auth, (req, res) => {

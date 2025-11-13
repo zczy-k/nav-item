@@ -8,6 +8,14 @@
       <a :href="editMode ? 'javascript:void(0)' : card.url" :target="editMode ? '' : '_blank'" :title="getTooltip(card)" @click="editMode ? $event.preventDefault() : null" :class="{'drag-handle': editMode}">
         <img class="link-icon" :src="getLogo(card)" alt="" @error="onImgError($event, card)" loading="lazy">
         <span class="link-text">{{ truncate(card.title) }}</span>
+        <div v-if="card.tags && card.tags.length > 0" class="card-tags">
+          <span v-for="tag in card.tags.slice(0, 2)" :key="tag.id" class="card-tag" :style="{ backgroundColor: tag.color }">
+            {{ tag.name }}
+          </span>
+          <span v-if="card.tags.length > 2" class="card-tag-more" title="更多标签">
+            +{{ card.tags.length - 2 }}
+          </span>
+        </div>
       </a>
       <div v-if="editMode" class="card-btns">
         <input 
@@ -466,6 +474,40 @@ const gradients = [
   letter-spacing: -0.01em;
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* 卡片标签 */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: white;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-tag-more {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: white;
+  background: rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* 动画样式 */
