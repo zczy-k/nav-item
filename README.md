@@ -42,7 +42,7 @@
 ## 📸 界面预览
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/91c687a4-0beb-4445-9528-4501d26ddc10" width="800" alt="首页预览" />
+  <img width="1859" height="890" alt="image" src="https://github.com/user-attachments/assets/819633a6-2c05-4ab0-ae37-ad928703ef50" width="800" alt="首页预览" />
   <p><i>首页导航界面</i></p>
   
   <img src="https://github.com/user-attachments/assets/c810c79c-568f-4c19-a059-54ce88ea29d3" width="800" alt="后台管理" />
@@ -464,5 +464,6 @@ docker exec -it Con-Nav-Item node check-password.js reset-env
 ---
 
 ⭐ 如果这个项目对你有帮助，请给它一个星标！
+
 
 
