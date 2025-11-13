@@ -171,12 +171,6 @@ router.post('/create', authMiddleware, backupLimiter, async (req, res) => {
       archive.directory(databaseDir, 'database');
     }
     
-    // 备份上传文件
-    const uploadsDir = path.join(__dirname, '..', 'uploads');
-    if (fs.existsSync(uploadsDir)) {
-      archive.directory(uploadsDir, 'uploads');
-    }
-    
     // 备份环境配置
     const envFile = path.join(__dirname, '..', '.env');
     if (fs.existsSync(envFile)) {
@@ -519,11 +513,6 @@ router.post('/webdav/backup', authMiddleware, async (req, res) => {
       const databaseDir = path.join(__dirname, '..', 'database');
       if (fs.existsSync(databaseDir)) {
         archive.directory(databaseDir, 'database');
-      }
-      
-      const uploadsDir = path.join(__dirname, '..', 'uploads');
-      if (fs.existsSync(uploadsDir)) {
-        archive.directory(uploadsDir, 'uploads');
       }
       
       const envFile = path.join(__dirname, '..', '.env');

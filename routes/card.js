@@ -86,9 +86,9 @@ router.patch('/batch-update', auth, (req, res) => {
 
 // 新增、修改、删除卡片需认证
 router.post('/', auth, (req, res) => {
-  const { menu_id, sub_menu_id, title, url, logo_url, custom_logo_path, desc, order } = req.body;
-  db.run('INSERT INTO cards (menu_id, sub_menu_id, title, url, logo_url, custom_logo_path, desc, "order") VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-    [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0], function(err) {
+  const { menu_id, sub_menu_id, title, url, logo_url, desc, order } = req.body;
+  db.run('INSERT INTO cards (menu_id, sub_menu_id, title, url, logo_url, desc, "order") VALUES (?, ?, ?, ?, ?, ?)', 
+    [menu_id, sub_menu_id || null, title, url, logo_url, desc, order || 0], function(err) {
     if (err) return res.status(500).json({error: err.message});
     triggerDebouncedBackup(); // 触发自动备份
     res.json({ id: this.lastID });
@@ -96,9 +96,9 @@ router.post('/', auth, (req, res) => {
 });
 
 router.put('/:id', auth, (req, res) => {
-  const { menu_id, sub_menu_id, title, url, logo_url, custom_logo_path, desc, order } = req.body;
-  db.run('UPDATE cards SET menu_id=?, sub_menu_id=?, title=?, url=?, logo_url=?, custom_logo_path=?, desc=?, "order"=? WHERE id=?', 
-    [menu_id, sub_menu_id || null, title, url, logo_url, custom_logo_path, desc, order || 0, req.params.id], function(err) {
+  const { menu_id, sub_menu_id, title, url, logo_url, desc, order } = req.body;
+  db.run('UPDATE cards SET menu_id=?, sub_menu_id=?, title=?, url=?, logo_url=?, desc=?, "order"=? WHERE id=?', 
+    [menu_id, sub_menu_id || null, title, url, logo_url, desc, order || 0, req.params.id], function(err) {
     if (err) return res.status(500).json({error: err.message});
     triggerDebouncedBackup(); // 触发自动备份
     res.json({ changed: this.changes });

@@ -6,20 +6,17 @@ echo "🚀 启动 Con-Nav-Item..."
 # 自动创建所有必需的目录
 echo "📁 创建必需的目录..."
 mkdir -p /app/database
-mkdir -p /app/uploads
 mkdir -p /app/backups
 mkdir -p /app/config
 mkdir -p /app/web/dist
 
 # 设置目录权限
 chmod 755 /app/database
-chmod 755 /app/uploads
 chmod 755 /app/backups
 chmod 755 /app/config
 
 echo "✅ 目录创建完成："
 echo "   - /app/database (数据库)"
-echo "   - /app/uploads (上传文件)"
 echo "   - /app/backups (备份文件)"
 echo "   - /app/config (配置文件)"
 

@@ -4,7 +4,6 @@ const path = require('path');
 const db = require('./db');
 const menuRoutes = require('./routes/menu');
 const cardRoutes = require('./routes/card');
-const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const adRoutes = require('./routes/ad');
 const friendRoutes = require('./routes/friend');
@@ -58,12 +57,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// 静态资源缓存设置
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  maxAge: '7d',
-  etag: true,
-  lastModified: true
-}));
+// uploads 目录已废弃，不再需要静态资源服务
 
 // PWA 相关文件的 MIME 类型设置
 app.get('/manifest.json', (req, res) => {
@@ -87,7 +81,6 @@ app.use((req, res, next) => {
   if (
     req.method === 'GET' &&
     !req.path.startsWith('/api') &&
-    !req.path.startsWith('/uploads') &&
     !req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot|json|txt)$/i)
   ) {
     // 返回 index.html，让 Vue Router 处理路由
@@ -102,7 +95,6 @@ app.clearCache = () => cache.clear();
 
 app.use('/api/menus', menuRoutes);
 app.use('/api/cards', cardRoutes);
-app.use('/api/upload', uploadRoutes);
 app.use('/api', authRoutes);
 app.use('/api/ads', adRoutes);
 app.use('/api/friends', friendRoutes);

@@ -24,7 +24,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # 创建必需的目录
-RUN mkdir -p uploads database backups config certs web/dist
+RUN mkdir -p database backups config certs web/dist
 
 COPY package*.json ./
 

@@ -102,7 +102,6 @@ docker run -d \
   --name Con-Nav-Item \
   -p 3000:3000 \
   -v $(pwd)/database:/app/database \
-  -v $(pwd)/uploads:/app/uploads \
   -v $(pwd)/backups:/app/backups \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=123456 \
@@ -111,9 +110,9 @@ docker run -d \
 ```
 
 > 💡 **新特性**：
-> - 容器启动时会**自动创建**所有必需目录（database, uploads, backups, config）
+> - 容器启动时会**自动创建**所有必需目录（database, backups, config）
 > - 即使不挂载卷，备份功能也可正常使用（但数据不持久化）
-> - **推荐**：至少挂载 `database` 和 `backups` 卷以持久化数据
+> - **推荐**：挂载 `database` 和 `backups` 卷以持久化数据
 
 > ⚠️ **重要**：
 > - `ADMIN_PASSWORD` 环境变量**仅在首次初始化时生效**
@@ -130,7 +129,6 @@ docker run -d \
   --name Con-Nav-Item \
   -p 3000:3000 \
   -v $(pwd)/database:/app/database \
-  -v $(pwd)/uploads:/app/uploads \
   -v $(pwd)/backups:/app/backups \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=your_secure_password \
@@ -157,7 +155,6 @@ services:
       - ADMIN_PASSWORD=123456  # 仅首次初始化生效
     volumes:
       - ./database:/app/database
-      - ./uploads:/app/uploads
       - ./backups:/app/backups
     restart: unless-stopped
 ```
@@ -306,8 +303,8 @@ npm start
 ### 数据存储
 
 - **数据库**: `database/nav.db` (SQLite)
-- **上传文件**: `uploads/` 目录
-- **备份文件**: `backups/` 目录（本地备份）
+- **备份文件**: `backups/` 目录
+- **配置文件**: `config/autoBackup.json` (自动备份配置)
 - **配置文件**: `config/autoBackup.json` (自动备份配置)
 
 ## 💾 备份与恢复
