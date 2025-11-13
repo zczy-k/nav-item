@@ -102,9 +102,13 @@ async function handleChangeUsername() {
   
   try {
     await changeUsername(newUsername.value);
-    showUsernameMessage('用户名修改成功！', 'success');
+    showUsernameMessage('用户名修改成功！2秒后自动退出，请使用新用户名重新登录...', 'success');
     newUsername.value = '';
-    await loadUserProfile();
+    // 修改用户名后强制退出登录
+    setTimeout(() => {
+      localStorage.removeItem('token');
+      window.location.href = '/admin';
+    }, 2000);
   } catch (error) {
     showUsernameMessage(error.response?.data?.message || '用户名修改失败', 'error');
   } finally {
