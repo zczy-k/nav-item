@@ -126,6 +126,12 @@ async function createBackupFile(prefix = 'auto') {
         archive.directory(databaseDir, 'database');
       }
       
+      // 备份 config 目录（自动备份配置等）
+      const configDir = path.join(__dirname, '..', 'config');
+      if (fs.existsSync(configDir)) {
+        archive.directory(configDir, 'config');
+      }
+      
       // 备份上传文件
       const uploadsDir = path.join(__dirname, '..', 'uploads');
       if (fs.existsSync(uploadsDir)) {
