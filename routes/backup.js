@@ -117,17 +117,44 @@ router.post('/create', authMiddleware, backupLimiter, async (req, res) => {
     });
     
     output.on('close', () => {
-      const stats = fs.statSync(backupPath);
-      const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
-      
-      res.json({
-        success: true,
-        message: '备份创建成功',
-        backup: {
-          name: `${backupName}.zip`,
-          path: backupPath,
-          size: `${sizeInMB} MB`,
-          timestamp: new Date().toISOString()
+      // 确保文件完全写入并刷新文件系统缓存
+      // 使用 setImmediate 确保 I/O 操作完成
+      setImmediate(() => {
+        try {
+          // 强制同步文件系统（fsync）
+          const fd = fs.openSync(backupPath, 'r');
+          fs.fsyncSync(fd);
+          fs.closeSync(fd);
+          
+          const stats = fs.statSync(backupPath);
+          const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+          
+          res.json({
+            success: true,
+            message: '备份创建成功',
+            backup: {
+              name: `${backupName}.zip`,
+              path: backupPath,
+              size: `${sizeInMB} MB`,
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (err) {
+          console.error('文件同步失败:', err);
+          // 即使同步失败，也返回成功（文件已创建）
+          const stats = fs.statSync(backupPath);
+          const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+          
+          res.json({
+            success: true,
+            message: '备份创建成功',
+            backup: {
+              name: `${backupName}.zip`,
+              path: backupPath,
+              size: `${sizeInMB} MB`,
+              timestamp: new Date().toISOString()
+            }
+          });
         }
       });
     });
@@ -472,7 +499,20 @@ router.post('/webdav/backup', authMiddleware, async (req, res) => {
     const archive = archiver('zip', { zlib: { level: 9 } });
     
     await new Promise((resolve, reject) => {
-      output.on('close', resolve);
+      output.on('close', () => {
+        // 确保文件完全写入
+        setImmediate(() => {
+          try {
+            const fd = fs.openSync(backupPath, 'r');
+            fs.fsyncSync(fd);
+            fs.closeSync(fd);
+            resolve();
+          } catch (err) {
+            console.error('WebDAV备份文件同步失败:', err);
+            resolve(); // 即使失败也继续
+          }
+        });
+      });
       archive.on('error', reject);
       archive.pipe(output);
       
