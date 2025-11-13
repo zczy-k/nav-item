@@ -2,9 +2,17 @@ const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
 const schedule = require('node-schedule');
+const { createClient } = require('webdav');
+const { decryptWebDAVConfig } = require('./crypto');
 
 // 配置文件路径
 const CONFIG_PATH = path.join(__dirname, '..', 'config', 'autoBackup.json');
+
+// WebDAV配置文件路径
+function getWebDAVConfigPath() {
+  const homeDir = process.env.HOME || require('os').homedir();
+  return path.join(homeDir, '.Con-Nav-Item-webdav-config.json');
+}
 
 // 默认配置
 const DEFAULT_CONFIG = {
@@ -19,6 +27,11 @@ const DEFAULT_CONFIG = {
     hour: 2,                       // 每天凌晨2点
     minute: 0,
     keep: 7                        // 保留7天
+  },
+  webdav: {
+    enabled: false,                // WebDAV 自动备份（默认禁用）
+    syncDaily: true,               // 同步每日备份
+    syncIncremental: false         // 同步增量备份（默认不同步，避免频繁）
   },
   autoClean: true                  // 自动清理过期备份
 };
@@ -143,6 +156,57 @@ async function createBackupFile(prefix = 'auto') {
 }
 
 /**
+ * 同步备份到 WebDAV
+ */
+async function syncToWebDAV(backupPath, backupName) {
+  try {
+    // 检查 WebDAV 配置是否存在
+    const webdavConfigPath = getWebDAVConfigPath();
+    if (!fs.existsSync(webdavConfigPath)) {
+      console.log('[\u81ea\u52a8\u5907\u4efd] WebDAV \u672a\u914d\u7f6e\uff0c\u8df3\u8fc7\u540c\u6b65');
+      return false;
+    }
+    
+    // 读取并解密配置
+    const encryptedConfig = JSON.parse(fs.readFileSync(webdavConfigPath, 'utf-8'));
+    const webdavConfig = decryptWebDAVConfig(encryptedConfig);
+    
+    if (!webdavConfig) {
+      console.error('[\u81ea\u52a8\u5907\u4efd] WebDAV \u914d\u7f6e\u89e3\u5bc6\u5931\u8d25');
+      return false;
+    }
+    
+    // 创建 WebDAV 客\u6237\u7aef
+    const client = createClient(webdavConfig.url, {
+      username: webdavConfig.username,
+      password: webdavConfig.password
+    });
+    
+    // 确\u4fdd\u5907\u4efd\u76ee\u5f55\u5b58\u5728
+    const remotePath = '/Con-Nav-Item-Backups';
+    try {
+      await client.createDirectory(remotePath);
+    } catch (e) {
+      // \u76ee\u5f55\u53ef\u80fd\u5df2\u5b58\u5728\uff0c\u5ffd\u7565\u9519\u8bef
+    }
+    
+    // \u4e0a\u4f20\u6587\u4ef6
+    const fileBuffer = fs.readFileSync(backupPath);
+    const remoteFilePath = `${remotePath}/${backupName}`;
+    await client.putFileContents(remoteFilePath, fileBuffer);
+    
+    const stats = fs.statSync(backupPath);
+    const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+    console.log(`[\u81ea\u52a8\u5907\u4efd] \u5df2\u540c\u6b65\u5230 WebDAV: ${backupName} (${sizeInMB}MB)`);
+    
+    return true;
+  } catch (error) {
+    console.error('[\u81ea\u52a8\u5907\u4efd] WebDAV \u540c\u6b65\u5931\u8d25:', error.message);
+    return false;
+  }
+}
+
+/**
  * 清理过期备份
  */
 function cleanOldBackups(prefix, keepCount) {
@@ -209,9 +273,14 @@ function triggerDebouncedBackup() {
   debounceTimer = setTimeout(async () => {
     try {
       console.log('[自动备份] 开始执行防抖备份...');
-      await createBackupFile('incremental');
+      const result = await createBackupFile('incremental');
       lastBackupTime = Date.now();
       dailyBackupCount++;
+      
+      // 同步到 WebDAV（如果启用）
+      if (config.webdav && config.webdav.enabled && config.webdav.syncIncremental) {
+        await syncToWebDAV(result.path, result.name);
+      }
       
       // 自动清理
       if (config.autoClean) {
@@ -246,6 +315,11 @@ function startScheduledBackup() {
     try {
       console.log('[自动备份] 开始执行定时备份...');
       const result = await createBackupFile('daily');
+      
+      // 同步到 WebDAV（如果启用）
+      if (config.webdav && config.webdav.enabled && config.webdav.syncDaily) {
+        await syncToWebDAV(result.path, result.name);
+      }
       
       // 自动清理
       if (config.autoClean) {

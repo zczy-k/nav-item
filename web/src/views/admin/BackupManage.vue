@@ -253,6 +253,35 @@
           </div>
         </div>
 
+        <!-- WebDAV Auto Sync Settings -->
+        <div class="config-card">
+          <div class="config-header">
+            <h4>☁️ WebDAV 自动同步</h4>
+            <label class="switch">
+              <input type="checkbox" v-model="autoBackupConfig.webdav.enabled" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="config-info">自动将本地备份同步到 WebDAV 云端。需要先配置 WebDAV 连接。</p>
+          
+          <div v-if="autoBackupConfig.webdav.enabled" class="config-fields">
+            <div class="field-row checkbox-row">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="autoBackupConfig.webdav.syncDaily" />
+                <span>同步每日定时备份</span>
+              </label>
+              <small>每天定时备份后自动上传到 WebDAV</small>
+            </div>
+            <div class="field-row checkbox-row">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="autoBackupConfig.webdav.syncIncremental" />
+                <span>同步增量备份</span>
+              </label>
+              <small>增量备份后自动上传（可能频繁，不推荐）</small>
+            </div>
+          </div>
+        </div>
+
         <!-- Auto Clean Setting -->
         <div class="config-card">
           <div class="config-header">
@@ -408,6 +437,11 @@ const autoBackupConfig = reactive({
     hour: 2,
     minute: 0,
     keep: 7
+  },
+  webdav: {
+    enabled: false,
+    syncDaily: true,
+    syncIncremental: false
   },
   autoClean: true
 });
@@ -1102,6 +1136,31 @@ onMounted(async () => {
 
 .time-field {
   width: 80px;
+}
+
+.checkbox-row {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  user-select: none;
 }
 
 .switch {
