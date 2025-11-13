@@ -171,6 +171,18 @@ router.post('/create', authMiddleware, backupLimiter, async (req, res) => {
       archive.directory(databaseDir, 'database');
     }
     
+    // 备份 config 目录（自动备份配置等）
+    const configDir = path.join(__dirname, '..', 'config');
+    if (fs.existsSync(configDir)) {
+      archive.directory(configDir, 'config');
+    }
+    
+    // 备份 WebDAV 配置
+    const webdavConfigPath = getWebDAVConfigPath();
+    if (fs.existsSync(webdavConfigPath)) {
+      archive.file(webdavConfigPath, { name: 'webdav-config.json' });
+    }
+    
     // 备份环境配置
     const envFile = path.join(__dirname, '..', '.env');
     if (fs.existsSync(envFile)) {
@@ -181,7 +193,7 @@ router.post('/create', authMiddleware, backupLimiter, async (req, res) => {
     const backupInfo = {
       timestamp: new Date().toISOString(),
       version: require('../package.json').version || '1.0.0',
-      description: '数据库、上传文件和配置文件备份'
+      description: '数据库、配置文件和 WebDAV 配置备份'
     };
     archive.append(JSON.stringify(backupInfo, null, 2), { name: 'backup-info.json' });
     
@@ -340,14 +352,37 @@ router.post('/restore/:filename', authMiddleware, backupLimiter, async (req, res
         .on('error', reject);
     });
 
-    // 2. 覆盖文件 (可添加更安全的逻辑，如先备份当前数据)
+    // 2. 覆盖文件
     const projectRoot = path.join(__dirname, '..');
     const backupContents = fs.readdirSync(tempDir);
 
     for (const item of backupContents) {
       const sourcePath = path.join(tempDir, item);
+      
+      // 特殊处理 WebDAV 配置文件
+      if (item === 'webdav-config.json') {
+        const webdavConfigPath = getWebDAVConfigPath();
+        fs.copyFileSync(sourcePath, webdavConfigPath);
+        fs.chmodSync(webdavConfigPath, 0o600);
+        continue;
+      }
+      
+      // 忽略 backup-info.json
+      if (item === 'backup-info.json') {
+        continue;
+      }
+      
       const destPath = path.join(projectRoot, item);
-      await exec(`cp -r "${sourcePath}" "${destPath}"`);
+      
+      if (fs.statSync(sourcePath).isDirectory()) {
+        // 如果目标目录已存在，先删除
+        if (fs.existsSync(destPath)) {
+          fs.rmSync(destPath, { recursive: true, force: true });
+        }
+        fs.cpSync(sourcePath, destPath, { recursive: true });
+      } else {
+        fs.copyFileSync(sourcePath, destPath);
+      }
     }
 
     // 3. 清理临时文件
@@ -515,6 +550,18 @@ router.post('/webdav/backup', authMiddleware, async (req, res) => {
         archive.directory(databaseDir, 'database');
       }
       
+      // 备份 config 目录
+      const configDir = path.join(__dirname, '..', 'config');
+      if (fs.existsSync(configDir)) {
+        archive.directory(configDir, 'config');
+      }
+      
+      // 备份 WebDAV 配置
+      const webdavConfigPath = getWebDAVConfigPath();
+      if (fs.existsSync(webdavConfigPath)) {
+        archive.file(webdavConfigPath, { name: 'webdav-config.json' });
+      }
+      
       const envFile = path.join(__dirname, '..', '.env');
       if (fs.existsSync(envFile)) {
         archive.file(envFile, { name: '.env' });
@@ -524,7 +571,7 @@ router.post('/webdav/backup', authMiddleware, async (req, res) => {
         timestamp: new Date().toISOString(),
         version: require('../package.json').version || '1.0.0',
         type: 'webdav',
-        description: '数据库、上传文件和配置文件备份'
+        description: '数据库、配置文件和 WebDAV 配置备份'
       };
       archive.append(JSON.stringify(backupInfo, null, 2), { name: 'backup-info.json' });
       
@@ -690,6 +737,20 @@ router.post('/webdav/restore', authMiddleware, async (req, res) => {
     
     for (const item of backupContents) {
       const sourcePath = path.join(tempDir, item);
+      
+      // 特殊处理 WebDAV 配置文件
+      if (item === 'webdav-config.json') {
+        const webdavConfigPath = getWebDAVConfigPath();
+        fs.copyFileSync(sourcePath, webdavConfigPath);
+        fs.chmodSync(webdavConfigPath, 0o600);
+        continue;
+      }
+      
+      // 忽略 backup-info.json
+      if (item === 'backup-info.json') {
+        continue;
+      }
+      
       const destPath = path.join(projectRoot, item);
       
       if (fs.existsSync(destPath) && fs.statSync(destPath).isDirectory()) {
@@ -709,7 +770,7 @@ router.post('/webdav/restore', authMiddleware, async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: '从WebDAV恢复成功！应用可能需要重启以生效。' 
+      message: '从 WebDAV恢复成功！应用可能需要重启以生效。' 
     });
     
   } catch (error) {
