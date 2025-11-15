@@ -336,6 +336,9 @@ async function seedDefaultData() {
       console.log(`  ✓ 插入 ${defaultFriends.length} 个友情链接`);
     }
 
+    // 预置标签分类
+    await seedTags();
+
     // 提交事务
     await dbRun('COMMIT');
   } catch (error) {
@@ -343,6 +346,139 @@ async function seedDefaultData() {
     await dbRun('ROLLBACK');
     console.error('✗ 插入默认数据失败:', error);
     throw error;
+  }
+}
+
+// 预置标签分类
+async function seedTags() {
+  try {
+    const tagCount = await dbGet('SELECT COUNT(*) as count FROM tags');
+    
+    if (tagCount && tagCount.count > 0) {
+      console.log(`  ✓ 标签已存在，跳过预置`);
+      return;
+    }
+    
+    console.log('→ 开始预置标签分类...');
+    
+    // 预置标签
+    const DEFAULT_TAGS = [
+      { name: '搜索引擎', color: '#3b82f6', order: 1 },
+      { name: '视频', color: '#ef4444', order: 2 },
+      { name: '邮箱', color: '#10b981', order: 3 },
+      { name: '开发工具', color: '#8b5cf6', order: 4 },
+      { name: 'AI工具', color: '#f59e0b', order: 5 },
+      { name: '云服务', color: '#06b6d4', order: 6 },
+      { name: '社交媒体', color: '#ec4899', order: 7 },
+      { name: '工具', color: '#6366f1', order: 8 },
+      { name: '软件下载', color: '#14b8a6', order: 9 },
+      { name: '网络工具', color: '#f97316', order: 10 },
+      { name: '娱乐', color: '#a855f7', order: 11 },
+      { name: '社区', color: '#84cc16', order: 12 },
+      { name: '图片处理', color: '#22d3ee', order: 13 },
+      { name: '域名工具', color: '#fb923c', order: 14 }
+    ];
+    
+    const tagMap = {};
+    for (const tag of DEFAULT_TAGS) {
+      const result = await dbRun(
+        'INSERT INTO tags (name, color, "order") VALUES (?, ?, ?)',
+        [tag.name, tag.color, tag.order]
+      );
+      tagMap[tag.name] = result.lastID;
+    }
+    console.log(`  ✓ 预置 ${DEFAULT_TAGS.length} 个标签分类`);
+    
+    // 为卡片分配标签
+    const CARD_TAG_RULES = [
+      { urlPattern: 'baidu.com', tags: ['搜索引擎'] },
+      { urlPattern: 'google.com', tags: ['搜索引擎', '邮箱'] },
+      { urlPattern: 'youtube.com', tags: ['视频', '社交媒体'] },
+      { urlPattern: 'music.eooce.com', tags: ['娱乐'] },
+      { urlPattern: 'libretv.eooce.com', tags: ['视频', '娱乐'] },
+      { urlPattern: 'github.com', tags: ['开发工具', '社区'] },
+      { urlPattern: 'hoppscotch.io', tags: ['开发工具', '工具'] },
+      { urlPattern: 'json.cn', tags: ['开发工具', '工具'] },
+      { urlPattern: 'obfuscator.io', tags: ['开发工具', '工具'] },
+      { urlPattern: 'freecodingtools.org', tags: ['开发工具', '工具'] },
+      { urlPattern: 'uiverse.io', tags: ['开发工具'] },
+      { urlPattern: 'igoutu.cn', tags: ['开发工具'] },
+      { urlPattern: 'chat.openai.com', tags: ['AI工具'] },
+      { urlPattern: 'deepseek.com', tags: ['AI工具'] },
+      { urlPattern: 'claude.ai', tags: ['AI工具'] },
+      { urlPattern: 'gemini.google.com', tags: ['AI工具'] },
+      { urlPattern: 'chat.qwenlm.ai', tags: ['AI工具'] },
+      { urlPattern: 'kimi.com', tags: ['AI工具'] },
+      { urlPattern: 'huggingface.co', tags: ['AI工具', '开发工具'] },
+      { urlPattern: 'cloudflare.com', tags: ['云服务', '网络工具'] },
+      { urlPattern: 'aliyun.com', tags: ['云服务'] },
+      { urlPattern: 'cloud.tencent.com', tags: ['云服务'] },
+      { urlPattern: 'cloud.oracle.com', tags: ['云服务'] },
+      { urlPattern: 'aws.amazon.com', tags: ['云服务'] },
+      { urlPattern: 'digitalocean.com', tags: ['云服务'] },
+      { urlPattern: 'vultr.com', tags: ['云服务'] },
+      { urlPattern: 'ip.sb', tags: ['网络工具', '工具'] },
+      { urlPattern: 'ping0.cc', tags: ['网络工具', '工具'] },
+      { urlPattern: 'itdog.cn', tags: ['网络工具', '工具'] },
+      { urlPattern: 'browserscan.net', tags: ['网络工具', '工具'] },
+      { urlPattern: 'ssss.nyc.mn', tags: ['网络工具', '工具'] },
+      { urlPattern: 'ssh.eooce.com', tags: ['网络工具', '工具'] },
+      { urlPattern: 'sublink.eooce.com', tags: ['网络工具', '工具'] },
+      { urlPattern: 'who.cx', tags: ['域名工具', '工具'] },
+      { urlPattern: 'whois.com', tags: ['域名工具', '工具'] },
+      { urlPattern: 'nodeseek.com', tags: ['社区'] },
+      { urlPattern: 'linux.do', tags: ['社区'] },
+      { urlPattern: 'mail.google.com', tags: ['邮箱'] },
+      { urlPattern: 'outlook.live.com', tags: ['邮箱'] },
+      { urlPattern: 'account.proton.me', tags: ['邮箱'] },
+      { urlPattern: 'mail.qq.com', tags: ['邮箱'] },
+      { urlPattern: 'mail.yahoo.com', tags: ['邮箱'] },
+      { urlPattern: 'linshiyouxiang.net', tags: ['邮箱', '工具'] },
+      { urlPattern: 'smsonline.cloud', tags: ['工具'] },
+      { urlPattern: 'hellowindows.cn', tags: ['软件下载'] },
+      { urlPattern: 'qijishow.com', tags: ['软件下载'] },
+      { urlPattern: 'ypojie.com', tags: ['软件下载'] },
+      { urlPattern: 'topcracked.com', tags: ['软件下载'] },
+      { urlPattern: 'macwk.com', tags: ['软件下载'] },
+      { urlPattern: 'mac.macsc.com', tags: ['软件下载'] },
+      { urlPattern: 'qqxiuzi.cn', tags: ['工具'] },
+      { urlPattern: 'cli.im', tags: ['工具'] },
+      { urlPattern: 'remove.photos', tags: ['图片处理', '工具'] },
+      { urlPattern: 'filebox.nnuu.nyc.mn', tags: ['工具'] },
+      { urlPattern: 'address.nnuu.nyc.mn', tags: ['工具'] }
+    ];
+    
+    const cards = await dbAll('SELECT id, url FROM cards');
+    let assignCount = 0;
+    
+    for (const card of cards) {
+      const matchedTags = new Set();
+      
+      for (const rule of CARD_TAG_RULES) {
+        if (card.url.includes(rule.urlPattern)) {
+          rule.tags.forEach(tagName => {
+            if (tagMap[tagName]) {
+              matchedTags.add(tagMap[tagName]);
+            }
+          });
+        }
+      }
+      
+      if (matchedTags.size > 0) {
+        for (const tagId of matchedTags) {
+          await dbRun(
+            'INSERT OR IGNORE INTO card_tags (card_id, tag_id) VALUES (?, ?)',
+            [card.id, tagId]
+          );
+        }
+        assignCount++;
+      }
+    }
+    
+    console.log(`  ✓ 为 ${assignCount} 张卡片分配标签`);
+  } catch (error) {
+    console.error('✗ 预置标签失败:', error);
+    // 不阻断初始化流程
   }
 }
 
