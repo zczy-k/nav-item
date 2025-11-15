@@ -10,7 +10,8 @@
     "dev": "node app.js",
     "start": "node app.js",
     "start:https": "node start-with-https.js",
-    "build": "cd web && npm run build:prod && cd .."
+    "build": "cd web && npm run build:prod && cd ..",
+    "seed:tags": "node scripts/seed-tags.js"
   },
   "dependencies": {
     "archiver": "^7.0.1",
