@@ -308,6 +308,21 @@
                       <label>描述：</label>
                       <textarea v-model="item.description" class="batch-edit-textarea" rows="2"></textarea>
                     </div>
+                    <div class="batch-edit-field" v-if="allTags.length > 0">
+                      <label>标签：</label>
+                      <div class="batch-tags-selector">
+                        <label v-for="tag in allTags" :key="tag.id" class="batch-tag-option">
+                          <input 
+                            type="checkbox" 
+                            :checked="item.tagIds && item.tagIds.includes(tag.id)"
+                            @change="toggleBatchCardTag(item, tag.id)"
+                          />
+                          <span class="batch-tag-label" :style="{ backgroundColor: tag.color }">
+                            {{ tag.name }}
+                          </span>
+                        </label>
+                      </div>
+                    </div>
                     <p class="batch-card-url">{{ item.url }}</p>
                     <p v-if="!item.success" class="batch-card-warning">⚠️ {{ item.error }}</p>
                   </div>
@@ -1294,13 +1309,27 @@ async function parseUrls() {
     const response = await batchParseUrls(urls);
     parsedCards.value = response.data.data.map(card => ({
       ...card,
-      selected: true // 默认全选
+      selected: true, // 默认全选
+      tagIds: [] // 初始化标签数组
     }));
     batchStep.value = 3;
   } catch (error) {
     batchError.value = error.response?.data?.error || '解析失败，请重试';
   } finally {
     batchLoading.value = false;
+  }
+}
+
+// 切换批量卡片的标签
+function toggleBatchCardTag(card, tagId) {
+  if (!card.tagIds) {
+    card.tagIds = [];
+  }
+  const index = card.tagIds.indexOf(tagId);
+  if (index > -1) {
+    card.tagIds.splice(index, 1);
+  } else {
+    card.tagIds.push(tagId);
   }
 }
 
@@ -1320,7 +1349,8 @@ async function addSelectedCards() {
       title: card.title,
       url: card.url,
       logo: card.logo,
-      description: card.description
+      description: card.description,
+      tagIds: card.tagIds || [] // 包含标签
     }));
     
     await batchAddCards(
@@ -2008,12 +2038,10 @@ async function saveCardEdit() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 0;
-  position: fixed;
-  top: 12vh;
-  left: 0;
-  right: 0;
+  padding: 1.5rem 0 0.5rem 0;
+  position: relative;
   z-index: 50;
+  margin-top: 12vh;
 }
 
 .search-box-wrapper {
@@ -2028,12 +2056,11 @@ async function saveCardEdit() {
 .tag-filter-section {
   display: flex;
   justify-content: center;
-  padding: 0.5rem 1rem;
-  position: fixed;
-  top: calc(12vh + 120px);
-  left: 0;
-  right: 0;
-  z-index: 49;
+  padding: 0.75rem 1rem 1rem 1rem;
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
+  max-width: 1400px;
 }
 
 .tag-cloud {
@@ -2041,12 +2068,13 @@ async function saveCardEdit() {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  max-width: 800px;
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .tag-filter-btn {
@@ -2775,6 +2803,47 @@ async function saveCardEdit() {
   min-height: 40px;
   font-family: inherit;
   line-height: 1.4;
+}
+
+/* 批量标签选择器 */
+.batch-tags-selector {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.batch-tag-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.batch-tag-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.batch-tag-label {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: white;
+  font-weight: 500;
+  transition: opacity 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.batch-tag-option:hover .batch-tag-label {
+  opacity: 0.85;
 }
 
 /* 记住密码复选框 */

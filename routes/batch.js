@@ -131,7 +131,7 @@ router.post('/add', auth, (req, res) => {
 
     // 逐个插入卡片
     cards.forEach((card, index) => {
-      const { title, url, logo, description } = card;
+      const { title, url, logo, description, tagIds } = card;
       const order = nextOrder + index;
 
       db.run(
@@ -144,15 +144,34 @@ router.post('/add', auth, (req, res) => {
           }
           
           if (!hasError) {
-            insertedIds.push(this.lastID);
-            completed++;
-
-            if (completed === cards.length) {
-              res.json({ 
-                success: true, 
-                count: insertedIds.length,
-                ids: insertedIds 
+            const cardId = this.lastID;
+            insertedIds.push(cardId);
+            
+            // 如果有标签，关联标签
+            if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+              const values = tagIds.map(tagId => `(${cardId}, ${tagId})`).join(',');
+              db.run(`INSERT INTO card_tags (card_id, tag_id) VALUES ${values}`, (tagErr) => {
+                if (tagErr) {
+                  console.error('标签关联失败:', tagErr);
+                }
+                completed++;
+                if (completed === cards.length) {
+                  res.json({ 
+                    success: true, 
+                    count: insertedIds.length,
+                    ids: insertedIds 
+                  });
+                }
               });
+            } else {
+              completed++;
+              if (completed === cards.length) {
+                res.json({ 
+                  success: true, 
+                  count: insertedIds.length,
+                  ids: insertedIds 
+                });
+              }
             }
           }
         }
