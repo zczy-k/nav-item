@@ -79,28 +79,51 @@
     
     <!-- 标签筛选区 -->
     <div v-if="allTags.length > 0" class="tag-filter-section">
-      <div class="tag-cloud">
-        <button 
-          v-for="tag in allTags" 
-          :key="tag.id" 
-          class="tag-filter-btn"
-          :class="{ active: selectedTagId === tag.id }"
-          :style="{ 
-            backgroundColor: selectedTagId === tag.id ? tag.color : 'rgba(255,255,255,0.9)',
-            color: selectedTagId === tag.id ? 'white' : tag.color,
-            borderColor: tag.color
-          }"
-          @click="toggleTagFilter(tag.id)"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="tag-cloud" :class="{ collapsed: !tagCloudExpanded }">
+        <!-- 展开/折叠按钮 -->
+        <button class="tag-toggle-btn" @click="tagCloudExpanded = !tagCloudExpanded">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
             <line x1="7" y1="7" x2="7.01" y2="7"/>
           </svg>
-          {{ tag.name }}
+          <span>{{ tagCloudExpanded ? '折叠标签' : '展开标签' }}</span>
+          <svg 
+            width="14" 
+            height="14" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            stroke-width="2"
+            :style="{ transform: tagCloudExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
         </button>
-        <button v-if="selectedTagId" class="tag-clear-btn" @click="clearTagFilter">
-          清除筛选
-        </button>
+        
+        <!-- 标签列表 -->
+        <div class="tag-list-wrapper">
+          <button 
+            v-for="(tag, index) in displayedTags" 
+            :key="tag.id" 
+            class="tag-filter-btn"
+            :class="{ active: selectedTagId === tag.id }"
+            :style="{ 
+              backgroundColor: selectedTagId === tag.id ? tag.color : 'rgba(255,255,255,0.9)',
+              color: selectedTagId === tag.id ? 'white' : tag.color,
+              borderColor: tag.color
+            }"
+            @click="toggleTagFilter(tag.id)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+            {{ tag.name }}
+          </button>
+          <button v-if="selectedTagId" class="tag-clear-btn" @click="clearTagFilter">
+            清除筛选
+          </button>
+        </div>
       </div>
     </div>
     
@@ -598,6 +621,15 @@ const showFriendLinks = ref(false);
 const friendLinks = ref([]);
 const allTags = ref([]);
 const selectedTagId = ref(null);
+const tagCloudExpanded = ref(false); // 标签云默认折叠
+
+// 显示的标签（折叠时最多8个）
+const displayedTags = computed(() => {
+  if (tagCloudExpanded.value) {
+    return allTags.value;
+  }
+  return allTags.value.slice(0, 8);
+});
 
 // 批量添加相关状态
 const showBatchAddModal = ref(false);
@@ -2065,9 +2097,8 @@ async function saveCardEdit() {
 
 .tag-cloud {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
   padding: 16px 24px;
   background: rgba(255, 255, 255, 0.25);
@@ -2075,6 +2106,55 @@ async function saveCardEdit() {
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.tag-cloud.collapsed {
+  padding: 12px 24px;
+}
+
+/* 展开/折叠按钮 */
+.tag-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  align-self: center;
+}
+
+.tag-toggle-btn:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 标签列表容器 */
+.tag-list-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-height: 1000px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.tag-cloud.collapsed .tag-list-wrapper {
+  max-height: 0;
+  opacity: 0;
 }
 
 .tag-filter-btn {
