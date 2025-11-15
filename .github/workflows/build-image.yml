@@ -8,12 +8,14 @@ on:
       - 'app.js'
       - 'config.js'
       - 'db.js'
+      - 'package.json'
       - 'start-with-https.js'
       - 'check-password.js'
       - 'web/**'
       - 'routes/**'
       - 'middleware/**'
       - 'utils/**'
+      - 'scripts/**'
       - '.github/workflows/build-image.yml'
   pull_request:
     branches: [ main ]
