@@ -9,20 +9,6 @@
         <img class="link-icon" :src="getLogo(card)" alt="" @error="onImgError($event, card)" loading="lazy">
         <span class="link-text">{{ truncate(card.title) }}</span>
       </a>
-      <!-- 标签显示在卡片左上角 -->
-      <div v-if="card.tags && card.tags.length > 0" class="card-tags-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-          <line x1="7" y1="7" x2="7.01" y2="7"/>
-        </svg>
-        <span class="badge-count">{{ card.tags.length }}</span>
-        <!-- 悬浮时显示详细标签 -->
-        <div class="card-tags-tooltip">
-          <span v-for="tag in card.tags" :key="tag.id" class="card-tag" :style="{ backgroundColor: tag.color }">
-            {{ tag.name }}
-          </span>
-        </div>
-      </div>
       <div v-if="editMode" class="card-btns">
         <input 
           type="checkbox" 
@@ -297,6 +283,9 @@ function onImgError(e, card) {
 function getTooltip(card) {
   let tip = '';
   if (card.desc) tip += card.desc + '\n';
+  if (card.tags && card.tags.length > 0) {
+    tip += '标签: ' + card.tags.map(t => t.name).join(', ') + '\n';
+  }
   tip += card.url;
   return tip;
 }
@@ -480,77 +469,6 @@ const gradients = [
   letter-spacing: -0.01em;
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-/* 卡片标签徽章 */
-.card-tags-badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 6px;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  border-radius: 10px;
-  font-size: 10px;
-  color: white;
-  z-index: 2;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.card-tags-badge svg {
-  opacity: 0.9;
-}
-
-.badge-count {
-  font-weight: 600;
-  font-size: 11px;
-}
-
-.card-tags-badge:hover {
-  background: rgba(0, 0, 0, 0.9);
-  transform: scale(1.05);
-}
-
-/* 标签悬浮提示 */
-.card-tags-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 6px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  display: none;
-  flex-wrap: wrap;
-  gap: 4px;
-  min-width: 120px;
-  max-width: 200px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 3;
-}
-
-.card-tags-badge:hover .card-tags-tooltip {
-  display: flex;
-}
-
-.card-tag {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  color: white;
-  white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  font-weight: 500;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* 动画样式 */

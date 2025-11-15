@@ -334,16 +334,48 @@
                     <div class="batch-edit-field" v-if="allTags.length > 0">
                       <label>标签：</label>
                       <div class="batch-tags-selector">
-                        <label v-for="tag in allTags" :key="tag.id" class="batch-tag-option">
-                          <input 
-                            type="checkbox" 
-                            :checked="item.tagIds && item.tagIds.includes(tag.id)"
-                            @change="toggleBatchCardTag(item, tag.id)"
-                          />
-                          <span class="batch-tag-label" :style="{ backgroundColor: tag.color }">
-                            {{ tag.name }}
-                          </span>
-                        </label>
+                        <!-- 推荐标签区域 -->
+                        <div v-if="item.recommendedTagIds && item.recommendedTagIds.length > 0" class="recommended-tags-section">
+                          <div class="recommended-tags-header">
+                            <span class="recommend-badge">⭐ 智能推荐</span>
+                          </div>
+                          <div class="recommended-tags-list">
+                            <label 
+                              v-for="tagId in item.recommendedTagIds" 
+                              :key="'rec-' + tagId" 
+                              class="batch-tag-option recommended"
+                            >
+                              <input 
+                                type="checkbox" 
+                                :checked="item.tagIds && item.tagIds.includes(tagId)"
+                                @change="toggleBatchCardTag(item, tagId)"
+                              />
+                              <span class="batch-tag-label" :style="{ backgroundColor: getTagById(tagId)?.color }">
+                                {{ getTagById(tagId)?.name }}
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                        <!-- 其他标签区域 -->
+                        <div v-if="getOtherTags(item).length > 0" class="other-tags-section">
+                          <div class="other-tags-header">其他标签</div>
+                          <div class="other-tags-list">
+                            <label 
+                              v-for="tag in getOtherTags(item)" 
+                              :key="'other-' + tag.id" 
+                              class="batch-tag-option"
+                            >
+                              <input 
+                                type="checkbox" 
+                                :checked="item.tagIds && item.tagIds.includes(tag.id)"
+                                @change="toggleBatchCardTag(item, tag.id)"
+                              />
+                              <span class="batch-tag-label" :style="{ backgroundColor: tag.color }">
+                                {{ tag.name }}
+                              </span>
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <p class="batch-card-url">{{ item.url }}</p>
@@ -504,6 +536,33 @@
                 class="batch-textarea"
                 rows="4"
               ></textarea>
+            </div>
+            <div class="form-group">
+              <label>标签</label>
+              <div class="tag-select-area">
+                <div class="selected-tags">
+                  <span 
+                    v-for="tagId in cardEditForm.tagIds" 
+                    :key="tagId"
+                    class="selected-tag"
+                    :style="{ backgroundColor: getTagById(tagId)?.color || '#666' }"
+                  >
+                    {{ getTagById(tagId)?.name || '未知' }}
+                    <button @click="removeTag(tagId)" class="remove-tag-btn">×</button>
+                  </span>
+                </div>
+                <div class="available-tags">
+                  <button 
+                    v-for="tag in availableTagsForEdit" 
+                    :key="tag.id"
+                    @click="addTag(tag.id)"
+                    class="available-tag-btn"
+                    :style="{ borderColor: tag.color, color: tag.color }"
+                  >
+                    + {{ tag.name }}
+                  </button>
+                </div>
+              </div>
             </div>
             <p v-if="editError" class="batch-error">{{ editError }}</p>
             <div class="batch-actions" style="margin-top: 20px;">
@@ -666,7 +725,8 @@ const cardEditForm = ref({
   title: '',
   url: '',
   logo_url: '',
-  desc: ''
+  desc: '',
+  tagIds: []
 });
 
 // FAB 菜单
@@ -1323,6 +1383,105 @@ function handleBackToPassword() {
   batchStep.value = 1;
 }
 
+// 智能标签推荐规则：基于域名和关键词
+const TAG_RECOMMENDATION_RULES = [
+  // 开发工具类
+  { domains: ['github.com', 'gitlab.com', 'gitee.com', 'bitbucket.org'], keywords: ['git', '代码', 'code'], tags: ['开发工具', '代码托管'] },
+  { domains: ['stackoverflow.com', 'stackexchange.com'], keywords: ['问答', 'q&a'], tags: ['开发工具', '问答社区'] },
+  { domains: ['npmjs.com', 'pypi.org', 'packagist.org', 'maven.org'], keywords: ['package', '包管理'], tags: ['开发工具', '包管理'] },
+  { domains: ['docker.com', 'kubernetes.io'], keywords: ['docker', 'k8s', '容器'], tags: ['开发工具', '云原生'] },
+  
+  // 搜索引擎类
+  { domains: ['google.com', 'bing.com', 'baidu.com', 'sogou.com', 'so.com', 'duckduckgo.com', 'yahoo.com'], keywords: ['搜索', 'search'], tags: ['搜索引擎'] },
+  
+  // 视频娱乐类
+  { domains: ['youtube.com', 'bilibili.com', 'youku.com', 'iqiyi.com', 'tencent.com/v'], keywords: ['视频', 'video', '影视'], tags: ['视频', '娱乐'] },
+  { domains: ['netflix.com', 'primevideo.com', 'disneyplus.com'], keywords: ['流媒体', 'streaming'], tags: ['视频', '娱乐', '流媒体'] },
+  
+  // 社交媒体类
+  { domains: ['twitter.com', 'x.com', 'facebook.com', 'instagram.com', 'linkedin.com'], keywords: ['社交', 'social'], tags: ['社交媒体'] },
+  { domains: ['weibo.com', 'douban.com'], keywords: ['微博', '社区'], tags: ['社交媒体', '社区'] },
+  
+  // 学习教育类
+  { domains: ['coursera.org', 'udemy.com', 'edx.org', 'khanacademy.org'], keywords: ['课程', 'course', '学习'], tags: ['学习', '教育'] },
+  { domains: ['zhihu.com', 'quora.com'], keywords: ['知识', '问答'], tags: ['问答社区', '学习'] },
+  { domains: ['medium.com', 'dev.to', 'csdn.net', 'cnblogs.com', 'juejin.cn'], keywords: ['博客', 'blog', '技术'], tags: ['技术博客', '学习'] },
+  
+  // 设计创作类
+  { domains: ['figma.com', 'sketch.com', 'adobe.com'], keywords: ['设计', 'design', 'ui'], tags: ['设计工具', '创作'] },
+  { domains: ['dribbble.com', 'behance.net'], keywords: ['灵感', 'inspiration'], tags: ['设计', '灵感'] },
+  
+  // 云服务类
+  { domains: ['aws.amazon.com', 'cloud.google.com', 'azure.microsoft.com', 'aliyun.com', 'tencent.com/cloud'], keywords: ['云计算', 'cloud'], tags: ['云服务'] },
+  
+  // 邮箱类
+  { domains: ['gmail.com', 'outlook.com', 'qq.com/mail', '163.com', '126.com'], keywords: ['邮箱', 'email', 'mail'], tags: ['邮箱'] },
+  
+  // 工具类
+  { domains: ['notion.so', 'evernote.com', 'onenote.com'], keywords: ['笔记', 'note'], tags: ['效率工具', '笔记'] },
+  { domains: ['trello.com', 'asana.com', 'jira.atlassian.com'], keywords: ['项目管理', 'project'], tags: ['效率工具', '项目管理'] },
+  
+  // AI工具类
+  { domains: ['openai.com', 'chat.openai.com', 'claude.ai', 'bard.google.com'], keywords: ['ai', '人工智能', 'gpt'], tags: ['AI工具'] },
+  
+  // 编程学习类
+  { domains: ['leetcode.com', 'leetcode.cn', 'codewars.com', 'hackerrank.com'], keywords: ['算法', 'algorithm', '刷题'], tags: ['编程学习', '算法'] },
+];
+
+// 智能推荐标签
+function recommendTags(url, title) {
+  const recommendedTagNames = new Set();
+  
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.toLowerCase().replace('www.', '');
+    const titleLower = (title || '').toLowerCase();
+    
+    // 遍历推荐规则
+    for (const rule of TAG_RECOMMENDATION_RULES) {
+      let matched = false;
+      
+      // 检查域名匹配
+      if (rule.domains) {
+        for (const ruleDomain of rule.domains) {
+          if (domain.includes(ruleDomain) || ruleDomain.includes(domain)) {
+            matched = true;
+            break;
+          }
+        }
+      }
+      
+      // 检查关键词匹配
+      if (!matched && rule.keywords && title) {
+        for (const keyword of rule.keywords) {
+          if (titleLower.includes(keyword.toLowerCase())) {
+            matched = true;
+            break;
+          }
+        }
+      }
+      
+      // 如果匹配，添加推荐标签
+      if (matched) {
+        rule.tags.forEach(tag => recommendedTagNames.add(tag));
+      }
+    }
+  } catch (e) {
+    console.warn('推荐标签失败:', e);
+  }
+  
+  // 将推荐的标签名称转换为标签ID
+  const recommendedTagIds = [];
+  for (const tagName of recommendedTagNames) {
+    const tag = allTags.value.find(t => t.name === tagName);
+    if (tag) {
+      recommendedTagIds.push(tag.id);
+    }
+  }
+  
+  return recommendedTagIds;
+}
+
 async function parseUrls() {
   const urls = batchUrls.value
     .split('\n')
@@ -1339,11 +1498,16 @@ async function parseUrls() {
   
   try {
     const response = await batchParseUrls(urls);
-    parsedCards.value = response.data.data.map(card => ({
-      ...card,
-      selected: true, // 默认全选
-      tagIds: [] // 初始化标签数组
-    }));
+    parsedCards.value = response.data.data.map(card => {
+      // 为每个卡片智能推荐标签
+      const recommendedTagIds = recommendTags(card.url, card.title);
+      return {
+        ...card,
+        selected: true, // 默认全选
+        tagIds: recommendedTagIds, // 自动填充推荐标签
+        recommendedTagIds: recommendedTagIds // 保存推荐的标签，用于UI显示
+      };
+    });
     batchStep.value = 3;
   } catch (error) {
     batchError.value = error.response?.data?.error || '解析失败，请重试';
@@ -1363,6 +1527,14 @@ function toggleBatchCardTag(card, tagId) {
   } else {
     card.tagIds.push(tagId);
   }
+}
+
+// 获取非推荐的其他标签
+function getOtherTags(card) {
+  if (!card.recommendedTagIds || card.recommendedTagIds.length === 0) {
+    return allTags.value;
+  }
+  return allTags.value.filter(tag => !card.recommendedTagIds.includes(tag.id));
 }
 
 async function addSelectedCards() {
@@ -1716,7 +1888,8 @@ function handleEditCard(card) {
     title: card.title || '',
     url: card.url || '',
     logo_url: card.logo_url || '',
-    desc: card.desc || ''
+    desc: card.desc || '',
+    tagIds: card.tags ? card.tags.map(t => t.id) : []
   };
   editError.value = '';
   showEditCardModal.value = true;
@@ -1730,10 +1903,33 @@ function closeEditCardModal() {
     title: '',
     url: '',
     logo_url: '',
-    desc: ''
+    desc: '',
+    tagIds: []
   };
   editError.value = '';
 }
+
+// 标签相关辅助方法
+function getTagById(tagId) {
+  return allTags.value.find(t => t.id === tagId);
+}
+
+function addTag(tagId) {
+  if (!cardEditForm.value.tagIds.includes(tagId)) {
+    cardEditForm.value.tagIds.push(tagId);
+  }
+}
+
+function removeTag(tagId) {
+  const index = cardEditForm.value.tagIds.indexOf(tagId);
+  if (index > -1) {
+    cardEditForm.value.tagIds.splice(index, 1);
+  }
+}
+
+const availableTagsForEdit = computed(() => {
+  return allTags.value.filter(tag => !cardEditForm.value.tagIds.includes(tag.id));
+});
 
 // 保存卡片编辑
 async function saveCardEdit() {
@@ -1755,10 +1951,12 @@ async function saveCardEdit() {
       title: cardEditForm.value.title,
       url: cardEditForm.value.url,
       logo_url: cardEditForm.value.logo_url,
-      desc: cardEditForm.value.desc
+      desc: cardEditForm.value.desc,
+      tagIds: cardEditForm.value.tagIds
     });
     
     // 立即更新当前显示的卡片列表
+    const updatedTags = cardEditForm.value.tagIds.map(id => allTags.value.find(t => t.id === id)).filter(Boolean);
     const index = cards.value.findIndex(c => c.id === editingCard.value.id);
     if (index > -1) {
       cards.value[index] = {
@@ -1766,7 +1964,8 @@ async function saveCardEdit() {
         title: cardEditForm.value.title,
         url: cardEditForm.value.url,
         logo_url: cardEditForm.value.logo_url,
-        desc: cardEditForm.value.desc
+        desc: cardEditForm.value.desc,
+        tags: updatedTags
       };
     }
     
@@ -1778,7 +1977,8 @@ async function saveCardEdit() {
         title: cardEditForm.value.title,
         url: cardEditForm.value.url,
         logo_url: cardEditForm.value.logo_url,
-        desc: cardEditForm.value.desc
+        desc: cardEditForm.value.desc,
+        tags: updatedTags
       };
     }
     
@@ -1790,7 +1990,8 @@ async function saveCardEdit() {
         title: cardEditForm.value.title,
         url: cardEditForm.value.url,
         logo_url: cardEditForm.value.logo_url,
-        desc: cardEditForm.value.desc
+        desc: cardEditForm.value.desc,
+        tags: updatedTags
       };
     }
     
@@ -2070,7 +2271,7 @@ async function saveCardEdit() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 0 0.5rem 0;
+  padding: 1.5rem 0 0 0;
   position: relative;
   z-index: 50;
   margin-top: 12vh;
@@ -2088,7 +2289,7 @@ async function saveCardEdit() {
 .tag-filter-section {
   display: flex;
   justify-content: center;
-  padding: 0.75rem 1rem 1rem 1rem;
+  padding: 0.3rem 1rem 0.3rem 1rem;
   position: relative;
   z-index: 2;
   margin: 0 auto;
@@ -2098,9 +2299,9 @@ async function saveCardEdit() {
 .tag-cloud {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
-  padding: 16px 24px;
+  padding: 10px 20px;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(12px);
   border-radius: 16px;
@@ -2110,7 +2311,7 @@ async function saveCardEdit() {
 }
 
 .tag-cloud.collapsed {
-  padding: 12px 24px;
+  padding: 8px 20px;
 }
 
 /* 展开/折叠按钮 */
@@ -2730,6 +2931,81 @@ async function saveCardEdit() {
   color: #374151;
 }
 
+/* 标签选择区域 */
+.tag-select-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: white;
+  font-weight: 500;
+}
+
+.remove-tag-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.remove-tag-btn:hover {
+  opacity: 1;
+}
+
+.available-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.available-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: white;
+  border: 1.5px solid;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.available-tag-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
 .btn {
   padding: 10px 24px;
   border-radius: 8px;
@@ -2889,14 +3165,67 @@ async function saveCardEdit() {
 .batch-tags-selector {
   flex: 1;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
-  max-height: 120px;
+  max-height: 180px;
   overflow-y: auto;
+}
+
+/* 推荐标签区域 */
+.recommended-tags-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recommended-tags-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recommend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f59e0b;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid #fbbf24;
+}
+
+.recommended-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 其他标签区域 */
+.other-tags-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.other-tags-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.other-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .batch-tag-option {
@@ -2906,10 +3235,24 @@ async function saveCardEdit() {
   cursor: pointer;
 }
 
+.batch-tag-option.recommended {
+  animation: pulse 2s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
 .batch-tag-option input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
+  accent-color: #667eea;
 }
 
 .batch-tag-label {
@@ -2918,12 +3261,18 @@ async function saveCardEdit() {
   font-size: 12px;
   color: white;
   font-weight: 500;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .batch-tag-option:hover .batch-tag-label {
   opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.batch-tag-option.recommended .batch-tag-label {
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
 }
 
 /* 记住密码复选框 */
