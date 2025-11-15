@@ -327,7 +327,7 @@ const gradients = [
 .container {
   max-width: 70rem;
   margin: 0 auto;
-  margin-top: 5vh;
+  margin-top: 2vh;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(8, 1fr);

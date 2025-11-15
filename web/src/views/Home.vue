@@ -81,15 +81,14 @@
     <div v-if="allTags.length > 0" class="tag-filter-section">
       <div class="tag-cloud" :class="{ collapsed: !tagCloudExpanded }">
         <!-- 展开/折叠按钮 -->
-        <button class="tag-toggle-btn" @click="tagCloudExpanded = !tagCloudExpanded">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="tag-toggle-btn" @click="tagCloudExpanded = !tagCloudExpanded" :title="tagCloudExpanded ? '折叠标签' : '展开标签'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
             <line x1="7" y1="7" x2="7.01" y2="7"/>
           </svg>
-          <span>{{ tagCloudExpanded ? '折叠标签' : '展开标签' }}</span>
           <svg 
-            width="14" 
-            height="14" 
+            width="12" 
+            height="12" 
             viewBox="0 0 24 24" 
             fill="none" 
             stroke="currentColor" 
@@ -2289,7 +2288,7 @@ async function saveCardEdit() {
 .tag-filter-section {
   display: flex;
   justify-content: center;
-  padding: 0.3rem 1rem 0.3rem 1rem;
+  padding: 0.2rem 1rem 0.2rem 1rem;
   position: relative;
   z-index: 2;
   margin: 0 auto;
@@ -2299,19 +2298,19 @@ async function saveCardEdit() {
 .tag-cloud {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  padding: 10px 20px;
+  padding: 6px 16px;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(12px);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
 }
 
 .tag-cloud.collapsed {
-  padding: 8px 20px;
+  padding: 5px 16px;
 }
 
 /* 展开/折叠按钮 */
@@ -2319,17 +2318,17 @@ async function saveCardEdit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 4px;
+  padding: 4px 8px;
   background: rgba(255, 255, 255, 0.9);
-  border: 2px solid rgba(102, 126, 234, 0.3);
-  border-radius: 12px;
-  font-size: 14px;
+  border: 1.5px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 600;
   color: #667eea;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   align-self: center;
 }
 
@@ -2337,8 +2336,8 @@ async function saveCardEdit() {
   background: #667eea;
   color: white;
   border-color: #667eea;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 /* 标签列表容器 */
