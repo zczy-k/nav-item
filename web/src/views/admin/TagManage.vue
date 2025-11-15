@@ -103,36 +103,88 @@ async function addTag() {
     ? Math.max(...tags.value.map(t => t.order || 0))
     : 0;
   
-  await apiAddTag({ 
-    name: newTagName.value.trim(), 
-    color: newTagColor.value,
-    order: maxOrder + 1 
-  });
+  const tagName = newTagName.value.trim();
+  const tagColor = newTagColor.value;
   
+  // 乐观更新：立即添加到列表
+  const tempTag = {
+    id: Date.now(), // 临时 ID
+    name: tagName,
+    color: tagColor,
+    order: maxOrder + 1,
+    cardCount: 0,
+    _temp: true // 标记为临时数据
+  };
+  tags.value.push(tempTag);
+  
+  // 清空输入
   newTagName.value = '';
   newTagColor.value = '#2566d8';
-  loadTags();
+  
+  // 后台保存
+  try {
+    const res = await apiAddTag({ 
+      name: tagName, 
+      color: tagColor,
+      order: maxOrder + 1 
+    });
+    
+    // 更新为真实 ID
+    const index = tags.value.findIndex(t => t.id === tempTag.id);
+    if (index > -1) {
+      tags.value[index] = {
+        ...res.data,
+        cardCount: 0
+      };
+    }
+  } catch (err) {
+    // 失败时移除临时标签
+    const index = tags.value.findIndex(t => t.id === tempTag.id);
+    if (index > -1) {
+      tags.value.splice(index, 1);
+    }
+    alert('添加标签失败：' + (err.response?.data?.error || err.message));
+  }
 }
 
 async function updateTag(tag) {
-  await apiUpdateTag(tag.id, { 
-    name: tag.name, 
-    color: tag.color,
-    order: tag.order 
-  });
-  loadTags();
+  if (tag._temp) return; // 跳过临时标签
+  
+  try {
+    await apiUpdateTag(tag.id, { 
+      name: tag.name, 
+      color: tag.color,
+      order: tag.order 
+    });
+  } catch (err) {
+    alert('更新标签失败：' + (err.response?.data?.error || err.message));
+    loadTags(); // 失败时重新加载
+  }
 }
 
 async function deleteTag(id) {
   const tag = tags.value.find(t => t.id === id);
+  if (!tag) return;
+  
   const confirmMsg = tag.cardCount > 0
     ? `确定要删除标签"${tag.name}"吗？这将取消 ${tag.cardCount} 张卡片的关联。`
     : `确定要删除标签"${tag.name}"吗？`;
   
   if (!confirm(confirmMsg)) return;
   
-  await apiDeleteTag(id);
-  loadTags();
+  // 乐观更新：立即移除
+  const index = tags.value.findIndex(t => t.id === id);
+  if (index > -1) {
+    tags.value.splice(index, 1);
+  }
+  
+  // 后台删除
+  try {
+    await apiDeleteTag(id);
+  } catch (err) {
+    alert('删除标签失败：' + (err.response?.data?.error || err.message));
+    loadTags(); // 失败时重新加载
+  }
 }
 </script>
 
