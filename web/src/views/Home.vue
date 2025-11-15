@@ -77,54 +77,56 @@
       </div>
     </div>
     
-    <!-- 标签筛选区 -->
-    <div v-if="allTags.length > 0" class="tag-filter-section">
-      <div class="tag-cloud" :class="{ collapsed: !tagCloudExpanded }">
-        <!-- 展开/折叠按钮 -->
-        <button class="tag-toggle-btn" @click="tagCloudExpanded = !tagCloudExpanded" :title="tagCloudExpanded ? '折叠标签' : '展开标签'">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-            <line x1="7" y1="7" x2="7.01" y2="7"/>
-          </svg>
-          <svg 
-            width="12" 
-            height="12" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            stroke-width="2"
-            :style="{ transform: tagCloudExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }"
-          >
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        
-        <!-- 标签列表 -->
-        <div class="tag-list-wrapper">
-          <button 
-            v-for="(tag, index) in displayedTags" 
-            :key="tag.id" 
-            class="tag-filter-btn"
-            :class="{ active: selectedTagId === tag.id }"
-            :style="{ 
-              backgroundColor: selectedTagId === tag.id ? tag.color : 'rgba(255,255,255,0.9)',
-              color: selectedTagId === tag.id ? 'white' : tag.color,
-              borderColor: tag.color
-            }"
-            @click="toggleTagFilter(tag.id)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-              <line x1="7" y1="7" x2="7.01" y2="7"/>
-            </svg>
-            {{ tag.name }}
-          </button>
-          <button v-if="selectedTagId" class="tag-clear-btn" @click="clearTagFilter">
-            清除筛选
-          </button>
+    <!-- 迷你标签栏 -->
+    <div v-if="allTags.length > 0" class="mini-tag-bar">
+      <!-- 已选标签显示 -->
+      <div class="selected-tag-display" v-if="selectedTagId">
+        <span class="mini-tag-chip" :style="{ backgroundColor: getTagById(selectedTagId)?.color }">
+          {{ getTagById(selectedTagId)?.name }}
+          <button class="mini-tag-close" @click="clearTagFilter" title="清除筛选">×</button>
+        </span>
+      </div>
+      <!-- 标签选择按钮 -->
+      <button class="mini-tag-btn" @click="showTagPanel = !showTagPanel" :title="showTagPanel ? '关闭标签' : '选择标签'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+          <line x1="7" y1="7" x2="7.01" y2="7"/>
+        </svg>
+        <span class="tag-count">{{ allTags.length }}</span>
+      </button>
+    </div>
+    
+    <!-- 标签选择浮层 -->
+    <transition name="tag-panel">
+      <div v-if="showTagPanel" class="tag-panel-overlay" @click="showTagPanel = false">
+        <div class="tag-panel" @click.stop>
+          <div class="tag-panel-header">
+            <h4>选择标签</h4>
+            <button class="panel-close-btn" @click="showTagPanel = false">×</button>
+          </div>
+          <div class="tag-panel-content">
+            <button 
+              v-for="tag in allTags" 
+              :key="tag.id" 
+              class="panel-tag-btn"
+              :class="{ active: selectedTagId === tag.id }"
+              :style="{ 
+                backgroundColor: selectedTagId === tag.id ? tag.color : 'rgba(255,255,255,0.9)',
+                color: selectedTagId === tag.id ? 'white' : tag.color,
+                borderColor: tag.color
+              }"
+              @click="selectTag(tag.id)"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+              {{ tag.name }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
     
     <!-- 左侧广告条 -->
     <div v-if="leftAds.length" class="ad-space-fixed left-ad-fixed">
@@ -679,15 +681,7 @@ const showFriendLinks = ref(false);
 const friendLinks = ref([]);
 const allTags = ref([]);
 const selectedTagId = ref(null);
-const tagCloudExpanded = ref(false); // 标签云默认折叠
-
-// 显示的标签（折叠时最多8个）
-const displayedTags = computed(() => {
-  if (tagCloudExpanded.value) {
-    return allTags.value;
-  }
-  return allTags.value.slice(0, 8);
-});
+const showTagPanel = ref(false); // 标签选择浮层
 
 // 批量添加相关状态
 const showBatchAddModal = ref(false);
@@ -849,6 +843,11 @@ function toggleTagFilter(tagId) {
 
 function clearTagFilter() {
   selectedTagId.value = null;
+}
+
+function selectTag(tagId) {
+  selectedTagId.value = selectedTagId.value === tagId ? null : tagId;
+  showTagPanel.value = false;
 }
 
 // 打开添加搜索引擎弹窗(需要先验证密码)
@@ -2284,87 +2283,173 @@ async function saveCardEdit() {
   max-width: 640px;
 }
 
-/* 标签筛选区 */
-.tag-filter-section {
-  display: flex;
-  justify-content: center;
-  padding: 0.2rem 1rem 0.2rem 1rem;
-  position: relative;
-  z-index: 2;
-  margin: 0 auto;
-  max-width: 1400px;
-}
-
-.tag-cloud {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  padding: 6px 16px;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-}
-
-.tag-cloud.collapsed {
-  padding: 5px 16px;
-}
-
-/* 展开/折叠按钮 */
-.tag-toggle-btn {
+/* 迷你标签栏 */
+.mini-tag-bar {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  padding: 0.5rem 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.selected-tag-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mini-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.mini-tag-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.mini-tag-close:hover {
+  opacity: 1;
+}
+
+.mini-tag-btn {
+  display: flex;
+  align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  padding: 5px 10px;
   background: rgba(255, 255, 255, 0.9);
   border: 1.5px solid rgba(102, 126, 234, 0.3);
-  border-radius: 8px;
+  border-radius: 16px;
   font-size: 12px;
-  font-weight: 600;
   color: #667eea;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  align-self: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.tag-toggle-btn:hover {
+.mini-tag-btn:hover {
   background: #667eea;
   color: white;
   border-color: #667eea;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
 }
 
-/* 标签列表容器 */
-.tag-list-wrapper {
+.tag-count {
+  background: rgba(102, 126, 234, 0.1);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.mini-tag-btn:hover .tag-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* 标签选择浮层 */
+.tag-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding-top: 15vh;
+}
+
+.tag-panel {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.tag-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.tag-panel-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.panel-close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.panel-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tag-panel-content {
+  padding: 20px;
+  overflow-y: auto;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  max-height: 1000px;
-  opacity: 1;
-  overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  gap: 10px;
+  align-content: flex-start;
 }
 
-.tag-cloud.collapsed .tag-list-wrapper {
-  max-height: 0;
-  opacity: 0;
-}
-
-.tag-filter-btn {
+.panel-tag-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border: 2px solid;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -2372,33 +2457,33 @@ async function saveCardEdit() {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.tag-filter-btn:hover {
+.panel-tag-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.tag-filter-btn.active {
+.panel-tag-btn.active {
   transform: scale(1.05);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.tag-clear-btn {
-  padding: 6px 14px;
-  background: rgba(220, 53, 69, 0.9);
-  color: white;
-  border: 2px solid #dc3545;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
+/* 浮层动画 */
+.tag-panel-enter-active,
+.tag-panel-leave-active {
   transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.tag-clear-btn:hover {
-  background: #dc3545;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+.tag-panel-enter-from {
+  opacity: 0;
+}
+
+.tag-panel-leave-to {
+  opacity: 0;
+}
+
+.tag-panel-enter-from .tag-panel,
+.tag-panel-leave-to .tag-panel {
+  transform: translateY(-20px) scale(0.95);
 }
 
 .content-wrapper {
